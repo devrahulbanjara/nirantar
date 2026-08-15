@@ -6,6 +6,7 @@ from nirantar.models.workouts import (
     WorkoutExercise,
     WorkoutSession,
 )
+from nirantar.models.weights import BodyWeightEntry
 
 __all__ = [
     "ExerciseGroup",
@@ -14,4 +15,5 @@ __all__ = [
     "ExerciseSetType",
     "WorkoutExercise",
     "WorkoutSession",
+    "BodyWeightEntry",
 ]

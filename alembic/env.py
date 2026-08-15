@@ -9,6 +9,7 @@ from alembic import context
 from nirantar.config import get_settings
 from nirantar.db.base import Base
 from nirantar.models import (  # noqa: F401
+    BodyWeightEntry,
     ExerciseGroup,
     ExerciseGroupMember,
     ExerciseSet,

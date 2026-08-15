@@ -39,3 +39,48 @@ async def test_api_rejects_invalid_workout(api_client: AsyncClient) -> None:
     payload["check_out_at"] = datetime(2026, 8, 16, 6, 0, tzinfo=NEPAL).isoformat()
     response = await api_client.post("/workouts", json=payload)
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_api_get_edit_and_delete_workout(api_client: AsyncClient) -> None:
+    created = (
+        await api_client.post(
+            "/workouts",
+            json=sample_workout().model_dump(mode="json"),
+        )
+    ).json()
+
+    fetched = await api_client.get(f"/workouts/{created['id']}")
+    assert fetched.status_code == 200
+
+    edited = await api_client.patch(
+        f"/workouts/{created['id']}",
+        json={
+            "expected_updated_at": created["updated_at"],
+            "operations": [{"operation": "update_workout", "title": "API edit"}],
+        },
+    )
+    assert edited.status_code == 200
+    edited_payload = edited.json()
+    assert edited_payload["title"] == "API edit"
+
+    stale = await api_client.patch(
+        f"/workouts/{created['id']}",
+        json={
+            "expected_updated_at": created["updated_at"],
+            "operations": [{"operation": "update_workout", "notes": "stale"}],
+        },
+    )
+    assert stale.status_code == 409
+
+    deleted = await api_client.request(
+        "DELETE",
+        f"/workouts/{created['id']}",
+        json={
+            "expected_updated_at": edited_payload["updated_at"],
+            "confirmation": f"DELETE {created['id']}",
+        },
+    )
+    assert deleted.status_code == 200
+    assert deleted.json() == {"workout_id": created["id"], "deleted": True}
+    assert (await api_client.get(f"/workouts/{created['id']}")).status_code == 404

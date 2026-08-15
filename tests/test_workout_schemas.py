@@ -10,6 +10,7 @@ from nirantar.schemas.workouts import (
     SetCreate,
     SetType,
     WorkoutCreate,
+    WorkoutEditRequest,
 )
 from tests.helpers import NEPAL, sample_workout
 
@@ -75,4 +76,12 @@ def test_rejects_non_superset_group_type() -> None:
             type="circuit",
             order=1,
             exercise_refs=["a", "b"],
+        )
+
+
+def test_edit_requires_timezone_aware_version_and_nonempty_patch() -> None:
+    with pytest.raises(ValidationError):
+        WorkoutEditRequest(
+            expected_updated_at=datetime(2026, 8, 16, 7, 5),
+            operations=[{"operation": "update_workout"}],
         )

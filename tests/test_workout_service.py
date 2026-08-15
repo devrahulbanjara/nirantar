@@ -4,7 +4,7 @@ from decimal import Decimal
 import pytest
 from sqlalchemy import func, select
 
-from nirantar.models.workouts import WorkoutSession
+from nirantar.models.workouts import ExerciseSet, WorkoutExercise, WorkoutSession
 from nirantar.schemas.workouts import (
     ExerciseCreate,
     ExerciseHistoryQuery,
@@ -12,8 +12,10 @@ from nirantar.schemas.workouts import (
     SetCreate,
     SetType,
     WorkoutCreate,
+    WorkoutDeleteRequest,
+    WorkoutEditRequest,
 )
-from nirantar.services.errors import ValidationDomainError
+from nirantar.services.errors import ConflictDomainError, ValidationDomainError
 from nirantar.services.workouts import WorkoutService
 from tests.helpers import NEPAL, sample_workout
 
@@ -126,3 +128,149 @@ async def test_database_rejects_checkout_before_checkin(db_session) -> None:
     with pytest.raises(Exception):
         await db_session.commit()
     await db_session.rollback()
+
+
+@pytest.mark.asyncio
+async def test_edit_workout_updates_set_and_adds_dropset(db_session) -> None:
+    service = WorkoutService(db_session)
+    created = await service.log_workout(sample_workout())
+    target_set = created.exercises[0].sets[2]
+
+    edited = await service.edit_workout(
+        created.id,
+        WorkoutEditRequest(
+            expected_updated_at=created.updated_at,
+            operations=[
+                {"operation": "update_workout", "title": "Corrected Arms"},
+                {
+                    "operation": "update_set",
+                    "set_id": target_set.id,
+                    "weight_kg": "17.5",
+                    "notes": None,
+                },
+                {
+                    "operation": "add_dropset",
+                    "parent_set_id": target_set.id,
+                    "dropset": {"order": 1, "weight_kg": "12.5", "reps": 7},
+                },
+            ],
+        ),
+    )
+
+    assert edited.title == "Corrected Arms"
+    assert edited.exercises[0].sets[2].id == target_set.id
+    assert edited.exercises[0].sets[2].weight_kg == Decimal("17.500")
+    assert edited.exercises[0].sets[2].dropsets[0].reps == 7
+    assert edited.updated_at > created.updated_at
+
+
+@pytest.mark.asyncio
+async def test_edit_requires_explicit_dropset_cascade(db_session) -> None:
+    service = WorkoutService(db_session)
+    created = await service.log_workout(sample_workout())
+    parent = created.exercises[0].sets[-1]
+
+    with pytest.raises(ValidationDomainError, match="cascade_dropsets=true"):
+        await service.edit_workout(
+            created.id,
+            WorkoutEditRequest(
+                expected_updated_at=created.updated_at,
+                operations=[{"operation": "remove_set", "set_id": parent.id}],
+            ),
+        )
+
+    edited = await service.edit_workout(
+        created.id,
+        WorkoutEditRequest(
+            expected_updated_at=created.updated_at,
+            operations=[
+                {
+                    "operation": "remove_set",
+                    "set_id": parent.id,
+                    "cascade_dropsets": True,
+                }
+            ],
+        ),
+    )
+    assert all(item.id != parent.id for item in edited.exercises[0].sets)
+    assert edited.dropset_count == 0
+
+
+@pytest.mark.asyncio
+async def test_edit_rejects_grouped_exercise_removal_and_stale_version(db_session) -> None:
+    service = WorkoutService(db_session)
+    created = await service.log_workout(sample_workout())
+
+    with pytest.raises(ValidationDomainError, match="belongs to a superset"):
+        await service.edit_workout(
+            created.id,
+            WorkoutEditRequest(
+                expected_updated_at=created.updated_at,
+                operations=[
+                    {
+                        "operation": "remove_exercise",
+                        "exercise_id": created.exercises[0].id,
+                    }
+                ],
+            ),
+        )
+
+    edited = await service.edit_workout(
+        created.id,
+        WorkoutEditRequest(
+            expected_updated_at=created.updated_at,
+            operations=[{"operation": "update_workout", "notes": "new note"}],
+        ),
+    )
+    with pytest.raises(ConflictDomainError):
+        await service.edit_workout(
+            created.id,
+            WorkoutEditRequest(
+                expected_updated_at=created.updated_at,
+                operations=[{"operation": "update_workout", "title": "stale"}],
+            ),
+        )
+    assert edited.notes == "new note"
+
+
+@pytest.mark.asyncio
+async def test_remove_ungrouped_exercise_and_delete_workout(db_session) -> None:
+    service = WorkoutService(db_session)
+    payload = sample_workout()
+    payload.groups = []
+    created = await service.log_workout(payload)
+
+    edited = await service.edit_workout(
+        created.id,
+        WorkoutEditRequest(
+            expected_updated_at=created.updated_at,
+            operations=[
+                {
+                    "operation": "remove_exercise",
+                    "exercise_id": created.exercises[1].id,
+                }
+            ],
+        ),
+    )
+    assert len(edited.exercises) == 1
+
+    with pytest.raises(ValidationDomainError, match="confirmation must exactly match"):
+        await service.delete_workout(
+            edited.id,
+            WorkoutDeleteRequest(
+                expected_updated_at=edited.updated_at,
+                confirmation="DELETE",
+            ),
+        )
+
+    result = await service.delete_workout(
+        edited.id,
+        WorkoutDeleteRequest(
+            expected_updated_at=edited.updated_at,
+            confirmation=f"DELETE {edited.id}",
+        ),
+    )
+    assert result.deleted is True
+    assert await db_session.scalar(select(func.count()).select_from(WorkoutSession)) == 0
+    assert await db_session.scalar(select(func.count()).select_from(WorkoutExercise)) == 0
+    assert await db_session.scalar(select(func.count()).select_from(ExerciseSet)) == 0

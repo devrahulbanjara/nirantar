@@ -18,6 +18,9 @@ from nirantar.models.workouts import (
     WorkoutSession,
 )
 from nirantar.schemas.workouts import (
+    AddDropsetOperation,
+    AddExerciseOperation,
+    AddSetOperation,
     DropsetRead,
     ExerciseGroupRead,
     ExerciseHistoryEntry,
@@ -26,12 +29,25 @@ from nirantar.schemas.workouts import (
     ExerciseRead,
     GroupMemberRead,
     RecentWorkoutsQuery,
+    RemoveExerciseOperation,
+    RemoveSetOperation,
     SetRead,
+    SetCreate,
     SetType,
     WorkoutCreate,
+    WorkoutDeleteRequest,
+    WorkoutDeleteResult,
+    WorkoutEditRequest,
     WorkoutRead,
+    UpdateExerciseOperation,
+    UpdateSetOperation,
+    UpdateWorkoutOperation,
 )
-from nirantar.services.errors import ValidationDomainError
+from nirantar.services.errors import (
+    ConflictDomainError,
+    NotFoundError,
+    ValidationDomainError,
+)
 
 
 def _set_type(value: SetType | ExerciseSetType | str) -> SetType:
@@ -264,6 +280,449 @@ class WorkoutService:
         loaded = await self._get_session(workout.id)
         return _to_workout_read(loaded)
 
+    async def get_workout(self, workout_id: UUID) -> WorkoutRead:
+        self.session.expire_all()
+        return _to_workout_read(await self._get_session(workout_id))
+
+    async def edit_workout(
+        self,
+        workout_id: UUID,
+        payload: WorkoutEditRequest,
+    ) -> WorkoutRead:
+        try:
+            workout = await self._get_session(workout_id, for_update=True)
+            self._require_current_version(workout, payload.expected_updated_at)
+
+            exercises = {item.id: item for item in workout.exercises}
+            sets = {
+                item.id: item
+                for exercise in workout.exercises
+                for item in exercise.sets
+            }
+            self._validate_operation_conflicts(payload)
+
+            removed_exercises = {
+                operation.exercise_id
+                for operation in payload.operations
+                if isinstance(operation, RemoveExerciseOperation)
+            }
+            removed_sets = {
+                operation.set_id
+                for operation in payload.operations
+                if isinstance(operation, RemoveSetOperation)
+            }
+
+            for exercise_id in removed_exercises:
+                exercise = self._exercise_in_workout(exercises, exercise_id)
+                if any(
+                    member.workout_exercise_id == exercise_id
+                    for group in workout.groups
+                    for member in group.members
+                ):
+                    raise ValidationDomainError(
+                        "Cannot remove an exercise that belongs to a superset; "
+                        "superset editing is not supported yet"
+                    )
+                if any(
+                    isinstance(operation, AddSetOperation)
+                    and operation.exercise_id == exercise.id
+                    for operation in payload.operations
+                ):
+                    raise ValidationDomainError(
+                        "Cannot add a set to an exercise being removed"
+                    )
+
+            cascaded_set_ids: set[UUID] = set()
+            for operation in payload.operations:
+                if not isinstance(operation, RemoveSetOperation):
+                    continue
+                target = self._set_in_workout(sets, operation.set_id)
+                children = [
+                    item for item in sets.values() if item.parent_set_id == target.id
+                ]
+                if children and not operation.cascade_dropsets:
+                    raise ValidationDomainError(
+                        "Removing a working set with dropsets requires "
+                        "cascade_dropsets=true"
+                    )
+                cascaded_set_ids.update(item.id for item in children)
+
+            removed_sets.update(cascaded_set_ids)
+            for set_id in removed_sets:
+                target = sets.get(set_id)
+                if target is not None and target.workout_exercise_id in removed_exercises:
+                    raise ValidationDomainError(
+                        "Do not remove sets separately from an exercise being removed"
+                    )
+
+            final_exercise_orders: dict[object, int] = {
+                exercise_id: exercise.exercise_order
+                for exercise_id, exercise in exercises.items()
+                if exercise_id not in removed_exercises
+            }
+            final_set_orders = {
+                set_id: item.set_order
+                for set_id, item in sets.items()
+                if set_id not in removed_sets
+                and item.workout_exercise_id not in removed_exercises
+            }
+            final_check_in = workout.check_in_at
+            final_check_out = workout.check_out_at
+
+            for operation in payload.operations:
+                if isinstance(operation, UpdateWorkoutOperation):
+                    if "check_in_at" in operation.model_fields_set:
+                        final_check_in = operation.check_in_at
+                    if "check_out_at" in operation.model_fields_set:
+                        final_check_out = operation.check_out_at
+                elif isinstance(operation, UpdateExerciseOperation):
+                    exercise = self._exercise_in_workout(exercises, operation.exercise_id)
+                    self._reject_removed_exercise(exercise.id, removed_exercises)
+                    if "order" in operation.model_fields_set:
+                        final_exercise_orders[exercise.id] = operation.order
+                elif isinstance(operation, AddExerciseOperation):
+                    final_exercise_orders[("new", id(operation))] = operation.exercise.order
+                elif isinstance(operation, UpdateSetOperation):
+                    target = self._set_in_workout(sets, operation.set_id)
+                    self._reject_removed_set(target, removed_sets, removed_exercises)
+                    if "order" in operation.model_fields_set:
+                        final_set_orders[target.id] = operation.order
+                elif isinstance(operation, AddSetOperation):
+                    self._exercise_in_workout(exercises, operation.exercise_id)
+                    self._reject_removed_exercise(
+                        operation.exercise_id,
+                        removed_exercises,
+                    )
+                elif isinstance(operation, AddDropsetOperation):
+                    parent = self._set_in_workout(sets, operation.parent_set_id)
+                    self._reject_removed_set(parent, removed_sets, removed_exercises)
+                    if (
+                        parent.set_type != ExerciseSetType.WORKING
+                        or parent.parent_set_id is not None
+                    ):
+                        raise ValidationDomainError(
+                            "A dropset requires a top-level working-set parent"
+                        )
+
+            if final_check_in is None:
+                raise ValidationDomainError("check_in_at cannot be null")
+            if final_check_out is not None and final_check_out <= final_check_in:
+                raise ValidationDomainError(
+                    "check_out_at must be later than check_in_at"
+                )
+            self._require_unique_orders(
+                list(final_exercise_orders.values()),
+                "Exercise order values must be unique within a workout",
+            )
+            self._validate_final_set_orders(
+                workout,
+                payload,
+                sets,
+                removed_exercises,
+                removed_sets,
+                final_set_orders,
+            )
+
+            original_exercise_orders = {
+                item.id: item.exercise_order for item in workout.exercises
+            }
+            original_set_orders = {
+                item.id: item.set_order for item in sets.values()
+            }
+            stage_base = max(
+                [*original_exercise_orders.values(), *original_set_orders.values(), 0]
+            ) + len(original_exercise_orders) + len(original_set_orders) + 100
+            for index, exercise in enumerate(workout.exercises, start=1):
+                exercise.exercise_order = stage_base + index
+            for index, item in enumerate(sets.values(), start=len(workout.exercises) + 1):
+                item.set_order = stage_base + index
+            await self.session.flush()
+
+            for exercise_id, order in original_exercise_orders.items():
+                exercises[exercise_id].exercise_order = final_exercise_orders.get(
+                    exercise_id,
+                    order,
+                )
+            for set_id, order in original_set_orders.items():
+                sets[set_id].set_order = final_set_orders.get(set_id, order)
+
+            for operation in payload.operations:
+                await self._apply_operation(workout, exercises, sets, operation)
+
+            workout.updated_at = func.now()
+            await self.session.commit()
+        except IntegrityError as exc:
+            await self.session.rollback()
+            raise ValidationDomainError(
+                "Workout could not be edited due to a data constraint violation"
+            ) from exc
+        except Exception:
+            await self.session.rollback()
+            raise
+
+        self.session.expire_all()
+        return _to_workout_read(await self._get_session(workout_id))
+
+    async def delete_workout(
+        self,
+        workout_id: UUID,
+        payload: WorkoutDeleteRequest,
+    ) -> WorkoutDeleteResult:
+        try:
+            workout = await self._get_session(workout_id, for_update=True)
+            self._require_current_version(workout, payload.expected_updated_at)
+            expected_confirmation = f"DELETE {workout_id}"
+            if payload.confirmation != expected_confirmation:
+                raise ValidationDomainError(
+                    f"confirmation must exactly match '{expected_confirmation}'"
+                )
+            await self.session.delete(workout)
+            await self.session.commit()
+        except Exception:
+            await self.session.rollback()
+            raise
+        return WorkoutDeleteResult(workout_id=workout_id)
+
+    @staticmethod
+    def _require_current_version(
+        workout: WorkoutSession,
+        expected_updated_at: datetime,
+    ) -> None:
+        if workout.updated_at != expected_updated_at:
+            raise ConflictDomainError(
+                "Workout has changed since it was read; retrieve it again before editing"
+            )
+
+    @staticmethod
+    def _exercise_in_workout(
+        exercises: dict[UUID, WorkoutExercise],
+        exercise_id: UUID,
+    ) -> WorkoutExercise:
+        exercise = exercises.get(exercise_id)
+        if exercise is None:
+            raise ValidationDomainError(
+                f"Exercise {exercise_id} does not belong to this workout"
+            )
+        return exercise
+
+    @staticmethod
+    def _set_in_workout(
+        sets: dict[UUID, ExerciseSet],
+        set_id: UUID,
+    ) -> ExerciseSet:
+        target = sets.get(set_id)
+        if target is None:
+            raise ValidationDomainError(
+                f"Set {set_id} does not belong to this workout"
+            )
+        return target
+
+    @staticmethod
+    def _reject_removed_exercise(
+        exercise_id: UUID,
+        removed_exercises: set[UUID],
+    ) -> None:
+        if exercise_id in removed_exercises:
+            raise ValidationDomainError(
+                "An exercise cannot be changed in the same request that removes it"
+            )
+
+    @staticmethod
+    def _reject_removed_set(
+        target: ExerciseSet,
+        removed_sets: set[UUID],
+        removed_exercises: set[UUID],
+    ) -> None:
+        if (
+            target.id in removed_sets
+            or target.workout_exercise_id in removed_exercises
+        ):
+            raise ValidationDomainError(
+                "A set cannot be changed in the same request that removes it"
+            )
+
+    @staticmethod
+    def _require_unique_orders(orders: list[int], message: str) -> None:
+        if len(orders) != len(set(orders)):
+            raise ValidationDomainError(message)
+
+    @staticmethod
+    def _validate_operation_conflicts(payload: WorkoutEditRequest) -> None:
+        workout_updates = 0
+        exercise_targets: set[UUID] = set()
+        set_targets: set[UUID] = set()
+        for operation in payload.operations:
+            if isinstance(operation, UpdateWorkoutOperation):
+                workout_updates += 1
+            elif isinstance(operation, (UpdateExerciseOperation, RemoveExerciseOperation)):
+                if operation.exercise_id in exercise_targets:
+                    raise ValidationDomainError(
+                        "An exercise may be updated or removed only once per request"
+                    )
+                exercise_targets.add(operation.exercise_id)
+            elif isinstance(operation, (UpdateSetOperation, RemoveSetOperation)):
+                if operation.set_id in set_targets:
+                    raise ValidationDomainError(
+                        "A set may be updated or removed only once per request"
+                    )
+                set_targets.add(operation.set_id)
+        if workout_updates > 1:
+            raise ValidationDomainError(
+                "Workout details may be updated only once per request"
+            )
+
+    def _validate_final_set_orders(
+        self,
+        workout: WorkoutSession,
+        payload: WorkoutEditRequest,
+        sets: dict[UUID, ExerciseSet],
+        removed_exercises: set[UUID],
+        removed_sets: set[UUID],
+        final_set_orders: dict[UUID, int],
+    ) -> None:
+        orders_by_scope: dict[tuple[UUID, UUID | None], list[int]] = defaultdict(list)
+        for set_id, target in sets.items():
+            if (
+                set_id in removed_sets
+                or target.workout_exercise_id in removed_exercises
+            ):
+                continue
+            orders_by_scope[
+                (target.workout_exercise_id, target.parent_set_id)
+            ].append(final_set_orders[set_id])
+
+        for operation in payload.operations:
+            if isinstance(operation, AddSetOperation):
+                orders_by_scope[(operation.exercise_id, None)].append(
+                    operation.set.order
+                )
+            elif isinstance(operation, AddDropsetOperation):
+                parent = sets[operation.parent_set_id]
+                orders_by_scope[
+                    (parent.workout_exercise_id, parent.id)
+                ].append(operation.dropset.order)
+
+        for orders in orders_by_scope.values():
+            self._require_unique_orders(
+                orders,
+                "Set order values must be unique within their parent scope",
+            )
+
+    async def _apply_operation(
+        self,
+        workout: WorkoutSession,
+        exercises: dict[UUID, WorkoutExercise],
+        sets: dict[UUID, ExerciseSet],
+        operation: object,
+    ) -> None:
+        if isinstance(operation, UpdateWorkoutOperation):
+            for field_name in ("check_in_at", "check_out_at", "title", "notes"):
+                if field_name in operation.model_fields_set:
+                    setattr(workout, field_name, getattr(operation, field_name))
+            return
+
+        if isinstance(operation, AddExerciseOperation):
+            exercise = WorkoutExercise(
+                workout_session_id=workout.id,
+                exercise_name=operation.exercise.name.strip(),
+                exercise_order=operation.exercise.order,
+                notes=operation.exercise.notes,
+            )
+            self.session.add(exercise)
+            await self.session.flush()
+            for set_payload in sorted(
+                operation.exercise.sets,
+                key=lambda item: item.order,
+            ):
+                await self._add_top_level_set(exercise.id, set_payload)
+            return
+
+        if isinstance(operation, UpdateExerciseOperation):
+            exercise = exercises[operation.exercise_id]
+            if "name" in operation.model_fields_set:
+                exercise.exercise_name = operation.name.strip()
+            if "order" in operation.model_fields_set:
+                exercise.exercise_order = operation.order
+            if "notes" in operation.model_fields_set:
+                exercise.notes = operation.notes
+            return
+
+        if isinstance(operation, RemoveExerciseOperation):
+            await self.session.delete(exercises[operation.exercise_id])
+            return
+
+        if isinstance(operation, AddSetOperation):
+            await self._add_top_level_set(operation.exercise_id, operation.set)
+            return
+
+        if isinstance(operation, AddDropsetOperation):
+            parent = sets[operation.parent_set_id]
+            self.session.add(
+                ExerciseSet(
+                    workout_exercise_id=parent.workout_exercise_id,
+                    set_order=operation.dropset.order,
+                    set_type=ExerciseSetType.DROPSET,
+                    weight_kg=operation.dropset.weight_kg,
+                    reps=operation.dropset.reps,
+                    rir=operation.dropset.rir,
+                    rpe=operation.dropset.rpe,
+                    notes=operation.dropset.notes,
+                    parent_set_id=parent.id,
+                )
+            )
+            return
+
+        if isinstance(operation, UpdateSetOperation):
+            target = sets[operation.set_id]
+            field_map = {
+                "order": "set_order",
+                "weight_kg": "weight_kg",
+                "reps": "reps",
+                "rir": "rir",
+                "rpe": "rpe",
+                "notes": "notes",
+            }
+            for input_name, model_name in field_map.items():
+                if input_name in operation.model_fields_set:
+                    setattr(target, model_name, getattr(operation, input_name))
+            return
+
+        if isinstance(operation, RemoveSetOperation):
+            await self.session.delete(sets[operation.set_id])
+
+    async def _add_top_level_set(
+        self,
+        exercise_id: UUID,
+        payload: SetCreate,
+    ) -> None:
+        parent = ExerciseSet(
+            workout_exercise_id=exercise_id,
+            set_order=payload.order,
+            set_type=ExerciseSetType(payload.type.value),
+            weight_kg=payload.weight_kg,
+            reps=payload.reps,
+            rir=payload.rir,
+            rpe=payload.rpe,
+            notes=payload.notes,
+            parent_set_id=None,
+        )
+        self.session.add(parent)
+        await self.session.flush()
+        for drop_payload in sorted(payload.dropsets, key=lambda item: item.order):
+            self.session.add(
+                ExerciseSet(
+                    workout_exercise_id=exercise_id,
+                    set_order=drop_payload.order,
+                    set_type=ExerciseSetType.DROPSET,
+                    weight_kg=drop_payload.weight_kg,
+                    reps=drop_payload.reps,
+                    rir=drop_payload.rir,
+                    rpe=drop_payload.rpe,
+                    notes=drop_payload.notes,
+                    parent_set_id=parent.id,
+                )
+            )
+
     async def get_recent_workouts(
         self,
         query: RecentWorkoutsQuery,
@@ -334,11 +793,21 @@ class WorkoutService:
             )
         return history
 
-    async def _get_session(self, session_id: UUID) -> WorkoutSession:
-        result = await self.session.execute(
+    async def _get_session(
+        self,
+        session_id: UUID,
+        *,
+        for_update: bool = False,
+    ) -> WorkoutSession:
+        statement = (
             select(WorkoutSession)
             .where(WorkoutSession.id == session_id)
             .options(*_session_load_options())
         )
-        workout = result.scalar_one()
+        if for_update:
+            statement = statement.with_for_update()
+        result = await self.session.execute(statement)
+        workout = result.scalar_one_or_none()
+        if workout is None:
+            raise NotFoundError(f"Workout {session_id} was not found")
         return workout

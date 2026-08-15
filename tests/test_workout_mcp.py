@@ -54,7 +54,14 @@ async def test_mcp_tools_log_and_retrieve_workout() -> None:
     async with Client(mcp) as client:
         tools = await client.list_tools()
         names = {tool.name for tool in tools}
-        assert {"log_workout", "get_recent_workouts", "get_exercise_history"} <= names
+        assert {
+            "log_workout",
+            "get_recent_workouts",
+            "get_exercise_history",
+            "get_workout",
+            "edit_workout",
+            "delete_workout",
+        } <= names
 
         created_result = await client.call_tool("log_workout", {"workout": payload})
         created = _as_mapping(created_result.structured_content or created_result.data)
@@ -74,3 +81,38 @@ async def test_mcp_tools_log_and_retrieve_workout() -> None:
         history = _as_list(history_result.structured_content or history_result.data)
         assert history[0]["exercise_name"] == "Bicep Curl"
         assert len(history[0]["sets"][-1]["dropsets"]) == 2
+
+        fetched_result = await client.call_tool(
+            "get_workout",
+            {"workout_id": created["id"]},
+        )
+        fetched = _as_mapping(fetched_result.structured_content or fetched_result.data)
+        assert fetched["id"] == created["id"]
+
+        edited_result = await client.call_tool(
+            "edit_workout",
+            {
+                "workout_id": created["id"],
+                "edit": {
+                    "expected_updated_at": created["updated_at"],
+                    "operations": [
+                        {"operation": "update_workout", "title": "MCP edit"}
+                    ],
+                },
+            },
+        )
+        edited = _as_mapping(edited_result.structured_content or edited_result.data)
+        assert edited["title"] == "MCP edit"
+
+        deleted_result = await client.call_tool(
+            "delete_workout",
+            {
+                "workout_id": created["id"],
+                "deletion": {
+                    "expected_updated_at": edited["updated_at"],
+                    "confirmation": f"DELETE {created['id']}",
+                },
+            },
+        )
+        deleted = _as_mapping(deleted_result.structured_content or deleted_result.data)
+        assert deleted == {"workout_id": created["id"], "deleted": True}

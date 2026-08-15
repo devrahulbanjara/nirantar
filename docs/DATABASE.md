@@ -678,6 +678,29 @@ FoodItem
 
 Use `WorkoutSession`, not `Workout`, so a future reusable `WorkoutTemplate` remains unambiguous.
 
+## Daily Body Weight
+
+Daily body weight is stored as one explicit observation per local calendar date.
+The date is the fact supplied by the user; the application does not invent a
+measurement time. When the date is omitted, the service derives today from
+`USER_TIMEZONE`, which defaults to `Asia/Kathmandu`.
+
+```sql
+CREATE TABLE body_weight_entries (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    measured_on DATE NOT NULL UNIQUE,
+    weight_kg NUMERIC(7,3) NOT NULL,
+    notes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT body_weight_entries_weight_positive CHECK (weight_kg > 0)
+);
+```
+
+Duplicate dates are rejected rather than silently overwritten. Corrections use
+the existing entry's `updated_at` value to detect stale writes. Date-range
+history is inclusive and ordered by `measured_on` ascending.
+
 ## Future Extensions
 
 Add these only when real use requires them.

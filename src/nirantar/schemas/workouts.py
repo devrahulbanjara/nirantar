@@ -1,6 +1,7 @@
 from datetime import datetime
 from decimal import Decimal
 from enum import Enum
+from typing import Annotated, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
@@ -129,6 +130,136 @@ class WorkoutCreate(BaseModel):
                     f"Unknown exercise_refs in group order {group.order}: {', '.join(missing)}"
                 )
         return self
+
+
+class UpdateWorkoutOperation(BaseModel):
+    operation: Literal["update_workout"]
+    check_in_at: datetime | None = None
+    check_out_at: datetime | None = None
+    title: str | None = None
+    notes: str | None = None
+
+    @model_validator(mode="after")
+    def validate_patch(self) -> "UpdateWorkoutOperation":
+        changed = self.model_fields_set - {"operation"}
+        if not changed:
+            raise ValueError("update_workout requires at least one changed field")
+        if "check_in_at" in changed and self.check_in_at is None:
+            raise ValueError("check_in_at cannot be null")
+        for field_name in ("check_in_at", "check_out_at"):
+            value = getattr(self, field_name)
+            if value is not None and value.tzinfo is None:
+                raise ValueError(f"{field_name} must be timezone-aware")
+        return self
+
+
+class AddExerciseOperation(BaseModel):
+    operation: Literal["add_exercise"]
+    exercise: ExerciseCreate
+
+
+class UpdateExerciseOperation(BaseModel):
+    operation: Literal["update_exercise"]
+    exercise_id: UUID
+    name: str | None = None
+    order: int | None = Field(default=None, gt=0)
+    notes: str | None = None
+
+    @model_validator(mode="after")
+    def validate_patch(self) -> "UpdateExerciseOperation":
+        changed = self.model_fields_set - {"operation", "exercise_id"}
+        if not changed:
+            raise ValueError("update_exercise requires at least one changed field")
+        if "name" in changed and (self.name is None or not self.name.strip()):
+            raise ValueError("Exercise name cannot be null or blank")
+        if "order" in changed and self.order is None:
+            raise ValueError("Exercise order cannot be null")
+        return self
+
+
+class RemoveExerciseOperation(BaseModel):
+    operation: Literal["remove_exercise"]
+    exercise_id: UUID
+
+
+class AddSetOperation(BaseModel):
+    operation: Literal["add_set"]
+    exercise_id: UUID
+    set: SetCreate
+
+
+class AddDropsetOperation(BaseModel):
+    operation: Literal["add_dropset"]
+    parent_set_id: UUID
+    dropset: DropsetCreate
+
+
+class UpdateSetOperation(BaseModel):
+    operation: Literal["update_set"]
+    set_id: UUID
+    order: int | None = Field(default=None, gt=0)
+    weight_kg: Decimal | None = Field(default=None, ge=0)
+    reps: int | None = Field(default=None, ge=0)
+    rir: Decimal | None = Field(default=None, ge=0, le=10)
+    rpe: Decimal | None = Field(default=None, ge=0, le=10)
+    notes: str | None = None
+
+    @model_validator(mode="after")
+    def validate_patch(self) -> "UpdateSetOperation":
+        changed = self.model_fields_set - {"operation", "set_id"}
+        if not changed:
+            raise ValueError("update_set requires at least one changed field")
+        if "order" in changed and self.order is None:
+            raise ValueError("Set order cannot be null")
+        return self
+
+
+class RemoveSetOperation(BaseModel):
+    operation: Literal["remove_set"]
+    set_id: UUID
+    cascade_dropsets: bool = False
+
+
+WorkoutEditOperation = Annotated[
+    UpdateWorkoutOperation
+    | AddExerciseOperation
+    | UpdateExerciseOperation
+    | RemoveExerciseOperation
+    | AddSetOperation
+    | AddDropsetOperation
+    | UpdateSetOperation
+    | RemoveSetOperation,
+    Field(discriminator="operation"),
+]
+
+
+class WorkoutEditRequest(BaseModel):
+    expected_updated_at: datetime
+    operations: list[WorkoutEditOperation] = Field(min_length=1)
+
+    @field_validator("expected_updated_at")
+    @classmethod
+    def require_expected_timezone(cls, value: datetime) -> datetime:
+        if value.tzinfo is None:
+            raise ValueError("expected_updated_at must be timezone-aware")
+        return value
+
+
+class WorkoutDeleteRequest(BaseModel):
+    expected_updated_at: datetime
+    confirmation: str
+
+    @field_validator("expected_updated_at")
+    @classmethod
+    def require_expected_timezone(cls, value: datetime) -> datetime:
+        if value.tzinfo is None:
+            raise ValueError("expected_updated_at must be timezone-aware")
+        return value
+
+
+class WorkoutDeleteResult(BaseModel):
+    workout_id: UUID
+    deleted: Literal[True] = True
 
 
 class DropsetRead(BaseModel):

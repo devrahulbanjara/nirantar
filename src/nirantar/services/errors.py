@@ -12,3 +12,7 @@ class ValidationDomainError(DomainError):
 
 class NotFoundError(DomainError):
     """Raised when a requested resource does not exist."""
+
+
+class ConflictDomainError(DomainError):
+    """Raised when a mutation is based on stale state."""

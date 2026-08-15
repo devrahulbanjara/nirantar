@@ -482,6 +482,14 @@ The MVP is done when:
 
 ## After the MVP
 
+Implemented post-MVP measurement capability:
+
+- Log one body-weight value for today or an explicit calendar date.
+- Retrieve a specific day's weight or an inclusive date-range history.
+- Calculate first weight, last weight, measurement count, and change in ordinary code.
+- Correct an existing day's weight using stale-write protection.
+- Expose `log_weight`, `get_weight`, `get_weight_history`, and `edit_weight` through MCP.
+
 Iterate from actual usage. The first likely improvements are:
 
 1. Correct friction discovered during real workout logging.
