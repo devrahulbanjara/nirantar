@@ -5,7 +5,9 @@ from fastapi import FastAPI
 from fastmcp.utilities.lifespan import combine_lifespans
 
 from nirantar.api import workouts_router
+from nirantar.config import get_settings
 from nirantar.db.session import dispose_engine, get_engine
+from nirantar.mcp.auth import RequireBearerPin
 from nirantar.mcp.server import mcp
 
 
@@ -19,13 +21,18 @@ async def app_lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
 
 mcp_app = mcp.http_app(path="/")
+protected_mcp_app = RequireBearerPin(
+    mcp_app,
+    get_expected_pin=lambda: get_settings().nirantar_mcp_pin,
+)
+
 app = FastAPI(
     title="Nirantar",
     version="0.1.0",
     lifespan=combine_lifespans(app_lifespan, mcp_app.lifespan),
 )
 app.include_router(workouts_router)
-app.mount("/mcp", mcp_app)
+app.mount("/mcp", protected_mcp_app)
 
 
 @app.get("/", tags=["health"])
