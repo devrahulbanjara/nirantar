@@ -28,6 +28,19 @@ app.include_router(workouts_router)
 app.mount("/mcp", mcp_app)
 
 
-@app.get("/health")
+@app.get("/", tags=["health"])
+async def root() -> dict[str, str]:
+    """Simple root endpoint for the deployed service."""
+    return {
+        "name": "Nirantar",
+        "status": "ok",
+        "docs": "/docs",
+        "health": "/health",
+        "mcp": "/mcp",
+    }
+
+
+@app.get("/health", tags=["health"])
 async def health() -> dict[str, str]:
+    """Liveness probe for Render and other orchestrators."""
     return {"status": "ok"}
