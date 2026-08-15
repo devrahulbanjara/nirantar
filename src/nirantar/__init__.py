@@ -1,2 +1,2 @@
 def main() -> None:
-    print("Hello from nirantar!")
+    print("Nirantar backend. Prefer: uv run fastapi dev")

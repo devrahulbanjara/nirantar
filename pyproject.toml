@@ -9,9 +9,11 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "alembic>=1.19.1",
+    "asyncpg>=0.31.0",
     "fastapi[standard]>=0.141.1",
     "fastmcp>=3.4.7",
-    "sqlalchemy[postgresql]>=2.0.52",
+    "pydantic-settings>=2.15.0",
+    "sqlalchemy[asyncio,postgresql]>=2.0.52",
 ]
 
 [project.scripts]
@@ -23,3 +25,16 @@ entrypoint = "nirantar.main:app"
 [build-system]
 requires = ["uv_build>=0.12.3,<0.13.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests"]
+pythonpath = ["src", "."]
