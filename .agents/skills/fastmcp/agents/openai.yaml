@@ -1,0 +1,4 @@
+interface:
+  display_name: "FastMCP"
+  short_description: "Build safe FastMCP servers for Nirantar"
+  default_prompt: "Use $fastmcp to design and implement a FastMCP interface for this Nirantar feature."

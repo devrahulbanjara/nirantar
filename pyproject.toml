@@ -1,0 +1,25 @@
+[project]
+name = "nirantar"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "devrahulbanjara", email = "rdbanjara07@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "alembic>=1.19.1",
+    "fastapi[standard]>=0.141.1",
+    "fastmcp>=3.4.7",
+    "sqlalchemy[postgresql]>=2.0.52",
+]
+
+[project.scripts]
+nirantar = "nirantar:main"
+
+[tool.fastapi]
+entrypoint = "nirantar.main:app"
+
+[build-system]
+requires = ["uv_build>=0.12.3,<0.13.0"]
+build-backend = "uv_build"
