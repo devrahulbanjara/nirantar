@@ -16,7 +16,6 @@ class Settings(BaseSettings):
 
     database_url: str = Field(alias="DATABASE_URL")
     user_timezone: str = Field(default="Asia/Kathmandu", alias="USER_TIMEZONE")
-    nirantar_mcp_pin: str | None = Field(default=None, alias="NIRANTAR_MCP_PIN")
 
     @property
     def async_database_url(self) -> str:
