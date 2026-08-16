@@ -16,6 +16,26 @@ class Settings(BaseSettings):
 
     database_url: str = Field(alias="DATABASE_URL")
     user_timezone: str = Field(default="Asia/Kathmandu", alias="USER_TIMEZONE")
+    clerk_secret_key: str | None = Field(default=None, alias="CLERK_SECRET_KEY")
+    clerk_jwt_key: str | None = Field(default=None, alias="CLERK_JWT_KEY")
+    clerk_issuer_url: str | None = Field(default=None, alias="CLERK_ISSUER_URL")
+    clerk_authorized_parties_csv: str = Field(
+        default="http://localhost:3000",
+        alias="CLERK_AUTHORIZED_PARTIES",
+    )
+    mcp_base_url: str = Field(
+        default="http://127.0.0.1:8000/mcp",
+        alias="MCP_BASE_URL",
+    )
+
+    @property
+    def clerk_authorized_parties(self) -> list[str]:
+        """Return the configured frontend origins accepted by Clerk."""
+        return [
+            value.strip().rstrip("/")
+            for value in self.clerk_authorized_parties_csv.split(",")
+            if value.strip()
+        ]
 
     @property
     def async_database_url(self) -> str:

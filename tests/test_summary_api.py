@@ -7,14 +7,14 @@ from nirantar.schemas.weights import WeightCreate
 from nirantar.services.meals import MealService
 from nirantar.services.weights import WeightService
 from nirantar.services.workouts import WorkoutService
-from tests.helpers import sample_meal, sample_workout
+from tests.helpers import TEST_USER_ID, sample_meal, sample_workout
 
 
 @pytest.mark.asyncio
 async def test_daily_summary_api(api_client: AsyncClient, db_session) -> None:
-    await WorkoutService(db_session).log_workout(sample_workout())
-    await MealService(db_session).log_meal(sample_meal())
-    await WeightService(db_session).log_weight(
+    await WorkoutService(db_session, TEST_USER_ID).log_workout(sample_workout())
+    await MealService(db_session, TEST_USER_ID).log_meal(sample_meal())
+    await WeightService(db_session, TEST_USER_ID).log_weight(
         WeightCreate(weight_kg="73", measured_on=date(2026, 8, 16))
     )
 

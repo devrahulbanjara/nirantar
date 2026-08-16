@@ -17,12 +17,12 @@ from nirantar.schemas.workouts import (
 )
 from nirantar.services.errors import ConflictDomainError, ValidationDomainError
 from nirantar.services.workouts import WorkoutService
-from tests.helpers import NEPAL, sample_workout
+from tests.helpers import NEPAL, TEST_USER_ID, sample_workout
 
 
 @pytest.mark.asyncio
 async def test_log_workout_saves_sets_dropsets_and_superset(db_session) -> None:
-    service = WorkoutService(db_session)
+    service = WorkoutService(db_session, TEST_USER_ID)
     result = await service.log_workout(sample_workout())
 
     assert result.title == "Arms"
@@ -43,7 +43,7 @@ async def test_log_workout_saves_sets_dropsets_and_superset(db_session) -> None:
 
 @pytest.mark.asyncio
 async def test_log_workout_rolls_back_on_invalid_child(db_session) -> None:
-    service = WorkoutService(db_session)
+    service = WorkoutService(db_session, TEST_USER_ID)
     duplicate_set = SetCreate.model_construct(
         order=1,
         type=SetType.WORKING,
@@ -81,7 +81,7 @@ async def test_log_workout_rolls_back_on_invalid_child(db_session) -> None:
 
 @pytest.mark.asyncio
 async def test_recent_workouts_are_ordered(db_session) -> None:
-    service = WorkoutService(db_session)
+    service = WorkoutService(db_session, TEST_USER_ID)
     earlier = sample_workout(
         check_in_at=datetime(2026, 8, 15, 7, 0, tzinfo=NEPAL),
     )
@@ -100,7 +100,7 @@ async def test_recent_workouts_are_ordered(db_session) -> None:
 
 @pytest.mark.asyncio
 async def test_exercise_history_separates_working_and_dropsets(db_session) -> None:
-    service = WorkoutService(db_session)
+    service = WorkoutService(db_session, TEST_USER_ID)
     await service.log_workout(sample_workout())
 
     history = await service.get_exercise_history(
@@ -132,7 +132,7 @@ async def test_database_rejects_checkout_before_checkin(db_session) -> None:
 
 @pytest.mark.asyncio
 async def test_edit_workout_updates_set_and_adds_dropset(db_session) -> None:
-    service = WorkoutService(db_session)
+    service = WorkoutService(db_session, TEST_USER_ID)
     created = await service.log_workout(sample_workout())
     target_set = created.exercises[0].sets[2]
 
@@ -166,7 +166,7 @@ async def test_edit_workout_updates_set_and_adds_dropset(db_session) -> None:
 
 @pytest.mark.asyncio
 async def test_edit_requires_explicit_dropset_cascade(db_session) -> None:
-    service = WorkoutService(db_session)
+    service = WorkoutService(db_session, TEST_USER_ID)
     created = await service.log_workout(sample_workout())
     parent = created.exercises[0].sets[-1]
 
@@ -198,7 +198,7 @@ async def test_edit_requires_explicit_dropset_cascade(db_session) -> None:
 
 @pytest.mark.asyncio
 async def test_edit_rejects_grouped_exercise_removal_and_stale_version(db_session) -> None:
-    service = WorkoutService(db_session)
+    service = WorkoutService(db_session, TEST_USER_ID)
     created = await service.log_workout(sample_workout())
 
     with pytest.raises(ValidationDomainError, match="belongs to a superset"):
@@ -235,7 +235,7 @@ async def test_edit_rejects_grouped_exercise_removal_and_stale_version(db_sessio
 
 @pytest.mark.asyncio
 async def test_remove_ungrouped_exercise_and_delete_workout(db_session) -> None:
-    service = WorkoutService(db_session)
+    service = WorkoutService(db_session, TEST_USER_ID)
     payload = sample_workout()
     payload.groups = []
     created = await service.log_workout(payload)

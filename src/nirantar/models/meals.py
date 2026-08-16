@@ -24,7 +24,7 @@ class Meal(Base, TimestampMixin):
     __tablename__ = "meals"
     __table_args__ = (
         CheckConstraint("btrim(name) <> ''", name="name_not_blank"),
-        Index("meals_eaten_at_idx", text("eaten_at DESC")),
+        Index("meals_owner_eaten_at_idx", "owner_id", text("eaten_at DESC")),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -32,6 +32,7 @@ class Meal(Base, TimestampMixin):
         primary_key=True,
         server_default=func.gen_random_uuid(),
     )
+    owner_id: Mapped[str] = mapped_column(Text, nullable=False)
     eaten_at: Mapped[datetime] = mapped_column(nullable=False)
     name: Mapped[str] = mapped_column(Text, nullable=False)
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

@@ -87,14 +87,17 @@ class MealService:
     def __init__(
         self,
         session: AsyncSession,
+        owner_id: str,
         *,
         user_timezone: str | None = None,
     ) -> None:
         self.session = session
+        self.owner_id = owner_id
         self.user_timezone = user_timezone or get_settings().user_timezone
 
     async def log_meal(self, payload: MealCreate) -> MealRead:
         meal = Meal(
+            owner_id=self.owner_id,
             eaten_at=payload.eaten_at,
             name=payload.name,
             notes=payload.notes,
@@ -133,7 +136,11 @@ class MealService:
         )
         result = await self.session.scalars(
             select(Meal)
-            .where(Meal.eaten_at >= start_at, Meal.eaten_at < end_at)
+            .where(
+                Meal.owner_id == self.owner_id,
+                Meal.eaten_at >= start_at,
+                Meal.eaten_at < end_at,
+            )
             .options(selectinload(Meal.items))
             .order_by(Meal.eaten_at.asc(), Meal.id.asc())
             .limit(query.limit)
@@ -247,7 +254,7 @@ class MealService:
     async def _get_meal(self, meal_id: UUID, *, for_update: bool = False) -> Meal:
         query = (
             select(Meal)
-            .where(Meal.id == meal_id)
+            .where(Meal.id == meal_id, Meal.owner_id == self.owner_id)
             .options(selectinload(Meal.items))
         )
         if for_update:

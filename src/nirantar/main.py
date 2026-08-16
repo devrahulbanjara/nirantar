@@ -6,7 +6,7 @@ from fastmcp.utilities.lifespan import combine_lifespans
 
 from nirantar.api import meals_router, summaries_router, weights_router, workouts_router
 from nirantar.db.session import dispose_engine, get_engine
-from nirantar.mcp.server import mcp
+from nirantar.mcp.server import mcp, mcp_well_known_routes
 
 
 @asynccontextmanager
@@ -22,6 +22,7 @@ mcp_app = mcp.http_app(path="/")
 app = FastAPI(
     title="Nirantar",
     version="0.1.0",
+    routes=[*mcp_well_known_routes],
     lifespan=combine_lifespans(app_lifespan, mcp_app.lifespan),
 )
 app.include_router(workouts_router)

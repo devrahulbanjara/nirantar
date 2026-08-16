@@ -7,7 +7,7 @@ from nirantar.services.meals import MealService
 from nirantar.services.summaries import DailySummaryService
 from nirantar.services.weights import WeightService
 from nirantar.services.workouts import WorkoutService
-from tests.helpers import sample_meal, sample_workout
+from tests.helpers import TEST_USER_ID, sample_meal, sample_workout
 
 
 @pytest.mark.asyncio
@@ -16,14 +16,14 @@ async def test_daily_summary_combines_workouts_meals_nutrition_and_weight(
 ) -> None:
     complete = sample_workout()
     open_workout = sample_workout().model_copy(update={"check_out_at": None})
-    await WorkoutService(db_session).log_workout(complete)
-    await WorkoutService(db_session).log_workout(open_workout)
-    await MealService(db_session).log_meal(sample_meal())
-    await WeightService(db_session).log_weight(
+    await WorkoutService(db_session, TEST_USER_ID).log_workout(complete)
+    await WorkoutService(db_session, TEST_USER_ID).log_workout(open_workout)
+    await MealService(db_session, TEST_USER_ID).log_meal(sample_meal())
+    await WeightService(db_session, TEST_USER_ID).log_weight(
         WeightCreate(weight_kg="73", measured_on=date(2026, 8, 16))
     )
 
-    summary = await DailySummaryService(db_session).get_daily_summary(
+    summary = await DailySummaryService(db_session, TEST_USER_ID).get_daily_summary(
         date(2026, 8, 16)
     )
 
@@ -49,19 +49,19 @@ async def test_daily_summary_combines_workouts_meals_nutrition_and_weight(
 
 @pytest.mark.asyncio
 async def test_daily_summary_uses_kathmandu_boundaries(db_session) -> None:
-    await MealService(db_session).log_meal(
+    await MealService(db_session, TEST_USER_ID).log_meal(
         sample_meal(eaten_at=datetime(2026, 8, 16, 18, 14, 59, tzinfo=timezone.utc))
     )
-    await MealService(db_session).log_meal(
+    await MealService(db_session, TEST_USER_ID).log_meal(
         sample_meal(eaten_at=datetime(2026, 8, 16, 18, 15, tzinfo=timezone.utc))
     )
-    await WorkoutService(db_session).log_workout(
+    await WorkoutService(db_session, TEST_USER_ID).log_workout(
         sample_workout(
             check_in_at=datetime(2026, 8, 15, 18, 20, tzinfo=timezone.utc)
         )
     )
 
-    summary = await DailySummaryService(db_session).get_daily_summary(
+    summary = await DailySummaryService(db_session, TEST_USER_ID).get_daily_summary(
         date(2026, 8, 16)
     )
 
@@ -71,7 +71,7 @@ async def test_daily_summary_uses_kathmandu_boundaries(db_session) -> None:
 
 @pytest.mark.asyncio
 async def test_empty_daily_summary_reports_no_invented_values(db_session) -> None:
-    summary = await DailySummaryService(db_session).get_daily_summary(
+    summary = await DailySummaryService(db_session, TEST_USER_ID).get_daily_summary(
         date(2026, 8, 20)
     )
 

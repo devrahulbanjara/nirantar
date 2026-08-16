@@ -44,7 +44,11 @@ class WorkoutSession(Base, TimestampMixin):
             "check_out_at IS NULL OR check_out_at > check_in_at",
             name="valid_time",
         ),
-        Index("workout_sessions_check_in_at_idx", text("check_in_at DESC")),
+        Index(
+            "workout_sessions_owner_check_in_idx",
+            "owner_id",
+            text("check_in_at DESC"),
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -52,6 +56,7 @@ class WorkoutSession(Base, TimestampMixin):
         primary_key=True,
         server_default=func.gen_random_uuid(),
     )
+    owner_id: Mapped[str] = mapped_column(Text, nullable=False)
     check_in_at: Mapped[datetime] = mapped_column(nullable=False)
     check_out_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
     title: Mapped[Optional[str]] = mapped_column(Text, nullable=True)

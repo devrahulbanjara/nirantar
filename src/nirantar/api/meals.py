@@ -4,6 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, status
 
+from nirantar.auth import CurrentUserId
 from nirantar.db.dependencies import DBSession
 from nirantar.schemas.meals import (
     MealCreate,
@@ -38,9 +39,13 @@ def _http_error(exc: DomainError) -> HTTPException:
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
-async def log_meal(payload: MealCreate, db: DBSession) -> MealRead:
+async def log_meal(
+    payload: MealCreate,
+    db: DBSession,
+    user_id: CurrentUserId,
+) -> MealRead:
     try:
-        return await MealService(db).log_meal(payload)
+        return await MealService(db, user_id).log_meal(payload)
     except DomainError as exc:
         raise _http_error(exc) from exc
 
@@ -48,6 +53,7 @@ async def log_meal(payload: MealCreate, db: DBSession) -> MealRead:
 @router.get("")
 async def get_meals(
     db: DBSession,
+    user_id: CurrentUserId,
     start_date: Annotated[date, Query()],
     end_date: Annotated[date, Query()],
     limit: Annotated[int, Query(ge=1, le=200)] = 100,
@@ -62,13 +68,17 @@ async def get_meals(
         end_date=end_date,
         limit=limit,
     )
-    return await MealService(db).get_meals(query)
+    return await MealService(db, user_id).get_meals(query)
 
 
 @router.get("/{meal_id}")
-async def get_meal(meal_id: UUID, db: DBSession) -> MealRead:
+async def get_meal(
+    meal_id: UUID,
+    db: DBSession,
+    user_id: CurrentUserId,
+) -> MealRead:
     try:
-        return await MealService(db).get_meal(meal_id)
+        return await MealService(db, user_id).get_meal(meal_id)
     except DomainError as exc:
         raise _http_error(exc) from exc
 
@@ -78,9 +88,10 @@ async def edit_meal(
     meal_id: UUID,
     payload: MealEditRequest,
     db: DBSession,
+    user_id: CurrentUserId,
 ) -> MealRead:
     try:
-        return await MealService(db).edit_meal(meal_id, payload)
+        return await MealService(db, user_id).edit_meal(meal_id, payload)
     except DomainError as exc:
         raise _http_error(exc) from exc
 
@@ -90,8 +101,9 @@ async def delete_meal(
     meal_id: UUID,
     payload: MealDeleteRequest,
     db: DBSession,
+    user_id: CurrentUserId,
 ) -> MealDeleteResult:
     try:
-        return await MealService(db).delete_meal(meal_id, payload)
+        return await MealService(db, user_id).delete_meal(meal_id, payload)
     except DomainError as exc:
         raise _http_error(exc) from exc

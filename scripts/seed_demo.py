@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from datetime import date, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
@@ -325,6 +326,10 @@ def demo_weights(today: date) -> list[WeightCreate]:
 
 
 async def seed() -> None:
+    owner_id = os.environ.get("NIRANTAR_SEED_USER_ID", "").strip()
+    if not owner_id:
+        raise RuntimeError("Set NIRANTAR_SEED_USER_ID to the target Clerk user ID")
+
     timezone = ZoneInfo(get_settings().user_timezone)
     today = datetime.now(timezone).date()
     factory = get_session_factory()
@@ -335,6 +340,7 @@ async def seed() -> None:
         for payload in demo_workouts(today):
             exists = await session.scalar(
                 select(WorkoutSession.id).where(
+                    WorkoutSession.owner_id == owner_id,
                     WorkoutSession.check_in_at == payload.check_in_at,
                     WorkoutSession.title == payload.title,
                 )
@@ -342,12 +348,13 @@ async def seed() -> None:
             if exists:
                 skipped["workouts"] += 1
                 continue
-            await WorkoutService(session).log_workout(payload)
+            await WorkoutService(session, owner_id).log_workout(payload)
             created["workouts"] += 1
 
         for payload in demo_meals(today):
             exists = await session.scalar(
                 select(Meal.id).where(
+                    Meal.owner_id == owner_id,
                     Meal.eaten_at == payload.eaten_at,
                     Meal.name == payload.name,
                 )
@@ -355,19 +362,20 @@ async def seed() -> None:
             if exists:
                 skipped["meals"] += 1
                 continue
-            await MealService(session).log_meal(payload)
+            await MealService(session, owner_id).log_meal(payload)
             created["meals"] += 1
 
         for payload in demo_weights(today):
             exists = await session.scalar(
                 select(BodyWeightEntry.id).where(
+                    BodyWeightEntry.owner_id == owner_id,
                     BodyWeightEntry.measured_on == payload.measured_on
                 )
             )
             if exists:
                 skipped["weights"] += 1
                 continue
-            await WeightService(session).log_weight(payload)
+            await WeightService(session, owner_id).log_weight(payload)
             created["weights"] += 1
 
     await dispose_engine()

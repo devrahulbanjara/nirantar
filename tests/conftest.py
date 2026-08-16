@@ -1,11 +1,34 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Iterator
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
+from fastmcp.server.auth import AccessToken
 
+from nirantar.auth import require_user
 from nirantar.db.session import dispose_engine, get_session_factory
 from nirantar.main import app
+import nirantar.mcp.server as mcp_server
+from tests.helpers import TEST_USER_ID
+
+
+@pytest.fixture(autouse=True)
+def authenticated_test_user(monkeypatch) -> Iterator[None]:
+    app.dependency_overrides[require_user] = lambda: TEST_USER_ID
+    monkeypatch.setattr(
+        mcp_server,
+        "get_access_token",
+        lambda: AccessToken(
+            token="test-token",
+            client_id="test-client",
+            scopes=["openid"],
+            claims={"sub": TEST_USER_ID},
+        ),
+    )
+    try:
+        yield
+    finally:
+        app.dependency_overrides.pop(require_user, None)
 
 
 @pytest.fixture(autouse=True)

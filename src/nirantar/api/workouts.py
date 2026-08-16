@@ -4,6 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, status
 
+from nirantar.auth import CurrentUserId
 from nirantar.db.dependencies import DBSession
 from nirantar.schemas.workouts import (
     ExerciseHistoryEntry,
@@ -39,8 +40,12 @@ def _http_error(exc: DomainError) -> HTTPException:
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
-async def log_workout(payload: WorkoutCreate, db: DBSession) -> WorkoutRead:
-    service = WorkoutService(db)
+async def log_workout(
+    payload: WorkoutCreate,
+    db: DBSession,
+    user_id: CurrentUserId,
+) -> WorkoutRead:
+    service = WorkoutService(db, user_id)
     try:
         return await service.log_workout(payload)
     except DomainError as exc:
@@ -50,17 +55,19 @@ async def log_workout(payload: WorkoutCreate, db: DBSession) -> WorkoutRead:
 @router.get("/recent")
 async def get_recent_workouts(
     db: DBSession,
+    user_id: CurrentUserId,
     limit: Annotated[int, Query(ge=1, le=100)] = 10,
     before: Annotated[datetime | None, Query()] = None,
 ) -> list[WorkoutRead]:
     query = RecentWorkoutsQuery(limit=limit, before=before)
-    service = WorkoutService(db)
+    service = WorkoutService(db, user_id)
     return await service.get_recent_workouts(query)
 
 
 @router.get("/exercise-history")
 async def get_exercise_history(
     db: DBSession,
+    user_id: CurrentUserId,
     exercise_name: Annotated[str, Query(min_length=1)],
     start_at: Annotated[datetime | None, Query()] = None,
     end_at: Annotated[datetime | None, Query()] = None,
@@ -72,13 +79,17 @@ async def get_exercise_history(
         end_at=end_at,
         limit=limit,
     )
-    service = WorkoutService(db)
+    service = WorkoutService(db, user_id)
     return await service.get_exercise_history(query)
 
 
 @router.get("/{workout_id}")
-async def get_workout(workout_id: UUID, db: DBSession) -> WorkoutRead:
-    service = WorkoutService(db)
+async def get_workout(
+    workout_id: UUID,
+    db: DBSession,
+    user_id: CurrentUserId,
+) -> WorkoutRead:
+    service = WorkoutService(db, user_id)
     try:
         return await service.get_workout(workout_id)
     except DomainError as exc:
@@ -90,8 +101,9 @@ async def edit_workout(
     workout_id: UUID,
     payload: WorkoutEditRequest,
     db: DBSession,
+    user_id: CurrentUserId,
 ) -> WorkoutRead:
-    service = WorkoutService(db)
+    service = WorkoutService(db, user_id)
     try:
         return await service.edit_workout(workout_id, payload)
     except DomainError as exc:
@@ -103,8 +115,9 @@ async def delete_workout(
     workout_id: UUID,
     payload: WorkoutDeleteRequest,
     db: DBSession,
+    user_id: CurrentUserId,
 ) -> WorkoutDeleteResult:
-    service = WorkoutService(db)
+    service = WorkoutService(db, user_id)
     try:
         return await service.delete_workout(workout_id, payload)
     except DomainError as exc:

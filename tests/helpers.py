@@ -11,6 +11,7 @@ from nirantar.schemas.workouts import (
 from nirantar.schemas.meals import FoodItemCreate, MealCreate
 
 NEPAL = timezone(timedelta(hours=5, minutes=45))
+TEST_USER_ID = "user_test_primary"
 
 
 def sample_meal(*, eaten_at: datetime | None = None) -> MealCreate:

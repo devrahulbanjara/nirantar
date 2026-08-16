@@ -10,12 +10,14 @@ from nirantar.schemas.weights import (
 )
 from nirantar.services.errors import ConflictDomainError, ValidationDomainError
 from nirantar.services.weights import WeightService
+from tests.helpers import TEST_USER_ID
 
 
 @pytest.mark.asyncio
 async def test_log_weight_defaults_to_kathmandu_today(db_session) -> None:
     service = WeightService(
         db_session,
+        TEST_USER_ID,
         user_timezone="Asia/Kathmandu",
         clock=lambda: datetime(2026, 8, 15, 19, 0, tzinfo=timezone.utc),
     )
@@ -28,7 +30,7 @@ async def test_log_weight_defaults_to_kathmandu_today(db_session) -> None:
 
 @pytest.mark.asyncio
 async def test_duplicate_date_requires_edit(db_session) -> None:
-    service = WeightService(db_session)
+    service = WeightService(db_session, TEST_USER_ID)
     payload = WeightCreate(weight_kg="72", measured_on=date(2026, 8, 16))
     await service.log_weight(payload)
 
@@ -38,7 +40,7 @@ async def test_duplicate_date_requires_edit(db_session) -> None:
 
 @pytest.mark.asyncio
 async def test_specific_day_and_history_are_deterministic(db_session) -> None:
-    service = WeightService(db_session)
+    service = WeightService(db_session, TEST_USER_ID)
     await service.log_weight(
         WeightCreate(weight_kg="72.5", measured_on=date(2026, 8, 18))
     )
@@ -67,7 +69,7 @@ async def test_specific_day_and_history_are_deterministic(db_session) -> None:
 async def test_edit_weight_supports_clearing_notes_and_rejects_stale_state(
     db_session,
 ) -> None:
-    service = WeightService(db_session)
+    service = WeightService(db_session, TEST_USER_ID)
     created = await service.log_weight(
         WeightCreate(
             weight_kg="73",

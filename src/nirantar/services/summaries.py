@@ -30,10 +30,12 @@ class DailySummaryService:
     def __init__(
         self,
         session: AsyncSession,
+        owner_id: str,
         *,
         user_timezone: str | None = None,
     ) -> None:
         self.session = session
+        self.owner_id = owner_id
         self.user_timezone = user_timezone or get_settings().user_timezone
 
     async def get_daily_summary(self, summary_date: date) -> DailySummaryRead:
@@ -42,6 +44,7 @@ class DailySummaryService:
         meals = await self._get_meals(start_at, end_at)
         weight = await self.session.scalar(
             select(BodyWeightEntry).where(
+                BodyWeightEntry.owner_id == self.owner_id,
                 BodyWeightEntry.measured_on == summary_date
             )
         )
@@ -108,6 +111,7 @@ class DailySummaryService:
         result = await self.session.scalars(
             select(WorkoutSession)
             .where(
+                WorkoutSession.owner_id == self.owner_id,
                 WorkoutSession.check_in_at >= start_at,
                 WorkoutSession.check_in_at < end_at,
             )
@@ -128,6 +132,7 @@ class DailySummaryService:
         result = await self.session.scalars(
             select(Meal)
             .where(Meal.eaten_at >= start_at, Meal.eaten_at < end_at)
+            .where(Meal.owner_id == self.owner_id)
             .options(selectinload(Meal.items))
             .order_by(Meal.eaten_at.asc(), Meal.id.asc())
         )

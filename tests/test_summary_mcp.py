@@ -6,14 +6,14 @@ from fastmcp import Client
 from nirantar.mcp.server import mcp
 from nirantar.services.meals import MealService
 from nirantar.services.workouts import WorkoutService
-from tests.helpers import sample_meal, sample_workout
+from tests.helpers import TEST_USER_ID, sample_meal, sample_workout
 from tests.test_weight_mcp import _mapping
 
 
 @pytest.mark.asyncio
 async def test_daily_summary_mcp_tool(db_session) -> None:
-    await WorkoutService(db_session).log_workout(sample_workout())
-    await MealService(db_session).log_meal(sample_meal())
+    await WorkoutService(db_session, TEST_USER_ID).log_workout(sample_workout())
+    await MealService(db_session, TEST_USER_ID).log_meal(sample_meal())
 
     async with Client(mcp) as client:
         tools = await client.list_tools()

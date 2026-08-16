@@ -172,12 +172,14 @@ def _session_load_options() -> tuple:
 class WorkoutService:
     """Shared workout domain operations for FastAPI and MCP."""
 
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(self, session: AsyncSession, owner_id: str) -> None:
         self.session = session
+        self.owner_id = owner_id
 
     async def log_workout(self, payload: WorkoutCreate) -> WorkoutRead:
         try:
             workout = WorkoutSession(
+                owner_id=self.owner_id,
                 check_in_at=payload.check_in_at,
                 check_out_at=payload.check_out_at,
                 title=payload.title,
@@ -730,6 +732,7 @@ class WorkoutService:
         statement: Select[tuple[WorkoutSession]] = (
             select(WorkoutSession)
             .options(*_session_load_options())
+            .where(WorkoutSession.owner_id == self.owner_id)
             .order_by(WorkoutSession.check_in_at.desc())
             .limit(query.limit)
         )
@@ -752,6 +755,7 @@ class WorkoutService:
                 selectinload(WorkoutExercise.session),
             )
             .where(func.lower(WorkoutExercise.exercise_name) == query.exercise_name.lower())
+            .where(WorkoutSession.owner_id == self.owner_id)
             .order_by(WorkoutSession.check_in_at.desc(), WorkoutExercise.exercise_order.asc())
             .limit(query.limit)
         )
@@ -801,7 +805,10 @@ class WorkoutService:
     ) -> WorkoutSession:
         statement = (
             select(WorkoutSession)
-            .where(WorkoutSession.id == session_id)
+            .where(
+                WorkoutSession.id == session_id,
+                WorkoutSession.owner_id == self.owner_id,
+            )
             .options(*_session_load_options())
         )
         if for_update:

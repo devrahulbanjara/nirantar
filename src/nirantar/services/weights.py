@@ -33,11 +33,13 @@ class WeightService:
     def __init__(
         self,
         session: AsyncSession,
+        owner_id: str,
         *,
         user_timezone: str | None = None,
         clock: Callable[[], datetime] = _utc_now,
     ) -> None:
         self.session = session
+        self.owner_id = owner_id
         self.user_timezone = user_timezone or get_settings().user_timezone
         self.clock = clock
 
@@ -50,6 +52,7 @@ class WeightService:
     async def log_weight(self, payload: WeightCreate) -> WeightRead:
         measured_on = payload.measured_on or self.today()
         entry = BodyWeightEntry(
+            owner_id=self.owner_id,
             measured_on=measured_on,
             weight_kg=payload.weight_kg,
             notes=payload.notes,
@@ -67,7 +70,10 @@ class WeightService:
 
     async def get_weight(self, measured_on: date) -> WeightForDateResult:
         entry = await self.session.scalar(
-            select(BodyWeightEntry).where(BodyWeightEntry.measured_on == measured_on)
+            select(BodyWeightEntry).where(
+                BodyWeightEntry.owner_id == self.owner_id,
+                BodyWeightEntry.measured_on == measured_on,
+            )
         )
         return WeightForDateResult(
             measured_on=measured_on,
@@ -81,6 +87,7 @@ class WeightService:
         result = await self.session.scalars(
             select(BodyWeightEntry)
             .where(
+                BodyWeightEntry.owner_id == self.owner_id,
                 BodyWeightEntry.measured_on >= query.start_date,
                 BodyWeightEntry.measured_on <= query.end_date,
             )
@@ -106,7 +113,10 @@ class WeightService:
     ) -> WeightRead:
         result = await self.session.execute(
             select(BodyWeightEntry)
-            .where(BodyWeightEntry.measured_on == measured_on)
+            .where(
+                BodyWeightEntry.owner_id == self.owner_id,
+                BodyWeightEntry.measured_on == measured_on,
+            )
             .with_for_update()
         )
         entry = result.scalar_one_or_none()

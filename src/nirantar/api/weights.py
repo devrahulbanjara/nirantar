@@ -3,6 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, status
 
+from nirantar.auth import CurrentUserId
 from nirantar.db.dependencies import DBSession
 from nirantar.schemas.weights import (
     WeightCreate,
@@ -36,9 +37,13 @@ def _http_error(exc: DomainError) -> HTTPException:
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
-async def log_weight(payload: WeightCreate, db: DBSession) -> WeightRead:
+async def log_weight(
+    payload: WeightCreate,
+    db: DBSession,
+    user_id: CurrentUserId,
+) -> WeightRead:
     try:
-        return await WeightService(db).log_weight(payload)
+        return await WeightService(db, user_id).log_weight(payload)
     except DomainError as exc:
         raise _http_error(exc) from exc
 
@@ -46,6 +51,7 @@ async def log_weight(payload: WeightCreate, db: DBSession) -> WeightRead:
 @router.get("")
 async def get_weight_history(
     db: DBSession,
+    user_id: CurrentUserId,
     start_date: Annotated[date, Query()],
     end_date: Annotated[date, Query()],
 ) -> WeightHistoryRead:
@@ -55,12 +61,16 @@ async def get_weight_history(
             detail="end_date must be on or after start_date",
         )
     query = WeightHistoryQuery(start_date=start_date, end_date=end_date)
-    return await WeightService(db).get_weight_history(query)
+    return await WeightService(db, user_id).get_weight_history(query)
 
 
 @router.get("/{measured_on}")
-async def get_weight(measured_on: date, db: DBSession) -> WeightForDateResult:
-    return await WeightService(db).get_weight(measured_on)
+async def get_weight(
+    measured_on: date,
+    db: DBSession,
+    user_id: CurrentUserId,
+) -> WeightForDateResult:
+    return await WeightService(db, user_id).get_weight(measured_on)
 
 
 @router.patch("/{measured_on}")
@@ -68,8 +78,9 @@ async def edit_weight(
     measured_on: date,
     payload: WeightUpdate,
     db: DBSession,
+    user_id: CurrentUserId,
 ) -> WeightRead:
     try:
-        return await WeightService(db).edit_weight(measured_on, payload)
+        return await WeightService(db, user_id).edit_weight(measured_on, payload)
     except DomainError as exc:
         raise _http_error(exc) from exc
