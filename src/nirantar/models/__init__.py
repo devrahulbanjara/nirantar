@@ -9,6 +9,8 @@ from nirantar.models.workouts import (
 from nirantar.models.weights import BodyWeightEntry
 
 __all__ = [
+    "FoodItem",
+    "Meal",
     "ExerciseGroup",
     "ExerciseGroupMember",
     "ExerciseSet",
@@ -17,3 +19,4 @@ __all__ = [
     "WorkoutSession",
     "BodyWeightEntry",
 ]
+from nirantar.models.meals import FoodItem, Meal

@@ -110,6 +110,9 @@ get_recent_workouts
 get_exercise_history
 log_meal
 get_meals
+get_meal
+edit_meal
+delete_meal
 get_daily_summary
 ```
 
@@ -256,6 +259,20 @@ Example:
 ### `get_meals`
 
 Return meals and food items for a requested date or period.
+
+### `get_meal`
+
+Return one meal and its ordered food items by ID.
+
+### `edit_meal`
+
+Atomically update meal details or add, update, reorder, and remove food items.
+Require the meal's current `updated_at` value to reject stale edits.
+
+### `delete_meal`
+
+Permanently delete a meal and its food items only after exact-ID confirmation
+and a matching `updated_at` value.
 
 ### `get_daily_summary`
 
@@ -470,7 +487,7 @@ The MVP is done when:
 - Database migrations run successfully against Neon.
 - Workout and nutrition tables exist with required constraints.
 - Shared workout and nutrition services work.
-- The six MCP tools are available and validated.
+- The required workout and meal MCP tools are available and validated.
 - A complete workout can be saved in one transaction.
 - Dropsets are linked to their parent working set.
 - Superset exercises are linked through an exercise group.

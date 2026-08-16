@@ -16,6 +16,8 @@ async def clean_workout_tables() -> AsyncIterator[None]:
             text(
                 """
                 TRUNCATE TABLE
+                    food_items,
+                    meals,
                     body_weight_entries,
                     exercise_group_members,
                     exercise_groups,
@@ -36,6 +38,8 @@ async def clean_workout_tables() -> AsyncIterator[None]:
                 text(
                     """
                     TRUNCATE TABLE
+                        food_items,
+                        meals,
                         body_weight_entries,
                         exercise_group_members,
                         exercise_groups,

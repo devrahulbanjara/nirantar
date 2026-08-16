@@ -1,0 +1,23 @@
+services:
+  postgres_db:
+    image: postgres:18
+    container_name: postgres_container
+    restart: always
+    shm_size: 256mb
+    environment:
+      POSTGRES_USER: nirantar
+      POSTGRES_PASSWORD: nirantar
+      POSTGRES_DB: nirantar
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nirantar -d nirantar"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+    driver: local
