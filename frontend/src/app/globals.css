@@ -806,12 +806,10 @@ a.navigation-item:hover {
 .pwa-install-prompt {
   position: fixed;
   z-index: 15;
-  right: 16px;
+  right: max(16px, env(safe-area-inset-right));
   bottom: calc(82px + env(safe-area-inset-bottom));
-  left: 16px;
+  left: max(16px, env(safe-area-inset-left));
   display: grid;
-  grid-template-columns: 40px minmax(0, 1fr) 44px;
-  align-items: start;
   gap: 12px;
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -820,12 +818,20 @@ a.navigation-item:hover {
   padding: 16px;
 }
 
+.pwa-install-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .pwa-install-icon {
   display: flex;
   width: 40px;
   height: 40px;
   align-items: center;
   justify-content: center;
+  flex: none;
   border-radius: 10px;
   background: var(--primary-soft);
   color: var(--primary);
@@ -841,6 +847,7 @@ a.navigation-item:hover {
   font-size: 16px;
   font-weight: 650;
   line-height: 22px;
+  overflow-wrap: break-word;
 }
 
 .pwa-install-copy p {
@@ -848,14 +855,18 @@ a.navigation-item:hover {
   color: var(--muted);
   font-size: 14px;
   line-height: 20px;
+  overflow-wrap: break-word;
 }
 
+/* Negative margins keep the 44px target while the icon stays on the card's padding edge. */
 .pwa-install-close {
   display: flex;
   width: 44px;
   height: 44px;
+  margin: -2px -8px -2px 0;
   align-items: center;
   justify-content: center;
+  flex: none;
   border: 0;
   border-radius: 10px;
   background: transparent;
@@ -869,17 +880,17 @@ a.navigation-item:hover {
 }
 
 .pwa-install-prompt > .button-primary {
-  grid-column: 1 / -1;
   width: 100%;
   min-height: 48px;
+  margin-top: 4px;
 }
 
 @media (min-width: 744px) {
   .pwa-install-prompt {
-    right: 24px;
+    right: max(24px, env(safe-area-inset-right));
     bottom: 24px;
     left: auto;
-    width: min(420px, calc(100vw - 48px));
+    width: min(400px, calc(100vw - 48px));
   }
 }
 

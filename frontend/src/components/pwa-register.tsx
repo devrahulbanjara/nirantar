@@ -121,16 +121,18 @@ export function PwaRegister() {
 
   return (
     <aside className="pwa-install-prompt" aria-labelledby="pwa-install-title">
-      <button
-        type="button"
-        className="pwa-install-close"
-        aria-label="Dismiss install suggestion"
-        onClick={dismiss}
-      >
-        <XIcon size={20} aria-hidden="true" />
-      </button>
-      <div className="pwa-install-icon" aria-hidden="true">
-        <DownloadSimpleIcon size={24} weight="bold" />
+      <div className="pwa-install-head">
+        <span className="pwa-install-icon" aria-hidden="true">
+          <DownloadSimpleIcon size={22} weight="bold" />
+        </span>
+        <button
+          type="button"
+          className="pwa-install-close"
+          aria-label="Dismiss install suggestion"
+          onClick={dismiss}
+        >
+          <XIcon size={20} aria-hidden="true" />
+        </button>
       </div>
       <div className="pwa-install-copy">
         <h2 id="pwa-install-title">Add Nirantar to your home screen</h2>
