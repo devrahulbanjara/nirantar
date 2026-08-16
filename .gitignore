@@ -9,6 +9,3 @@ wheels/
 # Virtual environments
 .venv
 .env
-
-# Local Cursor MCP secrets (API tokens)
-.cursor/mcp.json
