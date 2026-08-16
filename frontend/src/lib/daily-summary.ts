@@ -1,4 +1,4 @@
-import { getApiUrl } from "@/lib/api";
+import { getApiAuthHeaders, getApiUrl } from "@/lib/api";
 
 export type NutrientTotal = {
   known_total: string | null;
@@ -70,9 +70,12 @@ export async function getDailySummary(
   summaryDate: string,
 ): Promise<DailySummaryResult> {
   try {
+    const headers = await getApiAuthHeaders();
+    if (!headers) return { status: "unavailable" };
+
     const response = await fetch(
       getApiUrl(`/summaries/daily/${summaryDate}`),
-      { cache: "no-store", signal: AbortSignal.timeout(5000) },
+      { cache: "no-store", headers, signal: AbortSignal.timeout(5000) },
     );
 
     if (!response.ok) {

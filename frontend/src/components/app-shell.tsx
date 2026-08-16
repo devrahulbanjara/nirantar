@@ -4,10 +4,13 @@ import {
   CalendarDotsIcon,
   HouseIcon,
 } from "@phosphor-icons/react/dist/ssr";
+import { Show, UserButton } from "@clerk/nextjs";
 import type { Icon } from "@phosphor-icons/react";
-import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
+
+import { BrandLogo } from "@/components/auth-shell";
+import { clerkAppearance } from "@/lib/clerk-appearance";
 
 export type NavigationDestination = "today" | "workouts" | "meals" | "history";
 
@@ -29,21 +32,6 @@ const navigation: NavigationItem[] = [
   { destination: "meals", label: "Meals", icon: BowlFoodIcon },
   { destination: "history", label: "History", icon: CalendarDotsIcon },
 ];
-
-function BrandLogo() {
-  return (
-    <Link className="brand-logo" href="/" aria-label="Nirantar home">
-      <Image
-        src="/logo/light_logo.png"
-        alt=""
-        width={1374}
-        height={1145}
-        sizes="(min-width: 1128px) 68px, 72px"
-        priority
-      />
-    </Link>
-  );
-}
 
 function Navigation({ activeDestination }: { activeDestination: NavigationDestination }) {
   return (
@@ -85,6 +73,32 @@ function Navigation({ activeDestination }: { activeDestination: NavigationDestin
   );
 }
 
+function AccountControls({ layout }: { layout: "header" | "sidebar" }) {
+  return (
+    <div className="account-controls" data-layout={layout}>
+      <Show when="signed-out">
+        {layout === "header" ? (
+          <>
+            <Link className="button-secondary button-compact" href="/sign-in">
+              Sign in
+            </Link>
+            <Link className="button-primary button-compact" href="/sign-up">
+              Sign up
+            </Link>
+          </>
+        ) : (
+          <Link className="button-secondary button-compact account-sidebar-link" href="/sign-in">
+            Sign in
+          </Link>
+        )}
+      </Show>
+      <Show when="signed-in">
+        <UserButton appearance={clerkAppearance} />
+      </Show>
+    </div>
+  );
+}
+
 export function AppShell({
   activeDestination,
   children,
@@ -97,10 +111,12 @@ export function AppShell({
       <aside className="desktop-sidebar">
         <BrandLogo />
         <Navigation activeDestination={activeDestination} />
+        <AccountControls layout="sidebar" />
       </aside>
       <div className="app-frame">
         <header className="mobile-header">
           <BrandLogo />
+          <AccountControls layout="header" />
         </header>
         {children}
       </div>

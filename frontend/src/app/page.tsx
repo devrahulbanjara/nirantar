@@ -6,7 +6,10 @@ import {
   WarningCircleIcon,
 } from "@phosphor-icons/react/dist/ssr";
 
+import { auth } from "@clerk/nextjs/server";
+
 import { AppShell } from "@/components/app-shell";
+import { Landing } from "@/components/landing";
 import {
   formatKathmanduDate,
   getDailySummary,
@@ -164,6 +167,13 @@ function SummaryContent({ summary }: { summary: DailySummary }) {
 }
 
 export default async function Home() {
+  // Signed-out visitors get the landing surface; the daily summary is only
+  // fetched once there is a session to fetch it for.
+  const { userId } = await auth();
+  if (!userId) {
+    return <Landing />;
+  }
+
   const today = getKathmanduDate();
   const result = await getDailySummary(today);
 
