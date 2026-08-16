@@ -245,6 +245,8 @@ button:disabled {
   }
 }
 
+
+
 .account-controls {
   display: flex;
   align-items: center;
@@ -799,6 +801,86 @@ a.navigation-item:hover {
 
 .navigation-item[data-active] {
   color: var(--primary);
+}
+
+.pwa-install-prompt {
+  position: fixed;
+  z-index: 15;
+  right: 16px;
+  bottom: calc(82px + env(safe-area-inset-bottom));
+  left: 16px;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 44px;
+  align-items: start;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--canvas);
+  box-shadow: var(--shadow-float);
+  padding: 16px;
+}
+
+.pwa-install-icon {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.pwa-install-copy {
+  min-width: 0;
+}
+
+.pwa-install-copy h2 {
+  margin: 0 0 4px;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 22px;
+}
+
+.pwa-install-copy p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.pwa-install-close {
+  display: flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.pwa-install-close:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.pwa-install-prompt > .button-primary {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-height: 48px;
+}
+
+@media (min-width: 744px) {
+  .pwa-install-prompt {
+    right: 24px;
+    bottom: 24px;
+    left: auto;
+    width: min(420px, calc(100vw - 48px));
+  }
 }
 
 .workouts-page-heading {
@@ -2879,5 +2961,3 @@ a.workout-activity-cell::after {
     aspect-ratio: auto;
   }
 }
-
-

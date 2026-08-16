@@ -206,6 +206,7 @@ All grid children must use `min-width: 0`. Long names wrap instead of forcing ho
 | `InlineAlert` | Error, warning, success, or information with text and icon; includes recovery action when one exists. |
 | `Toast` | Brief confirmation after a completed action; never the only location for an error or critical state. |
 | `Tooltip` | Supplementary explanation for pointer/keyboard users, never required to discover a primary action and never the sole accessible name. |
+| `InstallPrompt` | A dismissible floating install invitation shown only when the current device is eligible. It uses the native browser prompt where available, gives Safari-specific home-screen instructions, and stays above mobile navigation without covering primary actions. |
 
 ### Navigation and action patterns
 

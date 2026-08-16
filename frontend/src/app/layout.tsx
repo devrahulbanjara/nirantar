@@ -34,8 +34,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           localization={clerkLocalization}
         >
           {children}
+          <PwaRegister />
         </ClerkProvider>
-        <PwaRegister />
       </body>
     </html>
   );
