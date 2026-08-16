@@ -1,6 +1,7 @@
 # Nirantar Agent Guidelines
 
-Nirantar is a personal fitness data platform for one user in Nepal.
+Nirantar is a personal fitness data platform. Each person signs in to their own
+account and owns their own history; the default timezone is `Asia/Kathmandu`.
 Favor correctness, simplicity, reliable history, and daily usefulness over scale.
 
 `CLAUDE.md` points to this file. Edit `AGENTS.md` directly.
@@ -25,10 +26,11 @@ Prioritize the MVP:
 - Meal and food-item logging plus workout, exercise, and meal history.
 - Deterministic summaries and calculations.
 - High-level HTTP and MCP operations.
+- Clerk authentication for the web interface.
 
 Do not add without an explicit requirement:
 
-- Multi-user, authentication, billing, subscription, or social systems.
+- Billing, subscription, or social systems.
 - Microservices, event streaming, RAG, vectors, autonomous agents, or generic SQL MCP.
 - Embedded coaching LLMs, personal ML, wearables, photos, large catalogs, or Neon-specific abstractions.
 
@@ -36,6 +38,7 @@ Do not add without an explicit requirement:
 
 - Use repository-pinned versions and existing conventions.
 - Use `uv`, FastAPI, FastMCP, Pydantic, SQLAlchemy, and Alembic.
+- Use Clerk for web authentication; read its keys from the environment.
 - Treat Neon as standard PostgreSQL through `DATABASE_URL`.
 - Keep async I/O consistent with the repository.
 - Do not upgrade, reorganize, or broadly reformat without need.
@@ -113,7 +116,8 @@ Do not add without an explicit requirement:
 ## Security and Code Quality
 
 - Treat fitness and nutrition records as sensitive data.
-- Never commit `.env`, secrets, tokens, or database URLs.
+- Never commit `.env`, secrets, tokens, Clerk keys, or database URLs.
+- Enforce authentication in the API, not only in the UI; a signed-out request must not reach data.
 - Do not assume `.env` populates agent MCP variables; export them before launching the agent.
 - Use SQLAlchemy expressions or parameterized SQL.
 - Validate all external input and return only necessary data.

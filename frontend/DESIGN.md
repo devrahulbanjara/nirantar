@@ -15,7 +15,10 @@ Mode: **Operate**. Task completion and legibility take priority over decoration.
 - PostgreSQL and backend services remain the source of truth; the UI does not recalculate authoritative summaries.
 - Display server-provided IDs, timestamps, ordering, totals, and completeness without changing their meaning.
 - Use `Asia/Kathmandu` for user-facing calendar dates and times.
-- Authentication is out of scope for the current single-user UI. Do not let this assumption create multi-user abstractions.
+- Authentication uses Clerk. Sign-in and sign-up are full-page routes outside the app shell and follow these tokens, states, and accessibility rules like any other surface.
+- Email, Apple, Facebook, and Google are the supported sign-in methods. Clerk instance settings control provider availability; the UI must not duplicate provider logic.
+- Auth start screens use one heading and no subtitle. Later-step instructions remain visible when they explain verification, recovery, or an error.
+- Signed-out users may reach the public landing page and auth routes. Logging and history surfaces require a signed-in session.
 
 ## MVP Information Architecture
 
@@ -69,6 +72,15 @@ Mode: **Operate**. Task completion and legibility take priority over decoration.
 - One subtle shadow level for floating or sticky elements only.
 - Information and typography lead; photography is not part of the app shell.
 - Light theme first. Do not add dark mode until it is requested.
+
+## Landing Page
+
+- The signed-out landing page is product-led and uses the same tokens, logo, typography, controls, and data language as the authenticated app.
+- The first viewport pairs a concise value proposition and shared sign-in/sign-up actions with an illustrative daily summary built from real Nirantar concepts.
+- Mark illustrative fitness values as examples. Do not present them as user data or product claims.
+- Explain only the core path: log workouts, meals, and body weight; review exact history; use that history through MCP-compatible AI tools.
+- Avoid generic feature-card grids, testimonials, invented metrics, decorative photography, and repeated marketing claims.
+- Closing actions and the footer remain unboxed, aligned to the main content container, and visually quiet.
 
 ## Color Tokens
 
@@ -153,7 +165,7 @@ Mobile navigation uses four persistent destinations:
 
 Use a bottom navigation bar on mobile and a compact side or top navigation on larger screens. Body weight belongs on Today or History; it does not need a permanent navigation item.
 
-The current destination needs an icon and label. Use one consistent SVG icon family; prefer Phosphor if no project icon library exists. Do not hand-draw routine icons or use emoji as interface icons.
+The current destination needs an icon and label. Use one consistent SVG icon family; prefer Phosphor if no project icon library exists. Do not hand-draw routine icons or use emoji as interface icons. Never use a sparkle icon; label AI and MCP features directly instead.
 
 ## Core Components
 
@@ -230,6 +242,16 @@ The current destination needs an icon and label. Use one consistent SVG icon fam
 - Do not animate primary data values merely for decoration.
 - Show saving state immediately and prevent duplicate submissions.
 - If an edit is stale, keep the user's draft and present a clear refresh/retry choice.
+
+### Hover and Focus
+
+- Hover behavior is defined by interaction role, not by page or component.
+- Primary actions darken from `primary` to `primary-active`.
+- Secondary actions use `surface` with `border-strong`.
+- Text links change from `ink` to `primary` and reveal an underline.
+- Navigation may use `primary-soft` to indicate destination affordance. Data cards and non-interactive surfaces do not react to hover.
+- Use the shared `180ms ease-out` transition for color and border changes. Do not scale, lift, or add shadows on hover.
+- Every role retains the global visible focus ring; hover never replaces focus styling.
 
 ## Accessibility
 

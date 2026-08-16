@@ -418,7 +418,6 @@ Do not delay the MVP for any of the following:
 - Progress photos.
 - Social features.
 - Payments.
-- Multi-user authentication and authorization.
 - Complex role systems.
 - Microservices.
 - Event streaming.
@@ -509,6 +508,24 @@ Implemented post-MVP measurement capability:
 - Calculate first weight, last weight, measurement count, and change in ordinary code.
 - Correct an existing day's weight using stale-write protection.
 - Expose `log_weight`, `get_weight`, `get_weight_history`, and `edit_weight` through MCP.
+
+Implemented account capability:
+
+- Sign-in and sign-up through Clerk using email, Apple, Facebook, or Google.
+- Protected product routes in Next.js.
+- Clerk session-token verification in FastAPI.
+- Per-user ownership for workouts, meals, and body weight.
+- Clerk OAuth for MCP clients, with the acting user derived from the verified token.
+
+Accounts are independent. Nirantar has no social graph, sharing, or friend relationships.
+
+Required deployment configuration:
+
+- Frontend: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`.
+- Backend: `CLERK_SECRET_KEY` or `CLERK_JWT_KEY`, `CLERK_ISSUER_URL`,
+  `CLERK_AUTHORIZED_PARTIES`, and the public `MCP_BASE_URL`.
+- Clerk OAuth applications: enable Dynamic Client Registration, set default
+  scopes to `openid profile email`, and issue JWT access tokens for MCP.
 
 Iterate from actual usage. The first likely improvements are:
 

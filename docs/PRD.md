@@ -4,7 +4,7 @@
 
 This document defines the long-term product vision and end goal for Nirantar.
 
-Nirantar is a personal fitness intelligence platform built for one user. It is not intended to compete with generic commercial fitness trackers. Its purpose is to make consistency and progress visible, preserve high-quality longitudinal fitness data, and let multiple AI systems reason over that data safely through APIs and MCP.
+Nirantar is a personal fitness intelligence platform where each person owns their own account and history. It is not intended to compete with generic commercial fitness trackers. Its purpose is to make consistency and progress visible, preserve high-quality longitudinal fitness data, and let multiple AI systems reason over that data safely through APIs and MCP.
 
 ## Product Name
 
@@ -85,7 +85,6 @@ Nirantar is not primarily:
 - A calorie database.
 - An LLM chat screen attached to CRUD forms.
 - A social fitness network.
-- A commercial multi-user SaaS product.
 
 Nirantar is:
 
@@ -93,21 +92,23 @@ Nirantar is:
 
 Existing products already provide polished workout and food logging. Nirantar is justified by its combination of personal data ownership, interoperability, structured historical data, context engineering, experimentation, and personalized AI reasoning.
 
-## Primary User
+## Users
 
-There is one primary user: the developer and owner of the system.
+Each person signs in to their own account and owns their own fitness history. No
+account may read or change another account's records.
 
-The product may therefore deliberately omit commercial-product requirements such as:
+The developer and owner remains the reference user: the workflow the product is
+designed and tested against first.
 
-- Public registration and onboarding.
-- Multiple account support.
+The product may still deliberately omit commercial-product requirements such as:
+
 - Social feeds and sharing.
 - Subscription and payment flows.
 - Advertisements.
 - Generic discovery content.
-- Features designed for broad market appeal.
 
-The interface and data model should be optimized for this user's actual workflow.
+The interface and data model should be optimized for real logging workflow rather
+than broad market appeal.
 
 ## Core Product Principles
 
@@ -456,7 +457,6 @@ The permanent core. All interfaces must use the same domain services and source 
 
 - Competing with commercial food databases.
 - Building a public social product.
-- Supporting arbitrary users in the early system.
 - Depending on a single LLM provider.
 - Sending all historical data to every model request.
 - Allowing an AI model unrestricted database access.

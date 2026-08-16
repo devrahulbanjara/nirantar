@@ -777,9 +777,13 @@ Never store AI inference as an unqualified fact.
 
 ### Multi-User Support
 
-The product is currently personal. Do not add `user_id` everywhere solely for hypothetical scale.
+Authentication is handled by Clerk. `workout_sessions`, `meals`, and
+`body_weight_entries` store the verified Clerk user ID in `owner_id`. Child rows
+inherit ownership through their aggregate root.
 
-If multi-user support becomes a genuine goal, introduce an owner/account model through a deliberate migration and apply row-level authorization consistently.
+Every service query and mutation requires an owner ID and filters by it. The API
+and MCP adapters derive that ID from a verified token; callers never submit it.
+Body-weight uniqueness is scoped to `(owner_id, measured_on)`.
 
 ## Schema Non-Goals
 

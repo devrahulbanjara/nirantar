@@ -8,8 +8,10 @@ web
 
 ## Users
 
-Nirantar serves one user in Nepal who records fitness data during daily life and
-workouts, often one-handed on a phone and with limited attention.
+Nirantar serves people who record fitness data during daily life and workouts,
+often one-handed on a phone and with limited attention. Each person signs in to
+their own account and sees only their own history. The product is designed and
+tested first against its owner's use in Nepal.
 
 ## Product Purpose
 
@@ -34,7 +36,10 @@ interface and high-level MCP operations over the same backend services.
 - Log and review workouts, ordered exercises, sets, dropsets, and supersets.
 - Log and review meals with ordered food items and nullable nutrition values.
 - Log daily body weight and retrieve deterministic daily summaries.
-- Single-user and unauthenticated for the current MVP; no profile or account UI.
+- Authenticated through Clerk, with email, Apple, Facebook, and Google sign-in,
+  sign-up, and account controls.
+- Each signed-in user owns their own history.
+- Accounts are independent; there are no social or friend relationships.
 - PostgreSQL remains the source of truth; the frontend does not invent totals.
 
 ## Brand Commitments
