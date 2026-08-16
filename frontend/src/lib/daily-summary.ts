@@ -1,3 +1,5 @@
+import { getApiUrl } from "@/lib/api";
+
 export type NutrientTotal = {
   known_total: string | null;
   known_item_count: number;
@@ -67,11 +69,9 @@ export function formatKathmanduDate(date: string): string {
 export async function getDailySummary(
   summaryDate: string,
 ): Promise<DailySummaryResult> {
-  const baseUrl = process.env.NIRANTAR_API_URL ?? "http://127.0.0.1:8000";
-
   try {
     const response = await fetch(
-      `${baseUrl.replace(/\/$/, "")}/summaries/daily/${summaryDate}`,
+      getApiUrl(`/summaries/daily/${summaryDate}`),
       { cache: "no-store", signal: AbortSignal.timeout(5000) },
     );
 

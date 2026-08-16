@@ -311,15 +311,213 @@ button {
   color: var(--muted);
   font-size: 11px;
   font-weight: 600;
+  text-decoration: none;
   user-select: none;
+}
+
+a.navigation-item:hover {
+  color: var(--ink);
 }
 
 .navigation-item[data-active] {
   color: var(--primary);
 }
 
+.workouts-page {
+  width: min(100%, 1120px);
+  margin: 0 auto;
+  padding: 24px 16px calc(104px + env(safe-area-inset-bottom));
+}
+
+.workouts-page-heading {
+  margin-bottom: 28px;
+}
+
+.workouts-page-heading h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+  line-height: 34px;
+}
+
+.workout-groups {
+  display: grid;
+  max-width: 760px;
+  gap: 32px;
+}
+
+.workout-day,
+.workout-list,
+.workout-list-card,
+.workout-list-heading > div {
+  min-width: 0;
+}
+
+.workout-day h2 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 24px;
+}
+
+.workout-list {
+  display: grid;
+  gap: 12px;
+}
+
+.workout-list-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--canvas);
+  padding: 18px;
+}
+
+.workout-list-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.workout-list-heading h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  line-height: 24px;
+}
+
+.workout-list-heading p,
+.exercise-preview,
+.workouts-state p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.workout-list-heading p {
+  margin-top: 2px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.workout-status {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 5px;
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.workout-status[data-status="completed"] {
+  color: var(--success);
+}
+
+.workout-status[data-status="open"] {
+  color: var(--warning);
+}
+
+.exercise-preview {
+  overflow: hidden;
+  margin-top: 14px;
+  font-size: 14px;
+  line-height: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workout-list-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 0;
+  margin: 16px 0 0;
+  border-top: 1px solid var(--hairline-soft);
+  padding-top: 16px;
+}
+
+.workout-list-metrics > div:nth-child(even) {
+  border-left: 1px solid var(--hairline-soft);
+  padding-left: 16px;
+}
+
+.workout-list-metrics dt {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 18px;
+}
+
+.workout-list-metrics dd {
+  margin: 3px 0 0;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+
+.workouts-state {
+  display: flex;
+  max-width: 680px;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  padding: 18px;
+}
+
+.workouts-state > svg {
+  flex: 0 0 auto;
+  color: var(--muted);
+}
+
+.workouts-state h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.workouts-state p {
+  margin-top: 3px;
+  font-size: 14px;
+}
+
+.workout-loading {
+  display: grid;
+  max-width: 760px;
+  gap: 12px;
+}
+
+.skeleton-line,
+.skeleton-card {
+  display: block;
+  background: var(--surface-strong);
+}
+
+.skeleton-line {
+  width: 112px;
+  height: 16px;
+  border-radius: 6px;
+}
+
+.skeleton-card {
+  height: 210px;
+  border-radius: 14px;
+}
+
+.skeleton-card + .skeleton-line {
+  margin-top: 20px;
+}
+
 @media (min-width: 744px) {
   .today-page {
+    padding: 36px 24px 56px;
+  }
+
+  .workouts-page {
     padding: 36px 24px 56px;
   }
 
@@ -329,6 +527,15 @@ button {
 
   .summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .workout-list-metrics {
+    grid-template-columns: 1.4fr repeat(3, 1fr);
+  }
+
+  .workout-list-metrics > div + div {
+    border-left: 1px solid var(--hairline-soft);
+    padding-left: 16px;
   }
 
 }
@@ -374,6 +581,10 @@ button {
   }
 
   .today-page {
+    padding: 56px 32px 72px;
+  }
+
+  .workouts-page {
     padding: 56px 32px 72px;
   }
 

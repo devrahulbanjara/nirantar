@@ -168,7 +168,7 @@ export default async function Home() {
   const result = await getDailySummary(today);
 
   return (
-    <AppShell>
+    <AppShell activeDestination="today">
       <main className="today-page">
         <header className="page-heading">
           <div>
