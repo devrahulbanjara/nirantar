@@ -8,8 +8,11 @@ import {
 
 import { auth } from "@clerk/nextjs/server";
 
+import Link from "next/link";
+
 import { AppShell } from "@/components/app-shell";
 import { Landing } from "@/components/landing";
+import { WeightEntryDialog } from "@/components/weight-entry-dialog";
 import {
   formatKathmanduDate,
   getDailySummary,
@@ -186,6 +189,23 @@ export default async function Home() {
             <h1>Today</h1>
           </div>
         </header>
+
+        <div className="quick-actions">
+          <Link href="/workouts/new" className="button-primary">
+            Log workout
+          </Link>
+          <Link href="/meals/new" className="button-secondary">
+            Log meal
+          </Link>
+          <WeightEntryDialog
+            triggerLabel="Log weight"
+            triggerClassName="button-secondary"
+            defaultDate={today}
+            existing={
+              result.status === "ready" ? result.summary.body_weight ?? undefined : undefined
+            }
+          />
+        </div>
 
         <section className="daily-section" id="today-summary" aria-labelledby="daily-summary-title">
           <div className="section-heading">

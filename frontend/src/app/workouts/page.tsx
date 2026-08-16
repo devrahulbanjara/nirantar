@@ -2,8 +2,10 @@ import {
   BarbellIcon,
   CheckCircleIcon,
   ClockIcon,
+  PlusIcon,
   WarningCircleIcon,
 } from "@phosphor-icons/react/dist/ssr";
+import Link from "next/link";
 
 import { AppShell } from "@/components/app-shell";
 import { formatKathmanduDate, getKathmanduDate } from "@/lib/daily-summary";
@@ -62,7 +64,7 @@ function WorkoutCard({ workout }: { workout: Workout }) {
   const exerciseNames = workout.exercises.map((item) => item.exercise_name);
 
   return (
-    <article className="workout-list-card">
+    <Link href={`/workouts/${workout.id}`} className="workout-list-card">
       <header className="workout-list-heading">
         <div>
           <h3>{workout.title ?? "Workout"}</h3>
@@ -106,7 +108,7 @@ function WorkoutCard({ workout }: { workout: Workout }) {
           <dd>{workout.dropset_count}</dd>
         </div>
       </dl>
-    </article>
+    </Link>
   );
 }
 
@@ -142,6 +144,10 @@ export default async function WorkoutsPage() {
       <main className="workouts-page">
         <header className="workouts-page-heading">
           <h1>Workouts</h1>
+          <Link href="/workouts/new" className="button-primary">
+            <PlusIcon size={18} weight="bold" aria-hidden="true" />
+            Log workout
+          </Link>
         </header>
 
         {result.status === "unavailable" ? (

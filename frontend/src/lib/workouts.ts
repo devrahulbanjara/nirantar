@@ -1,4 +1,54 @@
-import { getApiAuthHeaders, getApiUrl } from "@/lib/api";
+import { apiGet, getApiAuthHeaders, getApiUrl } from "@/lib/api";
+
+export type SetType = "warmup" | "working" | "dropset";
+
+export type Dropset = {
+  id: string;
+  set_order: number;
+  set_type: SetType;
+  weight_kg: string | null;
+  reps: number | null;
+  rir: string | null;
+  rpe: string | null;
+  notes: string | null;
+  parent_set_id: string;
+};
+
+export type ExerciseSet = {
+  id: string;
+  set_order: number;
+  set_type: SetType;
+  weight_kg: string | null;
+  reps: number | null;
+  rir: string | null;
+  rpe: string | null;
+  notes: string | null;
+  parent_set_id: string | null;
+  dropsets: Dropset[];
+};
+
+export type WorkoutExercise = {
+  id: string;
+  exercise_name: string;
+  exercise_order: number;
+  notes: string | null;
+  sets: ExerciseSet[];
+};
+
+export type GroupMember = {
+  id: string;
+  workout_exercise_id: string;
+  exercise_name: string;
+  member_order: number;
+};
+
+export type ExerciseGroup = {
+  id: string;
+  group_type: string;
+  group_order: number;
+  notes: string | null;
+  members: GroupMember[];
+};
 
 export type Workout = {
   id: string;
@@ -8,16 +58,8 @@ export type Workout = {
   notes: string | null;
   created_at: string;
   updated_at: string;
-  exercises: Array<{
-    id: string;
-    exercise_name: string;
-    exercise_order: number;
-  }>;
-  groups: Array<{
-    id: string;
-    group_type: string;
-    group_order: number;
-  }>;
+  exercises: WorkoutExercise[];
+  groups: ExerciseGroup[];
   working_set_count: number;
   dropset_count: number;
   physical_set_count: number;
@@ -51,4 +93,61 @@ export async function getRecentWorkouts(
   } catch {
     return { status: "unavailable" };
   }
+}
+
+export type WorkoutResult =
+  | { status: "ready"; workout: Workout }
+  | { status: "not-found" }
+  | { status: "unavailable" };
+
+export async function getWorkout(workoutId: string): Promise<WorkoutResult> {
+  const result = await apiGet<Workout>(`/workouts/${workoutId}`);
+  if (result.ok) return { status: "ready", workout: result.data };
+  if (result.status === 404) return { status: "not-found" };
+  return { status: "unavailable" };
+}
+
+export type ExerciseHistorySet = {
+  id: string;
+  set_order: number;
+  set_type: SetType;
+  weight_kg: string | null;
+  reps: number | null;
+  rir: string | null;
+  rpe: string | null;
+  notes: string | null;
+  parent_set_id: string | null;
+  dropsets: Dropset[];
+};
+
+export type ExerciseHistoryEntry = {
+  workout_session_id: string;
+  check_in_at: string;
+  workout_title: string | null;
+  workout_exercise_id: string;
+  exercise_name: string;
+  exercise_order: number;
+  sets: ExerciseHistorySet[];
+};
+
+export type ExerciseHistoryResult =
+  | { status: "ready"; entries: ExerciseHistoryEntry[] }
+  | { status: "unavailable" };
+
+export async function getExerciseHistory(params: {
+  exerciseName: string;
+  startAt?: string;
+  endAt?: string;
+  limit?: number;
+}): Promise<ExerciseHistoryResult> {
+  const search = new URLSearchParams({ exercise_name: params.exerciseName });
+  if (params.startAt) search.set("start_at", params.startAt);
+  if (params.endAt) search.set("end_at", params.endAt);
+  if (params.limit) search.set("limit", String(params.limit));
+
+  const result = await apiGet<ExerciseHistoryEntry[]>(
+    `/workouts/exercise-history?${search.toString()}`,
+  );
+  if (!result.ok) return { status: "unavailable" };
+  return { status: "ready", entries: result.data };
 }

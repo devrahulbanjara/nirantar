@@ -29,8 +29,13 @@ const navigation: NavigationItem[] = [
     icon: BarbellIcon,
     href: "/workouts",
   },
-  { destination: "meals", label: "Meals", icon: BowlFoodIcon },
-  { destination: "history", label: "History", icon: CalendarDotsIcon },
+  { destination: "meals", label: "Meals", icon: BowlFoodIcon, href: "/meals" },
+  {
+    destination: "history",
+    label: "History",
+    icon: CalendarDotsIcon,
+    href: "/history",
+  },
 ];
 
 function Navigation({ activeDestination }: { activeDestination: NavigationDestination }) {
