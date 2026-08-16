@@ -6,6 +6,7 @@ import { useRef, useState } from "react";
 import { AddFoodItemInline } from "@/components/meal-form/add-food-item-inline";
 import { EditableFoodItemRow } from "@/components/meal-form/editable-food-item-row";
 import { StaleConflictDialog } from "@/components/stale-conflict-dialog";
+import { DateTimeField } from "@/components/ui/date-time-field";
 import {
   editMeal,
   refetchMeal,
@@ -76,9 +77,9 @@ export function EditMealForm({ initialMeal }: { initialMeal: Meal }) {
     }
   }
 
-  async function commitEatenAt() {
+  async function commitEatenAt(nextValue = eatenAt) {
     const current = mealRef.current;
-    const iso = kathmanduInputValueToIso(eatenAt);
+    const iso = kathmanduInputValueToIso(nextValue);
     if (new Date(iso).getTime() === new Date(current.eaten_at).getTime()) return;
     await runOp({ operation: "update_meal", eaten_at: iso });
   }
@@ -127,19 +128,13 @@ export function EditMealForm({ initialMeal }: { initialMeal: Meal }) {
 
       <section className="editor-section">
         <h2 className="editor-section-title">Meal</h2>
-        <div className="field">
-          <label className="field-label" htmlFor="edit-meal-eaten-at">
-            Eaten at
-          </label>
-          <input
-            id="edit-meal-eaten-at"
-            className="field-input"
-            type="datetime-local"
-            value={eatenAt}
-            onChange={(event) => setEatenAt(event.target.value)}
-            onBlur={commitEatenAt}
-          />
-        </div>
+        <DateTimeField
+          id="edit-meal-eaten-at"
+          label="Eaten at"
+          value={eatenAt}
+          onChange={setEatenAt}
+          onCommit={commitEatenAt}
+        />
         <div className="field">
           <label className="field-label" htmlFor="edit-meal-name">
             Name

@@ -7,6 +7,7 @@ import { ExerciseBuilder } from "@/components/workout-form/exercise-builder";
 import { ExistingExerciseEditor } from "@/components/workout-form/existing-exercise-editor";
 import { draftExerciseToInput, emptyExercise, type DraftExercise } from "@/components/workout-form/types";
 import { StaleConflictDialog } from "@/components/stale-conflict-dialog";
+import { DateTimeField } from "@/components/ui/date-time-field";
 import {
   editWorkout,
   refetchWorkout,
@@ -116,10 +117,10 @@ export function EditWorkoutForm({ initialWorkout }: { initialWorkout: Workout })
     return true;
   }
 
-  async function commitCheckIn() {
-    if (!validateCheckTimes(checkInAt, stillCheckedIn, checkOutAt)) return;
+  async function commitCheckIn(nextValue = checkInAt) {
+    if (!validateCheckTimes(nextValue, stillCheckedIn, checkOutAt)) return;
     const current = workoutRef.current;
-    const iso = kathmanduInputValueToIso(checkInAt);
+    const iso = kathmanduInputValueToIso(nextValue);
     if (new Date(iso).getTime() === new Date(current.check_in_at).getTime()) return;
     await runOp({ operation: "update_workout", check_in_at: iso });
   }
@@ -189,19 +190,7 @@ export function EditWorkoutForm({ initialWorkout }: { initialWorkout: Workout })
 
       <section className="editor-section">
         <h2 className="editor-section-title">Session</h2>
-        <div className="field">
-          <label className="field-label" htmlFor="edit-check-in-at">
-            Check-in
-          </label>
-          <input
-            id="edit-check-in-at"
-            className="field-input"
-            type="datetime-local"
-            value={checkInAt}
-            onChange={(event) => setCheckInAt(event.target.value)}
-            onBlur={commitCheckIn}
-          />
-        </div>
+        <DateTimeField id="edit-check-in-at" label="Check-in" value={checkInAt} onChange={setCheckInAt} onCommit={commitCheckIn} />
         <label className="checkbox-field">
           <input
             type="checkbox"
@@ -215,19 +204,7 @@ export function EditWorkoutForm({ initialWorkout }: { initialWorkout: Workout })
           Still checked in
         </label>
         {!stillCheckedIn ? (
-          <div className="field">
-            <label className="field-label" htmlFor="edit-check-out-at">
-              Check-out
-            </label>
-            <input
-              id="edit-check-out-at"
-              className="field-input"
-              type="datetime-local"
-              value={checkOutAt}
-              onChange={(event) => setCheckOutAt(event.target.value)}
-              onBlur={() => commitCheckOut(stillCheckedIn, checkOutAt)}
-            />
-          </div>
+          <DateTimeField id="edit-check-out-at" label="Check-out" value={checkOutAt} onChange={setCheckOutAt} onCommit={(next) => commitCheckOut(stillCheckedIn, next)} />
         ) : null}
         {timeError ? (
           <p className="field-error" role="alert">

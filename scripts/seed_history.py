@@ -604,7 +604,6 @@ def _build_sets(
         weight = top_weight
         if not spec.is_bodyweight and index == working_sets - 1 and rng.random() < 0.35:
             weight = max(step, top_weight - step)
-        rir = Decimal("2.0") if is_deload else Decimal(str(max(0.5, 2.0 - 0.5 * index)))
 
         dropsets: list[DropsetCreate] = []
         if (
@@ -630,7 +629,6 @@ def _build_sets(
                 type=SetType.WORKING,
                 weight_kg=None if spec.is_bodyweight else weight,
                 reps=reps,
-                rir=rir,
                 dropsets=dropsets,
             )
         )

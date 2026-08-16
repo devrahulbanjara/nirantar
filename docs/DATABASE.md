@@ -190,8 +190,6 @@ CREATE TABLE exercise_sets (
     set_type exercise_set_type NOT NULL DEFAULT 'working',
     weight_kg NUMERIC(7,3),
     reps INTEGER,
-    rir NUMERIC(3,1),
-    rpe NUMERIC(3,1),
     parent_set_id UUID,
     notes TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -206,10 +204,6 @@ CREATE TABLE exercise_sets (
         CHECK (weight_kg IS NULL OR weight_kg >= 0),
     CONSTRAINT exercise_sets_reps_nonnegative
         CHECK (reps IS NULL OR reps >= 0),
-    CONSTRAINT exercise_sets_rir_range
-        CHECK (rir IS NULL OR (rir >= 0 AND rir <= 10)),
-    CONSTRAINT exercise_sets_rpe_range
-        CHECK (rpe IS NULL OR (rpe >= 0 AND rpe <= 10)),
     CONSTRAINT exercise_sets_not_own_parent
         CHECK (parent_set_id IS NULL OR parent_set_id <> id),
     CONSTRAINT exercise_sets_parent_shape
@@ -523,8 +517,6 @@ SELECT
     es.set_type,
     es.weight_kg,
     es.reps,
-    es.rir,
-    es.rpe,
     es.parent_set_id
 FROM workout_exercises AS we
 JOIN workout_sessions AS ws

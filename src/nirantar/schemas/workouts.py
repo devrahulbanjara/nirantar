@@ -17,8 +17,6 @@ class DropsetCreate(BaseModel):
     order: int = Field(gt=0)
     weight_kg: Decimal | None = Field(default=None, ge=0)
     reps: int | None = Field(default=None, ge=0)
-    rir: Decimal | None = Field(default=None, ge=0, le=10)
-    rpe: Decimal | None = Field(default=None, ge=0, le=10)
     notes: str | None = None
     client_ref: str | None = None
 
@@ -28,8 +26,6 @@ class SetCreate(BaseModel):
     type: SetType
     weight_kg: Decimal | None = Field(default=None, ge=0)
     reps: int | None = Field(default=None, ge=0)
-    rir: Decimal | None = Field(default=None, ge=0, le=10)
-    rpe: Decimal | None = Field(default=None, ge=0, le=10)
     notes: str | None = None
     client_ref: str | None = None
     dropsets: list[DropsetCreate] = Field(default_factory=list)
@@ -200,8 +196,6 @@ class UpdateSetOperation(BaseModel):
     order: int | None = Field(default=None, gt=0)
     weight_kg: Decimal | None = Field(default=None, ge=0)
     reps: int | None = Field(default=None, ge=0)
-    rir: Decimal | None = Field(default=None, ge=0, le=10)
-    rpe: Decimal | None = Field(default=None, ge=0, le=10)
     notes: str | None = None
 
     @model_validator(mode="after")
@@ -270,8 +264,6 @@ class DropsetRead(BaseModel):
     set_type: SetType
     weight_kg: Decimal | None
     reps: int | None
-    rir: Decimal | None
-    rpe: Decimal | None
     notes: str | None
     parent_set_id: UUID
 
@@ -284,8 +276,6 @@ class SetRead(BaseModel):
     set_type: SetType
     weight_kg: Decimal | None
     reps: int | None
-    rir: Decimal | None
-    rpe: Decimal | None
     notes: str | None
     parent_set_id: UUID | None = None
     dropsets: list[DropsetRead] = Field(default_factory=list)
@@ -343,8 +333,6 @@ class ExerciseHistorySetRead(BaseModel):
     set_type: SetType
     weight_kg: Decimal | None
     reps: int | None
-    rir: Decimal | None
-    rpe: Decimal | None
     notes: str | None
     parent_set_id: UUID | None
     dropsets: list[DropsetRead] = Field(default_factory=list)

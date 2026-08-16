@@ -147,7 +147,10 @@ export function ExistingExerciseEditor({
               onCommit={(op) => runOp(op)}
             />
             {set.set_type === "working" ? (
-              <div className="dropset-builder">
+              <div
+                className="dropset-builder"
+                data-has-dropsets={set.dropsets.length > 0}
+              >
                 {set.dropsets
                   .slice()
                   .sort((a, b) => a.set_order - b.set_order)

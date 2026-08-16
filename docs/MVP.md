@@ -73,7 +73,6 @@ FastAPI and FastMCP must call the same service layer. Database logic must not be
 - Working sets.
 - Dropsets nested under a working set.
 - Weight and reps.
-- Optional RIR and RPE.
 - Superset grouping between exercises.
 
 ### Meals
@@ -324,7 +323,6 @@ The detailed schema is defined in `Nirantar_Database_Design.md`.
 - `check_out_at` must be after `check_in_at` when present.
 - Exercise and set order values must be positive.
 - Weight and reps must not be negative.
-- RIR and RPE must be within accepted ranges when present.
 - A dropset must have a valid parent working set.
 - Parent and child sets must belong to the same performed exercise.
 - A superset member must belong to the same workout session as its group.

@@ -1,7 +1,7 @@
 [project]
 name = "nirantar"
 version = "0.1.0"
-description = "Add your description here"
+description = "Nirantar is an AI-native personal fitness platform for tracking workouts, nutrition, recovery, and progress with first-class MCP integration."
 readme = "README.md"
 authors = [
     { name = "devrahulbanjara", email = "rdbanjara07@gmail.com" }
@@ -14,7 +14,7 @@ dependencies = [
     "fastapi[standard]>=0.141.1",
     "fastmcp>=3.4.7",
     "pydantic-settings>=2.15.0",
-    "sqlalchemy[asyncio,postgresql]>=2.0.52",
+    "sqlalchemy[asyncio]>=2.0.52",
     "tzdata>=2026.3",
 ]
 

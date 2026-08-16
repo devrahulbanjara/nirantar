@@ -42,7 +42,7 @@ Mode: **Operate**. Task completion and legibility take priority over decoration.
 
 ### History
 
-- Combine date navigation with exercise history and body-weight history entry points.
+- Combine date navigation with body-weight history.
 - Let the user inspect exact historical records before introducing charts.
 - Filters must preserve the active local-date range and be easy to clear.
 
@@ -139,7 +139,7 @@ Use a 4px base grid.
 - Sheet and modal radius: `20px` on exposed corners.
 - Pill radius: use only for compact filters, tags, and statuses.
 - Use one shadow tier: `0 0 0 1px rgb(0 0 0 / 2%), 0 2px 6px rgb(0 0 0 / 4%), 0 4px 8px rgb(0 0 0 / 10%)`.
-- Ordinary cards remain flat. Apply the shadow only to dialogs, sheets, floating menus, and sticky action bars.
+- Ordinary cards remain flat. Apply the shadow only to dialogs, sheets, and floating menus. Sticky save buttons stay bare—no panel or shadow behind them.
 
 ## Layout
 
@@ -167,7 +167,142 @@ Use a bottom navigation bar on mobile and a compact side or top navigation on la
 
 The current destination needs an icon and label. Use one consistent SVG icon family; prefer Phosphor if no project icon library exists. Do not hand-draw routine icons or use emoji as interface icons. Never use a sparkle icon; label AI and MCP features directly instead.
 
-## Core Components
+## Component System
+
+This inventory is the shared contract for all current and future product surfaces. Agents must reuse an existing primitive or composite before introducing a new one. A component library may supply implementation mechanics, but its default appearance does not override these tokens, dimensions, states, or semantics.
+
+### Foundations and layout primitives
+
+- `PageContainer`: centered, full-width content with `16px` mobile, `24px` tablet, and `32px` desktop gutters; cap at `1120px`.
+- `ReadingColumn`: text and simple forms capped at `680px`; never stretch to fill a desktop canvas.
+- `PageHeader`: one page title, optional factual supporting copy, and visible primary action. Stack on mobile and align actions to the trailing edge on desktop.
+- `Section`: groups one subject with a heading and optional action. Use spacing rather than a decorative container when no boundary is needed.
+- `ResponsiveGrid`: use deliberate columns, never auto-fit merely to fill space. Summary/list grids are 1 column on mobile, may become 2 at tablet, and only use 3 or 4 columns when each cell remains readable and comparable.
+- `FormLayout`: one column on mobile; at desktop use a `minmax(0, 680px)` form column and an optional `minmax(280px, 360px)` sticky summary rail, separated by `32px`.
+- `Stack` and `Inline`: use only the documented spacing scale. Related controls use `8–12px`; card content uses `16–24px`; sections use `32–64px`.
+- `Divider`: a single `hairline-soft` rule between repeated rows or major internal groups. Do not put every subsection in another card.
+
+All grid children must use `min-width: 0`. Long names wrap instead of forcing horizontal scrolling. Align repeated measurements using CSS grid tracks and tabular numerals; do not align them with arbitrary margins.
+
+### Shared primitives
+
+| Primitive | Required variants and behavior |
+| --- | --- |
+| `Button` | Primary, secondary, tertiary, destructive, icon-only, loading, and disabled. Minimum `48px` high for labeled primary actions and `44 × 44px` for every touch target. Create/log actions (`Log workout`, `Log meal`, `Log weight`, and matching empty-state CTAs) always show a decorative `PlusIcon` before the label; the label text itself never includes a `+` character. Edit triggers use a pencil icon, not plus. |
+| `IconButton` | One consistent icon family, visible hover/focus/pressed states, `aria-label`, and tooltip only when the meaning is not already visible. |
+| `Field` | Persistent label, control, unit/add-on when relevant, helper text, and associated error. Never use placeholder text as the label. |
+| `TextInput` | `56px` standard height, correct `inputMode` and autocomplete, `10px` radius, and no focus glow. |
+| `NumberInput` | Explicit unit, decimal/integer keyboard, legal range guidance, and no silent coercion. Use for kg, g, kcal, and reps. |
+| `Textarea` | Visible label, sensible mobile height, user resizing where layout permits, and preserved content after errors. |
+| `Select` | Native control on mobile when it gives the better platform experience; custom popover only when search or richer options are genuinely needed. |
+| `Checkbox` / `RadioGroup` | Entire label is clickable, state is not color-only, and the group has a programmatic name and error. |
+| `SegmentedControl` | Two to four mutually exclusive compact views only. On narrow screens it must wrap safely or become a select. |
+| `Badge` / `Status` | Text plus semantic icon where useful. Pills are reserved for compact status and filter information. |
+| `Card` | One meaningful aggregate, `14px` radius, normally flat, with consistent title/metadata/action order. Interactive cards use a real link or button and visible focus. |
+| `DataRow` | Stable label/value tracks, tabular numerals, explicit units, and wrapping for long labels. |
+| `Skeleton` | Mirrors the final geometry and does not animate when reduced motion is requested. |
+| `EmptyState` | No-data and no-results only. Centered-in-context surface with a 48px neutral icon treatment, factual heading, one-sentence explanation, and at most one next action. Nested variant is left-aligned and compact for detail sections. Full-width action on mobile, intrinsic width from tablet up. Cap at the 680px reading column. No decorative illustration. Do not use for network or unavailable failures—those stay on `FeedbackState`. |
+| `InlineAlert` | Error, warning, success, or information with text and icon; includes recovery action when one exists. |
+| `Toast` | Brief confirmation after a completed action; never the only location for an error or critical state. |
+| `Tooltip` | Supplementary explanation for pointer/keyboard users, never required to discover a primary action and never the sole accessible name. |
+
+### Navigation and action patterns
+
+- `AppShell`: mobile bottom navigation and desktop compact top/side navigation share the same four destinations and active-state semantics.
+- `BottomNavigation`: fixed on mobile with safe-area padding, icon plus label, and no more than the four permanent destinations.
+- `DesktopNavigation`: aligned to the same `PageContainer` grid. Account controls remain visually secondary to product navigation.
+- `Breadcrumb` or `BackLink`: use on detail and edit flows when it clarifies the return destination. Do not duplicate browser history with ambiguous `Back` text.
+- `QuickActions`: Today may present `Log workout`, `Log meal`, and `Log weight` as immediately visible actions; they must not be hidden in an overflow menu. Use the same plus-before-label create treatment as collection headers and empty-state CTAs.
+- `StickyActionBar`: mobile full-width save action that stays reachable above the bottom navigation. No panel background, border, or shadow behind the button—only the button itself. Desktop actions remain in normal flow or the summary rail unless persistence is necessary.
+- `Tabs`: use for peer views, not as a substitute for primary navigation or a multi-step form.
+
+### Date and time components
+
+Dates are product data, not decorative labels. Parse, compare, and display calendar values in `Asia/Kathmandu`; never derive a user-facing day from the server timezone.
+
+#### `DatePicker`
+
+- Use for one Nepal-local calendar date, such as body-weight entry.
+- The field keeps a persistent label and a readable formatted value; the calendar button has an accessible name.
+- Calendar day targets are at least `44 × 44px` in Nirantar, improving on the smaller reference component.
+- Provide distinct textual or programmatic states for today, selected, unavailable, and outside-month days. Selected uses `ink` or `primary` fill with sufficient contrast; today is never indicated by color alone.
+- Month navigation uses `44 × 44px` previous/next buttons and announces the visible month.
+- Support arrow-key day movement, Home/End within a week, Page Up/Page Down between months, Enter/Space selection, and Escape close when a popover is used.
+- On mobile, prefer the native date input when it is reliable for the flow; otherwise open a full-width bottom sheet. On desktop, use an anchored popover that stays within the viewport.
+
+#### `DateRangePicker`
+
+- Use for History filtering, with explicit `Start date` and `End date` fields. Never make users infer which endpoint is active.
+- Range start and end are circular selected cells. Dates between them use a connected `surface` background; state remains understandable to assistive technology without color.
+- Reject an end before the start with a field-level explanation. Preserve both entered values when validation fails.
+- Provide `Today`, `Last 7 days`, `Last 30 days`, and `Clear` only where the server contract can express them exactly. Applying a range is explicit; closing the surface does not silently discard a committed filter.
+- On mobile, use a bottom sheet or full-screen surface with one month and a sticky `Apply dates` action. On desktop, use an anchored panel and show one or two months only when space permits without shrinking day targets.
+- The active range remains visible in the page URL and in a removable filter summary.
+
+#### `DateTimeField` and `TimeField`
+
+- Use the appropriate native control where possible, with a visible Nepal-time note when ambiguity matters.
+- Store and submit timezone-aware ISO 8601 values. Show the offset on detail or conflict surfaces where precision is important.
+- Check-out must visually and programmatically follow check-in; invalid ordering is reported beside the relevant field.
+
+### Overlays and disclosure
+
+- `Popover`: anchored, non-modal choices on desktop; dismisses with Escape and outside click without losing committed state.
+- `BottomSheet`: short mobile choices and filters. It has a visible title, close control, focus management, scroll containment, and safe-area padding.
+- `Dialog`: destructive confirmation, stale-edit conflict, or another decision requiring protected focus. It traps focus, restores focus to its trigger, and closes with Escape unless an irreversible operation is running.
+- `ConfirmDialog`: states the exact record name or ID, consequence, and explicit destructive verb. The destructive action remains visually secondary until this step.
+- `StaleConflictDialog`: preserves the draft and clearly separates refresh, retry, and cancel outcomes.
+- `Menu`: secondary actions only. Primary save, log, edit, or recovery actions never live solely inside it.
+- `BackButton`: the only in-app back affordance. It uses browser history when available, a route fallback for direct entry, the shared left-arrow treatment, a `44px` minimum target, and context-specific labels such as `Back to meals`. Do not create route-local back links or alternate hover treatments.
+- `ViewToggle`: the only list/grid selector. Icon-only options with accessible names (`List view`, `Grid view`), each a `44 × 44px` target. Workouts, meals, and history use separate local-storage preference keys and retain the selected view through filtering and navigation.
+
+Mobile disclosure becomes a sheet only when the content remains a short choice or filter. Long forms stay pages; do not place workout or meal creation inside a modal.
+
+### Domain composites
+
+- `DailySummary`: server-owned facts with honest missing and incomplete states; quick logging actions remain visible above the fold on a common phone.
+- `WorkoutCard` and `WorkoutDetail`: stable order of local date/time, title, duration, set counts, completion state, and actions.
+- `ExerciseCard`: one performed exercise with ordered set rows and optional superset membership.
+- `SetRow`: order, textual set type, weight in kg, and reps aligned consistently. A dropset is indented beneath and visibly connected to its working-set parent.
+- Nested rails and indentation appear only when nested records exist. Nested empty states use the compact `EmptyState` variant without a decorative line or placeholder hierarchy.
+- `SupersetGroup`: labeled ordered group whose membership and member order do not rely on proximity alone.
+- `MealCard` and `MealDetail`: name, Nepal-local time, ordered foods, totals, and completeness in a stable hierarchy.
+- `FoodItemRow`: name first, quantity and unit second, then only known nutrition. Unknown values read `Not provided`.
+- `NutritionCompleteness`: known total plus coverage, such as `Protein: 42 g · 2 of 3 items`; never substitutes zero for unknown.
+- `WeightEntry`: Nepal-local date, decimal `kg` value, correction state, and save feedback.
+- `HistoryFilterBar`: current date range and other active filters, clear affordances, and the responsive `DateRangePicker` disclosure.
+- `HistoryGroup`: local-date heading followed by exact records. Lists remain the source for exact values even when a trend chart is later added.
+
+### Component state contract
+
+Every reusable interactive component must account for default, hover where relevant, focus-visible, pressed, disabled, loading, error, and success states. Every data surface must account for loading, empty, unavailable/network error, long content, and partial/missing values. Editors additionally require dirty, saving, saved, validation error, server error, and stale-conflict states.
+
+State changes that insert, remove, reorder, save, or fail must be announced through an appropriate live region. Loading disables duplicate submission without erasing the entered draft. Skeletons preserve layout; errors include a safe retry when retry is possible.
+
+### Responsive composition contract
+
+| Viewport | Composition |
+| --- | --- |
+| `< 744px` | One primary column, `16px` gutter, bottom navigation, sheets for short filters, sticky bottom save actions, and no hover-dependent behavior. |
+| `744–1127px` | `24px` gutter, one or two deliberate columns, compact navigation, and enough space for anchored filters when day targets remain at least `44px`. |
+| `>= 1128px` | `32px` gutter inside the `1120px` cap, consistent 12-column alignment, optional form plus summary rail, anchored panels, and stable repeated-data columns. |
+| `> 1440px` | Keep all content caps; additional width becomes balanced outer whitespace rather than stretched cards or forms. |
+
+The desktop grid uses 12 conceptual columns with `24px` gutters. Full-width page sections span 12; primary content commonly spans 8 and a secondary rail 4. A form may remain at its `680px` cap even when this leaves intentional whitespace. Tablet and mobile reduce columns rather than squeezing controls.
+
+### Agent implementation checklist
+
+Before adding or changing a frontend surface:
+
+1. Read this document, `frontend/AGENTS.md`, the applicable product docs, the real API contracts, and the neighboring surface implementation.
+2. Identify the shared primitives and domain composites above. Extend them rather than creating page-local near-duplicates.
+3. Use semantic design tokens from the shared stylesheet. Add a token only for a recurring role, not for a one-off value.
+4. Implement mobile layout first, then tablet, desktop, and wide compositions. Keep DOM order meaningful at every size.
+5. Include required loading, empty, validation, network error, saving, saved, long-content, incomplete-data, and stale-conflict states that apply.
+6. Verify the running UI with Playwright at `375px`, `768px`, `1024px`, and `1440px`. Check horizontal overflow, clipped/fixed content, focus order and visibility, keyboard operation, touch targets, reduced motion, console errors, and 200% zoom.
+7. Review the final diff for local style duplication, hard-coded near-token values, inaccessible names, unsupported claims, and unrelated changes.
+
+When a new pattern is truly reusable, update this component inventory in the same change. Do not document speculative components that no current product flow needs.
 
 ### Buttons
 
@@ -179,7 +314,7 @@ The current destination needs an icon and label. Use one consistent SVG icon fam
 - Tertiary actions are text or icon buttons with a clear hover and focus state.
 - Destructive buttons are visually secondary until confirmation.
 - Icon-only touch targets are at least `44 × 44px` and require accessible labels.
-- Labels describe the result: `Save workout`, `Add set`, `Log meal`.
+- Labels describe the result: `Save workout`, `Add set`, `Log meal`. Create/log buttons pair those labels with `PlusIcon`; do not write `+ Log meal` as text.
 
 ### Inputs
 
@@ -201,13 +336,15 @@ The current destination needs an icon and label. Use one consistent SVG icon fam
 
 ### Workout Logging
 
+- Optimize for one-handed phone use in the gym. Session timing, title, notes, warm-ups, dropsets, reorder, and supersets stay out of the default path.
 - One exercise card contains its ordered physical sets.
-- Set rows show order, type, weight in kg, reps, and optional RIR/RPE.
+- Start a new exercise with one working set. `Add another set` is a full-width primary action on mobile, carries forward the previous set's weight, reps, and type, never copies dropsets, and focuses the new weight field.
+- The primary logging row shows a compact set heading plus a two-column weight/reps grid. Type changes, dropsets, and removal live under a per-set `More` disclosure.
 - Warm-up, working, and dropset labels remain textual.
 - Indent dropsets beneath their parent working set and preserve the connection with a line or grouping, not color alone.
 - Superset members share a labeled group and explicit member order.
-- `Add set` remains next to the current exercise; `Add exercise` follows the exercise list.
-- Use a sticky mobile action bar for `Save workout` without covering the last fields.
+- `Add another set` remains on the current exercise; full-width `Add exercise` follows the exercise list on mobile.
+- Keep `Save workout` sticky above the mobile bottom navigation without covering the last fields.
 
 ### Meal Logging
 
@@ -221,8 +358,17 @@ The current destination needs an icon and label. Use one consistent SVG icon fam
 
 - Date grouping uses the user's `Asia/Kathmandu` calendar day.
 - Filters open in a bottom sheet on mobile and an anchored panel on desktop.
+- Body-weight list view stays compact; grid view uses balanced two-column cards on desktop and one column on mobile. Neither view stretches low-density rows across the full desktop grid.
 - Summary tiles show one fact each and do not imply unavailable data.
 - Use charts only when a trend is clearer than a compact list; always retain exact values.
+
+### Logging Forms
+
+- Optimize the initial form for the most common logging path. Meal items show name, quantity, and unit first; workout sets show weight and reps first.
+- Keep session timing, title, notes, nutrition, dropsets, and supersets available through clearly labeled optional disclosures.
+- Automatically reveal optional fields when editing existing values so recorded data is never hidden from the user.
+- Long-name inputs use the full available row. Short numeric inputs use balanced two-column groups on mobile and denser grids on desktop.
+- On mobile, keep a sticky full-width save button above the bottom navigation with no bar, surface, or shadow behind it. On desktop, keep save in normal document flow.
 
 ### Sheets, Dialogs, and Feedback
 
@@ -268,7 +414,7 @@ The current destination needs an icon and label. Use one consistent SVG icon fam
 
 - Use short, concrete labels and sentence case.
 - Prefer `No meals logged today` over vague empty copy.
-- Use `kg`, `g`, `kcal`, `reps`, `RIR`, and `RPE` consistently.
+- Use `kg`, `g`, `kcal`, and `reps` consistently.
 - Display timestamps with Nepal-local context and an explicit offset where precision matters.
 - Do not claim progress, nutrition totals, or completion when the data is incomplete.
 
@@ -277,9 +423,10 @@ The current destination needs an icon and label. Use one consistent SVG icon fam
 Every major surface must include:
 
 - First-use empty state with one clear action.
+- Filtered or searched no-results state with a recovery action when filters are active.
 - Loading state that preserves layout.
 - Field-level validation errors.
-- Network or server error with a safe retry.
+- Network or server error with a safe retry via `FeedbackState`, not `EmptyState`.
 - Saving and saved feedback.
 - Stale-edit conflict.
 - Partial nutrition state.

@@ -83,8 +83,6 @@ def _assemble_sets(sets: list[ExerciseSet]) -> list[SetRead]:
                 set_type=_set_type(child.set_type),
                 weight_kg=child.weight_kg,
                 reps=child.reps,
-                rir=child.rir,
-                rpe=child.rpe,
                 notes=child.notes,
                 parent_set_id=child.parent_set_id,
             )
@@ -100,8 +98,6 @@ def _assemble_sets(sets: list[ExerciseSet]) -> list[SetRead]:
                 set_type=_set_type(parent.set_type),
                 weight_kg=parent.weight_kg,
                 reps=parent.reps,
-                rir=parent.rir,
-                rpe=parent.rpe,
                 notes=parent.notes,
                 parent_set_id=None,
                 dropsets=dropsets,
@@ -212,8 +208,6 @@ class WorkoutService:
                         set_type=ExerciseSetType(set_payload.type.value),
                         weight_kg=set_payload.weight_kg,
                         reps=set_payload.reps,
-                        rir=set_payload.rir,
-                        rpe=set_payload.rpe,
                         notes=set_payload.notes,
                         parent_set_id=None,
                     )
@@ -231,8 +225,6 @@ class WorkoutService:
                                 set_type=ExerciseSetType.DROPSET,
                                 weight_kg=drop_payload.weight_kg,
                                 reps=drop_payload.reps,
-                                rir=drop_payload.rir,
-                                rpe=drop_payload.rpe,
                                 notes=drop_payload.notes,
                                 parent_set_id=parent.id,
                             )
@@ -666,8 +658,6 @@ class WorkoutService:
                     set_type=ExerciseSetType.DROPSET,
                     weight_kg=operation.dropset.weight_kg,
                     reps=operation.dropset.reps,
-                    rir=operation.dropset.rir,
-                    rpe=operation.dropset.rpe,
                     notes=operation.dropset.notes,
                     parent_set_id=parent.id,
                 )
@@ -680,8 +670,6 @@ class WorkoutService:
                 "order": "set_order",
                 "weight_kg": "weight_kg",
                 "reps": "reps",
-                "rir": "rir",
-                "rpe": "rpe",
                 "notes": "notes",
             }
             for input_name, model_name in field_map.items():
@@ -703,8 +691,6 @@ class WorkoutService:
             set_type=ExerciseSetType(payload.type.value),
             weight_kg=payload.weight_kg,
             reps=payload.reps,
-            rir=payload.rir,
-            rpe=payload.rpe,
             notes=payload.notes,
             parent_set_id=None,
         )
@@ -718,8 +704,6 @@ class WorkoutService:
                     set_type=ExerciseSetType.DROPSET,
                     weight_kg=drop_payload.weight_kg,
                     reps=drop_payload.reps,
-                    rir=drop_payload.rir,
-                    rpe=drop_payload.rpe,
                     notes=drop_payload.notes,
                     parent_set_id=parent.id,
                 )
@@ -785,8 +769,6 @@ class WorkoutService:
                             set_type=item.set_type,
                             weight_kg=item.weight_kg,
                             reps=item.reps,
-                            rir=item.rir,
-                            rpe=item.rpe,
                             notes=item.notes,
                             parent_set_id=item.parent_set_id,
                             dropsets=item.dropsets,

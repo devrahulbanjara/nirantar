@@ -49,8 +49,6 @@ async def test_log_workout_rolls_back_on_invalid_child(db_session) -> None:
         type=SetType.WORKING,
         weight_kg=Decimal("10"),
         reps=10,
-        rir=None,
-        rpe=None,
         notes=None,
         client_ref=None,
         dropsets=[],

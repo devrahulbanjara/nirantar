@@ -3,6 +3,7 @@ import {
   BowlFoodIcon,
   CheckCircleIcon,
   GaugeIcon,
+  PlusIcon,
   WarningCircleIcon,
 } from "@phosphor-icons/react/dist/ssr";
 
@@ -12,6 +13,12 @@ import Link from "next/link";
 
 import { AppShell } from "@/components/app-shell";
 import { Landing } from "@/components/landing";
+import { FeedbackState } from "@/components/ui/feedback-state";
+import {
+  PageContainer,
+  PageHeader,
+  SectionHeader,
+} from "@/components/ui/page-layout";
 import { WeightEntryDialog } from "@/components/weight-entry-dialog";
 import {
   formatKathmanduDate,
@@ -44,13 +51,13 @@ function formatNutrient(
 
 function EmptySummary() {
   return (
-    <section className="status-panel" aria-labelledby="summary-unavailable-title">
-      <WarningCircleIcon size={24} weight="regular" aria-hidden="true" />
-      <div>
-        <h2 id="summary-unavailable-title">Today’s summary is unavailable</h2>
-        <p>Refresh to try again.</p>
-      </div>
-    </section>
+    <FeedbackState
+      id="summary-unavailable-title"
+      title="Today’s summary is unavailable"
+      description="Refresh to try again."
+      icon={<WarningCircleIcon size={24} weight="regular" />}
+      tone="warning"
+    />
   );
 }
 
@@ -170,8 +177,6 @@ function SummaryContent({ summary }: { summary: DailySummary }) {
 }
 
 export default async function Home() {
-  // Signed-out visitors get the landing surface; the daily summary is only
-  // fetched once there is a session to fetch it for.
   const { userId } = await auth();
   if (!userId) {
     return <Landing />;
@@ -182,19 +187,16 @@ export default async function Home() {
 
   return (
     <AppShell activeDestination="today">
-      <main className="today-page">
-        <header className="page-heading">
-          <div>
-            <p className="local-date">{formatKathmanduDate(today)}</p>
-            <h1>Today</h1>
-          </div>
-        </header>
+      <PageContainer>
+        <PageHeader title="Today" eyebrow={formatKathmanduDate(today)} />
 
         <div className="quick-actions">
           <Link href="/workouts/new" className="button-primary">
+            <PlusIcon size={18} weight="bold" aria-hidden="true" />
             Log workout
           </Link>
           <Link href="/meals/new" className="button-secondary">
+            <PlusIcon size={18} weight="bold" aria-hidden="true" />
             Log meal
           </Link>
           <WeightEntryDialog
@@ -208,16 +210,14 @@ export default async function Home() {
         </div>
 
         <section className="daily-section" id="today-summary" aria-labelledby="daily-summary-title">
-          <div className="section-heading">
-            <h2 id="daily-summary-title">Daily summary</h2>
-          </div>
+          <SectionHeader id="daily-summary-title" title="Daily summary" />
           {result.status === "ready" ? (
             <SummaryContent summary={result.summary} />
           ) : (
             <EmptySummary />
           )}
         </section>
-      </main>
+      </PageContainer>
     </AppShell>
   );
 }

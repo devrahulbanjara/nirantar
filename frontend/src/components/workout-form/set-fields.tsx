@@ -1,18 +1,26 @@
 "use client";
 
+import type { InputHTMLAttributes } from "react";
+
 import type { DraftDropset, DraftSet } from "@/components/workout-form/types";
+
+type NumericInputProps = Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  "value" | "onChange" | "type" | "inputMode" | "min" | "step" | "aria-label"
+>;
 
 export function SetFields({
   values,
   onChange,
   labelPrefix,
+  weightInputProps,
+  repsInputProps,
 }: {
-  values: Pick<DraftSet | DraftDropset, "weight_kg" | "reps" | "rir" | "rpe">;
-  onChange: (
-    field: "weight_kg" | "reps" | "rir" | "rpe",
-    value: string,
-  ) => void;
+  values: Pick<DraftSet | DraftDropset, "weight_kg" | "reps">;
+  onChange: (field: "weight_kg" | "reps", value: string) => void;
   labelPrefix: string;
+  weightInputProps?: NumericInputProps;
+  repsInputProps?: NumericInputProps;
 }) {
   return (
     <div className="set-fields">
@@ -28,6 +36,7 @@ export function SetFields({
             aria-label={`${labelPrefix} weight in kilograms`}
             value={values.weight_kg}
             onChange={(event) => onChange("weight_kg", event.target.value)}
+            {...weightInputProps}
           />
           <span className="set-field-unit">kg</span>
         </span>
@@ -43,34 +52,7 @@ export function SetFields({
           aria-label={`${labelPrefix} reps`}
           value={values.reps}
           onChange={(event) => onChange("reps", event.target.value)}
-        />
-      </label>
-      <label className="set-field set-field-optional">
-        <span className="set-field-label">RIR</span>
-        <input
-          className="set-field-input"
-          type="number"
-          inputMode="decimal"
-          min={0}
-          max={10}
-          step={0.5}
-          aria-label={`${labelPrefix} reps in reserve`}
-          value={values.rir}
-          onChange={(event) => onChange("rir", event.target.value)}
-        />
-      </label>
-      <label className="set-field set-field-optional">
-        <span className="set-field-label">RPE</span>
-        <input
-          className="set-field-input"
-          type="number"
-          inputMode="decimal"
-          min={0}
-          max={10}
-          step={0.5}
-          aria-label={`${labelPrefix} rate of perceived exertion`}
-          value={values.rpe}
-          onChange={(event) => onChange("rpe", event.target.value)}
+          {...repsInputProps}
         />
       </label>
     </div>

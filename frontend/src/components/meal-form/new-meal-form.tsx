@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { FoodItemBuilder } from "@/components/meal-form/food-item-builder";
+import { DateTimeField } from "@/components/ui/date-time-field";
 import {
   draftFoodItemToInput,
   emptyFoodItem,
@@ -76,18 +77,7 @@ export function NewMealForm() {
 
       <section className="editor-section">
         <h2 className="editor-section-title">Meal</h2>
-        <div className="field">
-          <label className="field-label" htmlFor="meal-eaten-at">
-            Eaten at
-          </label>
-          <input
-            id="meal-eaten-at"
-            className="field-input"
-            type="datetime-local"
-            value={eatenAt}
-            onChange={(event) => setEatenAt(event.target.value)}
-          />
-        </div>
+        <DateTimeField id="meal-eaten-at" label="Eaten at" value={eatenAt} onChange={setEatenAt} />
         <div className="field">
           <label className="field-label" htmlFor="meal-name">
             Name
@@ -101,17 +91,13 @@ export function NewMealForm() {
             onChange={(event) => setName(event.target.value)}
           />
         </div>
-        <div className="field">
-          <label className="field-label" htmlFor="meal-notes">
-            Notes (optional)
-          </label>
-          <textarea
-            id="meal-notes"
-            className="field-textarea"
-            value={notes}
-            onChange={(event) => setNotes(event.target.value)}
-          />
-        </div>
+        <details className="optional-section-disclosure">
+          <summary>Add notes</summary>
+          <div className="field">
+            <label className="field-label" htmlFor="meal-notes">Notes</label>
+            <textarea id="meal-notes" className="field-textarea" value={notes} onChange={(event) => setNotes(event.target.value)} />
+          </div>
+        </details>
       </section>
 
       <section className="editor-section">

@@ -38,7 +38,6 @@ def set_entry(
     reps: int,
     *,
     set_type: SetType = SetType.WORKING,
-    rir: str | None = None,
     dropsets: list[DropsetCreate] | None = None,
 ) -> SetCreate:
     return SetCreate(
@@ -46,7 +45,6 @@ def set_entry(
         type=set_type,
         weight_kg=weight_kg,
         reps=reps,
-        rir=rir,
         dropsets=dropsets or [],
     )
 
@@ -99,39 +97,38 @@ def demo_workouts(today: date) -> list[WorkoutCreate]:
                     [
                         set_entry(1, "20", 15, set_type=SetType.WARMUP),
                         set_entry(2, "40", 10, set_type=SetType.WARMUP),
-                        set_entry(3, "60", 8, rir="2"),
-                        set_entry(4, "62.5", 7, rir="1.5"),
-                        set_entry(5, "60", 8, rir="1"),
+                        set_entry(3, "60", 8),
+                        set_entry(4, "62.5", 7),
+                        set_entry(5, "60", 8),
                     ],
                 ),
                 exercise(
                     "Lat Pulldown",
                     2,
                     [
-                        set_entry(1, "45", 12, rir="2"),
-                        set_entry(2, "50", 10, rir="1.5"),
-                        set_entry(3, "50", 9, rir="1"),
+                        set_entry(1, "45", 12),
+                        set_entry(2, "50", 10),
+                        set_entry(3, "50", 9),
                     ],
                 ),
                 exercise(
                     "Seated Cable Row",
                     3,
                     [
-                        set_entry(1, "45", 12, rir="2"),
-                        set_entry(2, "50", 10, rir="1"),
-                        set_entry(3, "50", 9, rir="1"),
+                        set_entry(1, "45", 12),
+                        set_entry(2, "50", 10),
+                        set_entry(3, "50", 9),
                     ],
                 ),
                 exercise(
                     "Cable Lateral Raise",
                     4,
                     [
-                        set_entry(1, "5", 15, rir="2"),
+                        set_entry(1, "5", 15),
                         set_entry(
                             2,
                             "7.5",
                             12,
-                            rir="1",
                             dropsets=[
                                 DropsetCreate(order=1, weight_kg="5", reps=8),
                                 DropsetCreate(order=2, weight_kg="2.5", reps=10),
@@ -153,26 +150,26 @@ def demo_workouts(today: date) -> list[WorkoutCreate]:
                     [
                         set_entry(1, "20", 12, set_type=SetType.WARMUP),
                         set_entry(2, "50", 8, set_type=SetType.WARMUP),
-                        set_entry(3, "75", 6, rir="2"),
-                        set_entry(4, "80", 5, rir="1.5"),
-                        set_entry(5, "75", 7, rir="1"),
+                        set_entry(3, "75", 6),
+                        set_entry(4, "80", 5),
+                        set_entry(5, "75", 7),
                     ],
                 ),
                 exercise(
                     "Romanian Deadlift",
                     2,
                     [
-                        set_entry(1, "60", 10, rir="2"),
-                        set_entry(2, "70", 8, rir="1.5"),
-                        set_entry(3, "70", 8, rir="1"),
+                        set_entry(1, "60", 10),
+                        set_entry(2, "70", 8),
+                        set_entry(3, "70", 8),
                     ],
                 ),
                 exercise(
                     "Leg Extension",
                     3,
                     [
-                        set_entry(1, "35", 14, rir="2"),
-                        set_entry(2, "40", 12, rir="1"),
+                        set_entry(1, "35", 14),
+                        set_entry(2, "40", 12),
                         set_entry(
                             3,
                             "40",

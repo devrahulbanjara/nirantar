@@ -158,7 +158,7 @@ This applies to workouts, meals, recovery, measurements, goals, recommendations,
 Store the facts required for future analysis:
 
 - Individual exercises and sets.
-- Weight, reps, set type, RIR/RPE, and notes.
+- Weight, reps, set type, and notes.
 - Warm-up, working, and dropset semantics.
 - Parent-child relationships between working sets and dropsets.
 - Superset membership and exercise order.
@@ -266,7 +266,7 @@ Advanced analytics and ML require meaningful history. Simple SQL, trends, and ch
 - Nest dropsets under the working set that triggered them.
 - Group exercises into supersets.
 - Preserve order within a superset.
-- Record weight, reps, RIR, RPE, and notes.
+- Record weight, reps, and notes.
 - View exercise history and progress.
 - Calculate working sets separately from warm-ups and dropsets.
 - Track personal records and training consistency.

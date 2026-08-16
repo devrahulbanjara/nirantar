@@ -7,6 +7,15 @@ import Link from "next/link";
 
 import { AppShell } from "@/components/app-shell";
 import { DateRangeFilter } from "@/components/date-range-filter";
+import {
+  AggregateCard,
+  AggregateCardHeader,
+  MetricList,
+} from "@/components/ui/aggregate-card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { FeedbackState } from "@/components/ui/feedback-state";
+import { PageContainer, PageHeader } from "@/components/ui/page-layout";
+import { ViewToggle, type CollectionView } from "@/components/ui/view-toggle";
 import { getKathmanduDate } from "@/lib/daily-summary";
 import { getMeals, type Meal } from "@/lib/meals";
 import {
@@ -41,92 +50,104 @@ function knownNutritionSummary(meal: Meal): string {
 
 function MealCard({ meal }: { meal: Meal }) {
   return (
-    <Link href={`/meals/${meal.id}`} className="workout-list-card">
-      <header className="workout-list-heading">
-        <div>
-          <h3>{meal.name}</h3>
-          <p>{formatKathmanduTime(meal.eaten_at)}</p>
-        </div>
-      </header>
+    <AggregateCard href={`/meals/${meal.id}`}>
+      <AggregateCardHeader
+        title={meal.name}
+        metadata={formatKathmanduTime(meal.eaten_at)}
+      />
       <p className="exercise-preview">
         {meal.items.map((item) => item.name).join(" · ")}
       </p>
-      <dl className="workout-list-metrics">
-        <div>
-          <dt>Items</dt>
-          <dd>{meal.items.length}</dd>
-        </div>
-        <div>
-          <dt>Nutrition</dt>
-          <dd>{knownNutritionSummary(meal)}</dd>
-        </div>
-      </dl>
-    </Link>
+      <MetricList items={[
+        { label: "Items", value: meal.items.length },
+        { label: "Nutrition", value: knownNutritionSummary(meal) },
+      ]} />
+    </AggregateCard>
   );
 }
 
-function EmptyMeals() {
+function EmptyMeals({ isDefaultRange }: { isDefaultRange: boolean }) {
   return (
-    <section className="workouts-state" aria-labelledby="no-meals-title">
-      <BowlFoodIcon size={24} weight="regular" aria-hidden="true" />
-      <div>
-        <h2 id="no-meals-title">No meals logged</h2>
-        <p>Nothing in this date range yet.</p>
-      </div>
-    </section>
+    <EmptyState
+      id="no-meals-title"
+      title={isDefaultRange ? "No meals logged" : "No meals in this range"}
+      description={
+        isDefaultRange
+          ? "Log a meal to start your nutrition history."
+          : "Nothing was logged in the selected dates."
+      }
+      icon={<BowlFoodIcon size={24} weight="regular" />}
+      action={
+        <Link href="/meals/new" className="button-primary">
+          <PlusIcon size={18} weight="bold" aria-hidden="true" />
+          Log meal
+        </Link>
+      }
+    />
   );
 }
 
 function UnavailableMeals() {
   return (
-    <section className="workouts-state" aria-labelledby="meals-error-title">
-      <WarningCircleIcon size={24} weight="regular" aria-hidden="true" />
-      <div>
-        <h2 id="meals-error-title">Meals are unavailable</h2>
-        <p>Refresh to try again.</p>
-      </div>
-    </section>
+    <FeedbackState
+      id="meals-error-title"
+      title="Meals are unavailable"
+      description="Refresh to try again."
+      icon={<WarningCircleIcon size={24} weight="regular" />}
+      tone="warning"
+    />
   );
 }
 
 export default async function MealsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ start?: string; end?: string }>;
+  searchParams: Promise<{ start?: string; end?: string; view?: string }>;
 }) {
   const params = await searchParams;
   const today = getKathmanduDate();
   const endDate = params.end ?? today;
   const startDate = params.start ?? addDaysToDateString(endDate, -DEFAULT_RANGE_DAYS);
   const isDefaultRange = !params.start && !params.end;
+  const view: CollectionView = params.view === "grid" ? "grid" : "list";
 
   const result = await getMeals(startDate, endDate);
 
   return (
     <AppShell activeDestination="meals">
-      <main className="workouts-page">
-        <header className="workouts-page-heading">
-          <h1>Meals</h1>
-          <div className="page-heading-actions">
+      <PageContainer>
+        <PageHeader
+          title="Meals"
+          actions={
+            <>
+            <ViewToggle
+              basePath="/meals"
+              view={view}
+              preferenceKey="nirantar:view:meals"
+              params={{ start: startDate, end: endDate }}
+            />
             <DateRangeFilter
               basePath="/meals"
               startDate={startDate}
               endDate={endDate}
               isDefaultRange={isDefaultRange}
+              todayDate={today}
+              extraParams={{ view }}
             />
             <Link href="/meals/new" className="button-primary">
               <PlusIcon size={18} weight="bold" aria-hidden="true" />
               Log meal
             </Link>
-          </div>
-        </header>
+            </>
+          }
+        />
 
         {result.status === "unavailable" ? (
           <UnavailableMeals />
         ) : result.history.meals.length === 0 ? (
-          <EmptyMeals />
+          <EmptyMeals isDefaultRange={isDefaultRange} />
         ) : (
-          <div className="workout-groups">
+          <div className="workout-groups collection" data-view={view}>
             {groupMealsByDate(result.history.meals).map(([date, meals]) => (
               <section className="workout-day" key={date}>
                 <h2>{date === today ? "Today" : formatDateLabel(date)}</h2>
@@ -142,7 +163,7 @@ export default async function MealsPage({
             ))}
           </div>
         )}
-      </main>
+      </PageContainer>
     </AppShell>
   );
 }

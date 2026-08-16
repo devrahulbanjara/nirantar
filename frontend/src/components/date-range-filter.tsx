@@ -5,19 +5,22 @@ import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 
 import { Modal } from "@/components/modal";
-import { formatDateShortLabel } from "@/lib/time";
+import { DateField } from "@/components/ui/date-field";
+import { addDaysToDateString, formatDateShortLabel } from "@/lib/time";
 
 export function DateRangeFilter({
   basePath,
   startDate,
   endDate,
   isDefaultRange,
+  todayDate,
   extraParams,
 }: {
   basePath: string;
   startDate: string;
   endDate: string;
   isDefaultRange: boolean;
+  todayDate: string;
   extraParams?: Record<string, string>;
 }) {
   const router = useRouter();
@@ -25,6 +28,7 @@ export function DateRangeFilter({
   const [open, setOpen] = useState(false);
   const [start, setStart] = useState(startDate);
   const [end, setEnd] = useState(endDate);
+  const invalidRange = !start || !end || end < start;
 
   function buildUrl(params: { start?: string; end?: string }): string {
     const search = new URLSearchParams(extraParams);
@@ -35,6 +39,7 @@ export function DateRangeFilter({
   }
 
   function apply() {
+    if (invalidRange) return;
     router.push(buildUrl({ start, end }));
     setOpen(false);
   }
@@ -42,6 +47,11 @@ export function DateRangeFilter({
   function clear() {
     router.push(buildUrl({}));
     setOpen(false);
+  }
+
+  function setPreset(days: number) {
+    setEnd(todayDate);
+    setStart(addDaysToDateString(todayDate, -(days - 1)));
   }
 
   return (
@@ -64,43 +74,53 @@ export function DateRangeFilter({
         open={open}
         onClose={() => setOpen(false)}
         labelledBy={headingId}
-        variant="sheet"
+        variant="responsive-dialog"
       >
         <h2 className="modal-heading" id={headingId}>
           Filter by date
         </h2>
-        <div className="field">
-          <label className="field-label" htmlFor="filter-start-date">
-            From
-          </label>
-          <input
-            id="filter-start-date"
-            className="field-input"
-            type="date"
-            value={start}
-            max={end}
-            onChange={(event) => setStart(event.target.value)}
-          />
+        <div className="date-range-presets" aria-label="Date range shortcuts">
+          <button type="button" className="filter-chip" onClick={() => setPreset(1)}>
+            Today
+          </button>
+          <button type="button" className="filter-chip" onClick={() => setPreset(7)}>
+            Last 7 days
+          </button>
+          <button type="button" className="filter-chip" onClick={() => setPreset(30)}>
+            Last 30 days
+          </button>
         </div>
-        <div className="field">
-          <label className="field-label" htmlFor="filter-end-date">
-            To
-          </label>
-          <input
-            id="filter-end-date"
-            className="field-input"
-            type="date"
-            value={end}
-            min={start}
-            onChange={(event) => setEnd(event.target.value)}
-          />
-        </div>
+        <DateField
+          id={`${headingId}-start`}
+          label="Start date"
+          value={start}
+          max={end}
+          onChange={setStart}
+        />
+        <DateField
+          id={`${headingId}-end`}
+          label="End date"
+          value={end}
+          min={start}
+          max={todayDate}
+          onChange={setEnd}
+        />
+        {invalidRange ? (
+          <p className="field-error" id={`${headingId}-error`} role="alert">
+            Choose a start date on or before the end date.
+          </p>
+        ) : null}
         <div className="modal-actions">
           <button type="button" className="button-secondary" onClick={clear}>
             Clear
           </button>
-          <button type="button" className="button-primary" onClick={apply}>
-            Apply
+          <button
+            type="button"
+            className="button-primary"
+            onClick={apply}
+            disabled={invalidRange}
+          >
+            Apply dates
           </button>
         </div>
       </Modal>
