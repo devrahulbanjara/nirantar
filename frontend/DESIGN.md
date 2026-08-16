@@ -78,18 +78,25 @@ Mode: **Operate**. Task completion and legibility take priority over decoration.
 | `surface` | `#F7F7F8` | Grouped sections and disabled surfaces |
 | `surface-strong` | `#EEEFF1` | Selected neutral states |
 | `border` | `#DCDDE1` | Dividers and control borders |
+| `hairline-soft` | `#EBEBEB` | Subtle separators in long lists and sections |
+| `border-strong` | `#B8BBC1` | Emphasized and focused control borders |
 | `ink` | `#202124` | Headings and primary values |
 | `text` | `#3F4248` | Body copy |
 | `muted` | `#686D76` | Metadata and helper text |
 | `primary` | `#D4143A` | Primary action, active navigation, focus accent |
-| `primary-hover` | `#B90F31` | Pointer hover and pressed state |
+| `primary-active` | `#B90F31` | Pressed primary controls |
+| `primary-disabled` | `#F4B8C5` | Disabled primary controls |
 | `primary-soft` | `#FCE8ED` | Selected background and subtle highlight |
+| `on-primary` | `#FFFFFF` | Text and icons on primary controls |
 | `success` | `#18794E` | Confirmed completion |
 | `warning` | `#946200` | Incomplete or attention state |
 | `danger` | `#B42318` | Destructive action and validation error |
 | `info` | `#175CD3` | Informational status |
+| `scrim` | `rgb(0 0 0 / 50%)` | Modal and sheet backdrop |
 
-Do not use color as the only indicator. Pair status colors with text and an icon. White text on `primary` is reserved for large, high-emphasis controls.
+Keep roughly 90% of each surface white, gray, and ink. Reserve crimson for primary actions, active navigation, selected states, important links, and focus accents. Semantic colors appear only when their meaning requires them.
+
+Do not use color as the only indicator. Pair status colors with text and an icon. Use `on-primary` only on high-emphasis primary controls.
 
 ## Typography
 
@@ -97,6 +104,7 @@ Do not use color as the only indicator. Pair status colors with text and an icon
 - Use tabular numbers for weights, reps, nutrition, duration, dates, and times.
 - Default body size is `16px` with at least `1.5` line height.
 - Keep headings compact and sentence case.
+- Keep page titles near `28px` and use modest weights. Workout values, ordering, summaries, and whitespace carry hierarchy instead of oversized display type.
 
 | Role | Size / line height | Weight |
 | --- | --- | --- |
@@ -118,17 +126,19 @@ Use a 4px base grid.
 - Card radius: `14px`.
 - Sheet and modal radius: `20px` on exposed corners.
 - Pill radius: use only for compact filters, tags, and statuses.
-- Shadow: `0 6px 24px rgb(32 33 36 / 10%)` for sticky bars, sheets, and dialogs.
-- Prefer borders and surface contrast over shadows for ordinary cards.
+- Use one shadow tier: `0 0 0 1px rgb(0 0 0 / 2%), 0 2px 6px rgb(0 0 0 / 4%), 0 4px 8px rgb(0 0 0 / 10%)`.
+- Ordinary cards remain flat. Apply the shadow only to dialogs, sheets, floating menus, and sticky action bars.
 
 ## Layout
 
 - Mobile-first breakpoint: `< 744px`.
 - Tablet: `744px–1127px`.
 - Desktop: `>= 1128px`.
+- Wide: `> 1440px`; retain the content caps and absorb extra width as outer whitespace.
 - Main content maximum width: `1120px`.
 - Form and reading column maximum width: `680px`.
 - Use one column for logging on mobile. On desktop, a secondary summary may sit beside the form.
+- Never stretch cards, forms, or repeated data rows merely to fill a wide viewport.
 - Never hide a primary action behind hover or a menu.
 - Account for safe-area insets on fixed mobile controls.
 
@@ -150,6 +160,9 @@ The current destination needs an icon and label. Use one consistent SVG icon fam
 ### Buttons
 
 - Primary buttons are solid crimson and at least `48px` high.
+- Pressed primary buttons use `primary-active` without scale, translation, or shadow changes.
+- Disabled primary buttons use `primary-disabled` with a readable ink label and never rely on opacity alone.
+- Loading buttons retain their width, indicate progress, and prevent duplicate submission.
 - Secondary buttons use a visible neutral border.
 - Tertiary actions are text or icon buttons with a clear hover and focus state.
 - Destructive buttons are visually secondary until confirmation.
@@ -158,7 +171,8 @@ The current destination needs an icon and label. Use one consistent SVG icon fam
 
 ### Inputs
 
-- Inputs are at least `52px` high with a persistent visible label.
+- Standard inputs are `56px` high with a `10px` radius and a persistent visible label.
+- Use a `1px` default border and a `2px` ink border on focus; do not add a decorative glow.
 - Put units beside numeric fields; never encode the unit only in placeholder text.
 - Use the appropriate mobile keyboard for numbers, decimals, dates, and times.
 - Keep helper and validation text directly below the field.
