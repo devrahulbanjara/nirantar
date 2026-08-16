@@ -278,12 +278,15 @@ and a matching `updated_at` value.
 
 Return deterministic facts available for the requested date, such as:
 
-- Workout count.
-- Gym duration.
+- Workout, completed-workout, and open-workout counts.
+- Completed gym duration.
 - Working-set count.
 - Dropset count.
+- Physical-set count.
 - Meals logged.
-- Nutrition totals where known.
+- Food items logged.
+- Known nutrition totals with per-nutrient completeness.
+- Body weight when logged for the date.
 
 Do not use an LLM to calculate these values.
 
