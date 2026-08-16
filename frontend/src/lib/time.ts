@@ -108,6 +108,16 @@ export function formatDateLabel(date: string): string {
   }).format(new Date(`${date}T00:00:00${KATHMANDU_OFFSET}`));
 }
 
+export function formatDateFullLabel(date: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: KATHMANDU_TIMEZONE,
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(new Date(`${date}T00:00:00${KATHMANDU_OFFSET}`));
+}
+
 export function formatDateShortLabel(date: string): string {
   return new Intl.DateTimeFormat("en-US", {
     timeZone: KATHMANDU_TIMEZONE,

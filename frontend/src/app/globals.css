@@ -2700,3 +2700,184 @@ a.navigation-item:hover {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Workout activity calendar (Today) */
+
+.workout-activity {
+  display: grid;
+  gap: 12px;
+}
+
+.workout-activity-summary {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 450;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.workout-activity-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.workout-activity-chart {
+  display: grid;
+  grid-template-columns: 14px max-content;
+  grid-template-rows: auto auto;
+  column-gap: 8px;
+  row-gap: 6px;
+  width: max-content;
+  min-width: 100%;
+  align-items: stretch;
+}
+
+.workout-activity-months {
+  grid-column: 2;
+  grid-row: 1;
+  display: grid;
+  grid-template-columns: repeat(var(--week-count), 12px);
+  gap: 3px;
+  height: 12px;
+}
+
+.workout-activity-month {
+  overflow: visible;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 12px;
+  white-space: nowrap;
+}
+
+.workout-activity-weekdays {
+  grid-column: 1;
+  grid-row: 2;
+  display: grid;
+  grid-template-rows: repeat(7, 12px);
+  gap: 3px;
+}
+
+.workout-activity-weekday {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.workout-activity-grid {
+  grid-column: 2;
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: repeat(var(--week-count), 12px);
+  grid-template-rows: repeat(7, 12px);
+  grid-auto-flow: column;
+  gap: 3px;
+}
+
+.workout-activity-cell {
+  position: relative;
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+
+.workout-activity-cell[data-level="1"] {
+  background: var(--primary);
+  box-shadow: none;
+}
+
+.workout-activity-cell[data-outside="true"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+a.workout-activity-cell:hover {
+  outline: 1px solid var(--border-strong);
+  outline-offset: 1px;
+}
+
+a.workout-activity-cell:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+a.workout-activity-cell::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+}
+
+.workout-activity-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 450;
+}
+
+.workout-activity-legend .workout-activity-cell {
+  flex: 0 0 auto;
+}
+
+.workout-activity-skeleton {
+  display: grid;
+  gap: 12px;
+}
+
+.workout-activity-skeleton-chart {
+  height: 112px;
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+@media (min-width: 1128px) {
+  .workout-activity-scroll {
+    overflow-x: visible;
+  }
+
+  .workout-activity-chart {
+    width: 100%;
+    min-width: 0;
+    grid-template-columns: 14px minmax(0, 1fr);
+  }
+
+  .workout-activity-months,
+  .workout-activity-grid {
+    width: 100%;
+    grid-template-columns: repeat(var(--week-count), minmax(0, 1fr));
+  }
+
+  .workout-activity-grid {
+    grid-template-rows: repeat(7, auto);
+  }
+
+  .workout-activity-weekdays {
+    align-self: stretch;
+    grid-template-rows: repeat(7, minmax(0, 1fr));
+  }
+
+  .workout-activity-cell {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+  }
+
+  .workout-activity-legend .workout-activity-cell {
+    width: 12px;
+    height: 12px;
+    aspect-ratio: auto;
+  }
+}
+
+

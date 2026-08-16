@@ -26,6 +26,7 @@ Mode: **Operate**. Task completion and legibility take priority over decoration.
 
 - Lead with today's local date, quick actions, and the deterministic daily summary.
 - Show current body weight when logged, today's workout state, meals, known nutrition totals, and completeness.
+- Show a binary workout-activity calendar for the last year (Nepal-local days with at least one workout).
 - Keep `Log workout`, `Log meal`, and `Log weight` reachable without scrolling on a common phone viewport.
 
 ### Workouts
@@ -261,6 +262,7 @@ Mobile disclosure becomes a sheet only when the content remains a short choice o
 ### Domain composites
 
 - `DailySummary`: server-owned facts with honest missing and incomplete states; quick logging actions remain visible above the fold on a common phone.
+- `WorkoutActivityCalendar`: Nepal-local year heatmap of workout presence (binary active/inactive). Compact cells, crimson for active days, horizontal scroll on narrow viewports, tooltips/aria with exact workout counts, and day links into the filtered Workouts list. Not a GitHub-green clone.
 - `WorkoutCard` and `WorkoutDetail`: stable order of local date/time, title, duration, set counts, completion state, and actions.
 - `ExerciseCard`: one performed exercise with ordered set rows and optional superset membership.
 - `SetRow`: order, textual set type, weight in kg, and reps aligned consistently. A dropset is indented beneath and visibly connected to its working-set parent.
@@ -360,6 +362,7 @@ When a new pattern is truly reusable, update this component inventory in the sam
 - Filters open in a bottom sheet on mobile and an anchored panel on desktop.
 - Body-weight list view stays compact; grid view uses balanced two-column cards on desktop and one column on mobile. Neither view stretches low-density rows across the full desktop grid.
 - Summary tiles show one fact each and do not imply unavailable data.
+- The Today workout-activity calendar is a presence chart only; exact counts stay in cell labels and the linked Workouts day filter.
 - Use charts only when a trend is clearer than a compact list; always retain exact values.
 
 ### Logging Forms

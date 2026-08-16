@@ -2,7 +2,7 @@ from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import select
+from sqlalchemy import Date, cast, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -19,6 +19,9 @@ from nirantar.schemas.summaries import (
     MealDailySummaryRead,
     NutrientTotalRead,
     NutritionSummaryRead,
+    WorkoutActivityDayRead,
+    WorkoutActivityQuery,
+    WorkoutActivityRead,
     WorkoutDailySummaryRead,
 )
 from nirantar.schemas.weights import WeightRead
@@ -96,6 +99,39 @@ class DailySummaryService:
                 ),
             ),
             body_weight=WeightRead.model_validate(weight) if weight is not None else None,
+        )
+
+    async def get_workout_activity(
+        self,
+        query: WorkoutActivityQuery,
+    ) -> WorkoutActivityRead:
+        start_at, _ = self._date_bounds(query.start_date)
+        _, end_at = self._date_bounds(query.end_date)
+        local_day = cast(
+            func.timezone(self.user_timezone, WorkoutSession.check_in_at),
+            Date,
+        )
+        result = await self.session.execute(
+            select(local_day.label("activity_date"), func.count())
+            .where(
+                WorkoutSession.owner_id == self.owner_id,
+                WorkoutSession.check_in_at >= start_at,
+                WorkoutSession.check_in_at < end_at,
+            )
+            .group_by(local_day)
+            .order_by(local_day.asc())
+        )
+        days = [
+            WorkoutActivityDayRead(date=activity_date, workout_count=int(count))
+            for activity_date, count in result.all()
+            if int(count) > 0
+        ]
+        return WorkoutActivityRead(
+            start_date=query.start_date,
+            end_date=query.end_date,
+            timezone=self.user_timezone,
+            active_day_count=len(days),
+            days=days,
         )
 
     def _date_bounds(self, summary_date: date) -> tuple[datetime, datetime]:

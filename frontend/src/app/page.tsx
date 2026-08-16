@@ -13,6 +13,7 @@ import Link from "next/link";
 
 import { AppShell } from "@/components/app-shell";
 import { Landing } from "@/components/landing";
+import { WorkoutActivityCalendar } from "@/components/workout-activity-calendar";
 import { FeedbackState } from "@/components/ui/feedback-state";
 import {
   PageContainer,
@@ -27,6 +28,11 @@ import {
   type DailySummary,
   type NutrientTotal,
 } from "@/lib/daily-summary";
+import { addDaysToDateString } from "@/lib/time";
+import {
+  buildActivityCells,
+  getWorkoutActivity,
+} from "@/lib/workout-activity";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +60,18 @@ function EmptySummary() {
     <FeedbackState
       id="summary-unavailable-title"
       title="Today’s summary is unavailable"
+      description="Refresh to try again."
+      icon={<WarningCircleIcon size={24} weight="regular" />}
+      tone="warning"
+    />
+  );
+}
+
+function UnavailableActivity() {
+  return (
+    <FeedbackState
+      id="workout-activity-unavailable-title"
+      title="Workout activity is unavailable"
       description="Refresh to try again."
       icon={<WarningCircleIcon size={24} weight="regular" />}
       tone="warning"
@@ -183,7 +201,11 @@ export default async function Home() {
   }
 
   const today = getKathmanduDate();
-  const result = await getDailySummary(today);
+  const activityStart = addDaysToDateString(today, -364);
+  const [result, activityResult] = await Promise.all([
+    getDailySummary(today),
+    getWorkoutActivity(activityStart, today),
+  ]);
 
   return (
     <AppShell activeDestination="today">
@@ -215,6 +237,26 @@ export default async function Home() {
             <SummaryContent summary={result.summary} />
           ) : (
             <EmptySummary />
+          )}
+        </section>
+
+        <section
+          className="daily-section"
+          id="workout-activity"
+          aria-labelledby="workout-activity-title"
+        >
+          <SectionHeader id="workout-activity-title" title="Workout activity" />
+          {activityResult.status === "ready" ? (
+            <WorkoutActivityCalendar
+              cells={buildActivityCells(
+                activityStart,
+                today,
+                activityResult.activity.days,
+              )}
+              activeDayCount={activityResult.activity.active_day_count}
+            />
+          ) : (
+            <UnavailableActivity />
           )}
         </section>
       </PageContainer>
