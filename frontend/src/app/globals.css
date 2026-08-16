@@ -66,29 +66,25 @@ button {
   display: flex;
   height: 64px;
   align-items: center;
-  gap: 10px;
+  gap: 4px;
   border-bottom: 1px solid var(--hairline-soft);
-  padding: 0 16px;
+  padding: 0 12px;
 }
 
-.brand-mark {
-  display: grid;
-  width: 36px;
-  height: 36px;
+.brand-logo {
+  display: flex;
+  width: 72px;
+  min-height: 44px;
   flex: 0 0 auto;
-  place-items: center;
-  border-radius: 11px;
-  background: var(--primary);
-  color: white;
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: -0.04em;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
 }
 
-.wordmark {
-  font-size: 17px;
-  font-weight: 650;
-  letter-spacing: -0.02em;
+.brand-logo img {
+  display: block;
+  width: 72px;
+  height: auto;
 }
 
 .today-page {
@@ -564,6 +560,14 @@ a.navigation-item:hover {
     margin-top: 44px;
     flex-direction: column;
     gap: 8px;
+  }
+
+  .desktop-sidebar .brand-logo {
+    width: 68px;
+  }
+
+  .desktop-sidebar .brand-logo img {
+    width: 68px;
   }
 
   .desktop-sidebar .navigation-item {

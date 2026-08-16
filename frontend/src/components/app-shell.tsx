@@ -5,6 +5,7 @@ import {
   HouseIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import type { Icon } from "@phosphor-icons/react";
+import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -28,6 +29,21 @@ const navigation: NavigationItem[] = [
   { destination: "meals", label: "Meals", icon: BowlFoodIcon },
   { destination: "history", label: "History", icon: CalendarDotsIcon },
 ];
+
+function BrandLogo() {
+  return (
+    <Link className="brand-logo" href="/" aria-label="Nirantar home">
+      <Image
+        src="/logo/light_logo.png"
+        alt=""
+        width={1374}
+        height={1145}
+        sizes="(min-width: 1128px) 68px, 72px"
+        priority
+      />
+    </Link>
+  );
+}
 
 function Navigation({ activeDestination }: { activeDestination: NavigationDestination }) {
   return (
@@ -79,17 +95,12 @@ export function AppShell({
   return (
     <div className="app-shell">
       <aside className="desktop-sidebar">
-        <div className="brand-mark" aria-label="Nirantar">
-          <span aria-hidden="true">N</span>
-        </div>
+        <BrandLogo />
         <Navigation activeDestination={activeDestination} />
       </aside>
       <div className="app-frame">
         <header className="mobile-header">
-          <div className="brand-mark" aria-label="Nirantar">
-            <span aria-hidden="true">N</span>
-          </div>
-          <span className="wordmark">Nirantar</span>
+          <BrandLogo />
         </header>
         {children}
       </div>
