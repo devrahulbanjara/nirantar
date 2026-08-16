@@ -2,6 +2,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { PwaRegister } from "@/components/pwa-register";
 import { clerkAppearance, clerkLocalization } from "@/lib/clerk-appearance";
 import "./globals.css";
 
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         >
           {children}
         </ClerkProvider>
+        <PwaRegister />
       </body>
     </html>
   );
