@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, time, timedelta
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import Select, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from nirantar.config import get_settings
 from nirantar.models.workouts import (
     ExerciseGroup,
     ExerciseGroupMember,
@@ -38,6 +40,8 @@ from nirantar.schemas.workouts import (
     WorkoutDeleteRequest,
     WorkoutDeleteResult,
     WorkoutEditRequest,
+    WorkoutHistoryQuery,
+    WorkoutHistoryRead,
     WorkoutRead,
     UpdateExerciseOperation,
     UpdateSetOperation,
@@ -168,9 +172,16 @@ def _session_load_options() -> tuple:
 class WorkoutService:
     """Shared workout domain operations for FastAPI and MCP."""
 
-    def __init__(self, session: AsyncSession, owner_id: str) -> None:
+    def __init__(
+        self,
+        session: AsyncSession,
+        owner_id: str,
+        *,
+        user_timezone: str | None = None,
+    ) -> None:
         self.session = session
         self.owner_id = owner_id
+        self.user_timezone = user_timezone or get_settings().user_timezone
 
     async def log_workout(self, payload: WorkoutCreate) -> WorkoutRead:
         try:
@@ -726,6 +737,35 @@ class WorkoutService:
         result = await self.session.execute(statement)
         sessions = result.scalars().unique().all()
         return [_to_workout_read(item) for item in sessions]
+
+    async def get_workouts(self, query: WorkoutHistoryQuery) -> WorkoutHistoryRead:
+        timezone = ZoneInfo(self.user_timezone)
+        start_at = datetime.combine(query.start_date, time.min, tzinfo=timezone)
+        end_at = datetime.combine(
+            query.end_date + timedelta(days=1),
+            time.min,
+            tzinfo=timezone,
+        )
+        statement: Select[tuple[WorkoutSession]] = (
+            select(WorkoutSession)
+            .options(*_session_load_options())
+            .where(
+                WorkoutSession.owner_id == self.owner_id,
+                WorkoutSession.check_in_at >= start_at,
+                WorkoutSession.check_in_at < end_at,
+            )
+            .order_by(WorkoutSession.check_in_at.desc(), WorkoutSession.id.asc())
+            .limit(query.limit)
+        )
+        result = await self.session.execute(statement)
+        sessions = result.scalars().unique().all()
+        workouts = [_to_workout_read(item) for item in sessions]
+        return WorkoutHistoryRead(
+            start_date=query.start_date,
+            end_date=query.end_date,
+            workout_count=len(workouts),
+            workouts=workouts,
+        )
 
     async def get_exercise_history(
         self,

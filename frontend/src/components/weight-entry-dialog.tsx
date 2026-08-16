@@ -128,6 +128,7 @@ export function WeightEntryDialog({
             id="weight-measured-on"
             label="Date"
             value={measuredOn}
+            todayDate={defaultDate}
             onChange={setMeasuredOn}
           />
         ) : (

@@ -13,6 +13,7 @@ export function DateField({
   onChange,
   min,
   max,
+  todayDate,
 }: {
   id: string;
   label: string;
@@ -20,6 +21,7 @@ export function DateField({
   onChange: (value: string) => void;
   min?: string;
   max?: string;
+  todayDate?: string;
 }) {
   const headingId = useId();
   const [open, setOpen] = useState(false);
@@ -34,7 +36,7 @@ export function DateField({
       </button>
       <Modal open={open} onClose={() => setOpen(false)} labelledBy={headingId} variant="responsive-dialog">
         <h2 className="modal-heading" id={headingId}>{label}</h2>
-        <Calendar value={draft} onChange={setDraft} min={min} max={max} />
+        <Calendar value={draft} onChange={setDraft} min={min} max={max} todayDate={todayDate} />
         <div className="modal-actions">
           <button type="button" className="button-secondary" onClick={() => setOpen(false)}>Cancel</button>
           <button type="button" className="button-primary" onClick={() => { onChange(draft); setOpen(false); }}>Apply date</button>

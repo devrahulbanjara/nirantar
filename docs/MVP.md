@@ -89,6 +89,7 @@ The MVP does not need a comprehensive nutrition database. Free-form food names a
 ### History
 
 - Recent workouts.
+- Workouts by date or period.
 - Exercise-specific history.
 - Meals by date or period.
 - Basic daily summary.
@@ -106,6 +107,7 @@ Keep the initial MCP surface small.
 ```text
 log_workout
 get_recent_workouts
+get_workouts
 get_exercise_history
 log_meal
 get_meals
@@ -223,6 +225,10 @@ before (optional)
 ```
 
 Return sessions with exercises and sets in deterministic order.
+
+### `get_workouts`
+
+Return workouts for a requested inclusive local-date range (`start_date`, `end_date`), with optional `limit`. Calendar days use the configured user timezone (default `Asia/Kathmandu`).
 
 ### `get_exercise_history`
 

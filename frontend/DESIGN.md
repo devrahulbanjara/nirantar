@@ -30,13 +30,13 @@ Mode: **Operate**. Task completion and legibility take priority over decoration.
 
 ### Workouts
 
-- Provide a recent-workout list, workout detail, new-workout flow, and edit flow.
+- Provide a Nepal-local date-filtered workout list (default today), workout detail, new-workout flow, and edit flow.
 - The editor handles check-in/out, ordered exercises, physical sets, nested dropsets, supersets, title, and notes.
 - Workout detail preserves exercise, set, dropset, and superset order exactly as returned.
 
 ### Meals
 
-- Provide a date-grouped meal list, meal detail, new-meal flow, and edit flow.
+- Provide a date-grouped meal list (default today, optional start–end range), meal detail, new-meal flow, and edit flow.
 - The editor saves a meal and all ordered food items as one aggregate.
 - Show per-item nutrition only when known and label incomplete totals honestly.
 
@@ -270,7 +270,7 @@ Mobile disclosure becomes a sheet only when the content remains a short choice o
 - `FoodItemRow`: name first, quantity and unit second, then only known nutrition. Unknown values read `Not provided`.
 - `NutritionCompleteness`: known total plus coverage, such as `Protein: 42 g · 2 of 3 items`; never substitutes zero for unknown.
 - `WeightEntry`: Nepal-local date, decimal `kg` value, correction state, and save feedback.
-- `HistoryFilterBar`: current date range and other active filters, clear affordances, and the responsive `DateRangePicker` disclosure.
+- `HistoryFilterBar`: current date range and other active filters, clear affordances, and the responsive `DateRangePicker` disclosure. Implemented by the shared date-range filter bar on Workouts, Meals, and History.
 - `HistoryGroup`: local-date heading followed by exact records. Lists remain the source for exact values even when a trend chart is later added.
 
 ### Component state contract

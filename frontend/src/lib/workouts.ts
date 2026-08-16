@@ -65,6 +65,17 @@ export type RecentWorkoutsResult =
   | { status: "ready"; workouts: Workout[] }
   | { status: "unavailable" };
 
+export type WorkoutHistory = {
+  start_date: string;
+  end_date: string;
+  workout_count: number;
+  workouts: Workout[];
+};
+
+export type WorkoutHistoryResult =
+  | { status: "ready"; history: WorkoutHistory }
+  | { status: "unavailable" };
+
 export async function getRecentWorkouts(
   limit = 20,
 ): Promise<RecentWorkoutsResult> {
@@ -89,6 +100,21 @@ export async function getRecentWorkouts(
   } catch {
     return { status: "unavailable" };
   }
+}
+
+export async function getWorkouts(
+  startDate: string,
+  endDate: string,
+  limit = 200,
+): Promise<WorkoutHistoryResult> {
+  const search = new URLSearchParams({
+    start_date: startDate,
+    end_date: endDate,
+    limit: String(limit),
+  });
+  const result = await apiGet<WorkoutHistory>(`/workouts?${search.toString()}`);
+  if (!result.ok) return { status: "unavailable" };
+  return { status: "ready", history: result.data };
 }
 
 export type WorkoutResult =

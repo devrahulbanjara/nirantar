@@ -10,7 +10,7 @@ from nirantar.auth import require_user
 from nirantar.config import Settings
 from nirantar.schemas.meals import MealHistoryQuery
 from nirantar.schemas.weights import WeightCreate, WeightHistoryQuery
-from nirantar.schemas.workouts import RecentWorkoutsQuery
+from nirantar.schemas.workouts import RecentWorkoutsQuery, WorkoutHistoryQuery
 from nirantar.services.errors import NotFoundError
 from nirantar.services.meals import MealService
 from nirantar.services.weights import WeightService
@@ -74,6 +74,14 @@ async def test_fitness_history_is_scoped_to_the_verified_user(db_session) -> Non
     assert await WorkoutService(db_session, friend).get_recent_workouts(
         RecentWorkoutsQuery()
     ) == []
+    assert (
+        await WorkoutService(db_session, friend).get_workouts(
+            WorkoutHistoryQuery(
+                start_date=date(2026, 8, 16),
+                end_date=date(2026, 8, 16),
+            )
+        )
+    ).workout_count == 0
     assert (
         await MealService(db_session, friend).get_meals(
             MealHistoryQuery(

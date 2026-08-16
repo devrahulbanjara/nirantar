@@ -57,6 +57,7 @@ export default async function HistoryPage({
               endDate={endDate}
               isDefaultRange={isDefaultRange}
               todayDate={today}
+              clearBehavior="omit-params"
               extraParams={{ view }}
             />
           }

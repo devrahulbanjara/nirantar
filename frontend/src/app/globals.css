@@ -1163,6 +1163,11 @@ a.navigation-item:hover {
     justify-content: flex-end;
   }
 
+  .page-header-actions > .history-filter-bar {
+    flex: 0 0 auto;
+    max-width: none;
+  }
+
   .page-header-actions > .date-range-trigger {
     flex: 0 0 auto;
     max-width: none;
@@ -2099,13 +2104,36 @@ a.navigation-item:hover {
   gap: 8px;
 }
 
+.history-filter-bar {
+  display: flex;
+  flex: 1 1 100%;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+}
+
 .date-range-trigger {
   display: inline-flex;
   max-width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
   gap: 6px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.date-range-trigger-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.date-range-clear {
+  flex: 0 0 auto;
+}
+
+.page-header-actions > .history-filter-bar {
+  flex: 1 1 100%;
 }
 
 .page-header-actions > .date-range-trigger {
@@ -2177,6 +2205,7 @@ a.navigation-item:hover {
 }
 
 .calendar-day {
+  position: relative;
   display: grid;
   width: 44px;
   height: 44px;
@@ -2193,9 +2222,28 @@ a.navigation-item:hover {
   background: var(--surface);
 }
 
+.calendar-day[data-today]:not([data-selected]) {
+  box-shadow: inset 0 0 0 2px var(--border-strong);
+}
+
 .calendar-day[data-selected] {
   background: var(--ink);
   color: var(--on-primary);
+}
+
+.calendar-day-number {
+  line-height: 1;
+}
+
+.calendar-day-today-mark {
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .time-controls {

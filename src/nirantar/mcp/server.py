@@ -27,6 +27,8 @@ from nirantar.schemas.workouts import (
     WorkoutDeleteRequest,
     WorkoutDeleteResult,
     WorkoutEditRequest,
+    WorkoutHistoryQuery,
+    WorkoutHistoryRead,
     WorkoutRead,
 )
 from nirantar.schemas.weights import (
@@ -239,6 +241,30 @@ async def get_recent_workouts(
     async with factory() as session:
         service = WorkoutService(session, _current_user_id())
         return await service.get_recent_workouts(query)
+
+
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    }
+)
+async def get_workouts(
+    start_date: date,
+    end_date: date,
+    limit: int = 100,
+) -> WorkoutHistoryRead:
+    """List workouts for an inclusive local-date range."""
+    query = WorkoutHistoryQuery(
+        start_date=start_date,
+        end_date=end_date,
+        limit=limit,
+    )
+    factory = get_session_factory()
+    async with factory() as session:
+        return await WorkoutService(session, _current_user_id()).get_workouts(query)
 
 
 @mcp.tool(

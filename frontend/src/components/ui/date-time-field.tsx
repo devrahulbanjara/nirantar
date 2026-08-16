@@ -5,6 +5,7 @@ import { useId, useState } from "react";
 
 import { Modal } from "@/components/modal";
 import { Calendar } from "@/components/ui/calendar";
+import { getKathmanduDate } from "@/lib/time";
 
 function parts(value: string) {
   const [date = "", time = "00:00"] = value.split("T");
@@ -79,6 +80,7 @@ export function DateTimeField({
           <h2 className="modal-heading" id={headingId}>{label}</h2>
           <Calendar
             value={valueFor(draft.year, draft.month, draft.day, 0, 0).slice(0, 10)}
+            todayDate={getKathmanduDate()}
             onChange={(next) => {
               const selected = parts(`${next}T00:00`);
               setDraft({ ...draft, year: selected.year, month: selected.month, day: selected.day });

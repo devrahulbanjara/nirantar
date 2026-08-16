@@ -8,6 +8,7 @@ import {
 import Link from "next/link";
 
 import { AppShell } from "@/components/app-shell";
+import { DateRangeFilter } from "@/components/date-range-filter";
 import {
   AggregateCard,
   AggregateCardHeader,
@@ -18,7 +19,7 @@ import { FeedbackState } from "@/components/ui/feedback-state";
 import { PageContainer, PageHeader } from "@/components/ui/page-layout";
 import { ViewToggle, type CollectionView } from "@/components/ui/view-toggle";
 import { formatKathmanduDate, getKathmanduDate } from "@/lib/daily-summary";
-import { getRecentWorkouts, type Workout } from "@/lib/workouts";
+import { getWorkouts, type Workout } from "@/lib/workouts";
 
 export const dynamic = "force-dynamic";
 
@@ -116,12 +117,16 @@ function WorkoutCard({
   );
 }
 
-function EmptyWorkouts() {
+function EmptyWorkouts({ isDefaultRange }: { isDefaultRange: boolean }) {
   return (
     <EmptyState
       id="no-workouts-title"
-      title="No workouts yet"
-      description="Log your first workout to begin your history."
+      title={isDefaultRange ? "No workouts logged today" : "No workouts in this range"}
+      description={
+        isDefaultRange
+          ? "Log a workout to begin today’s history."
+          : "Nothing was logged in the selected dates."
+      }
       icon={<BarbellIcon size={24} weight="regular" />}
       action={
         <Link href="/workouts/new" className="button-primary">
@@ -148,12 +153,15 @@ function UnavailableWorkouts() {
 export default async function WorkoutsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string }>;
+  searchParams: Promise<{ start?: string; end?: string; view?: string }>;
 }) {
   const params = await searchParams;
-  const view: CollectionView = params.view === "grid" ? "grid" : "list";
-  const result = await getRecentWorkouts();
   const today = getKathmanduDate();
+  const endDate = params.end ?? today;
+  const startDate = params.start ?? today;
+  const isDefaultRange = !params.start && !params.end;
+  const view: CollectionView = params.view === "grid" ? "grid" : "list";
+  const result = await getWorkouts(startDate, endDate);
 
   return (
     <AppShell activeDestination="workouts">
@@ -166,6 +174,20 @@ export default async function WorkoutsPage({
                 basePath="/workouts"
                 view={view}
                 preferenceKey="nirantar:view:workouts"
+                params={
+                  isDefaultRange
+                    ? undefined
+                    : { start: startDate, end: endDate }
+                }
+              />
+              <DateRangeFilter
+                basePath="/workouts"
+                startDate={startDate}
+                endDate={endDate}
+                isDefaultRange={isDefaultRange}
+                todayDate={today}
+                clearBehavior="today"
+                extraParams={{ view }}
               />
               <Link href="/workouts/new" className="button-primary">
                 <PlusIcon size={18} weight="bold" aria-hidden="true" />
@@ -177,11 +199,11 @@ export default async function WorkoutsPage({
 
         {result.status === "unavailable" ? (
           <UnavailableWorkouts />
-        ) : result.workouts.length === 0 ? (
-          <EmptyWorkouts />
+        ) : result.history.workouts.length === 0 ? (
+          <EmptyWorkouts isDefaultRange={isDefaultRange} />
         ) : view === "grid" ? (
           <div className="workout-list collection collection-grid-flat" data-view="grid">
-            {groupWorkouts(result.workouts).flatMap(([date, workouts]) =>
+            {groupWorkouts(result.history.workouts).flatMap(([date, workouts]) =>
               workouts.map((workout) => (
                 <WorkoutCard
                   workout={workout}
@@ -193,7 +215,7 @@ export default async function WorkoutsPage({
           </div>
         ) : (
           <div className="workout-groups collection" data-view={view}>
-            {groupWorkouts(result.workouts).map(([date, workouts]) => (
+            {groupWorkouts(result.history.workouts).map(([date, workouts]) => (
               <section className="workout-day" key={date}>
                 <h2>{date === today ? "Today" : formatKathmanduDate(date)}</h2>
                 <div className="workout-list">

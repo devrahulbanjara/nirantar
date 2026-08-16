@@ -207,6 +207,7 @@ Good examples:
 ```text
 log_workout
 get_recent_workouts
+get_workouts
 get_exercise_history
 get_training_summary
 log_meal

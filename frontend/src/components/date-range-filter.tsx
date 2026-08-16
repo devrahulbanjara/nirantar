@@ -1,12 +1,28 @@
 "use client";
 
-import { CalendarDotsIcon } from "@phosphor-icons/react";
+import { CalendarDotsIcon, XIcon } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 
 import { Modal } from "@/components/modal";
 import { DateField } from "@/components/ui/date-field";
-import { addDaysToDateString, formatDateShortLabel } from "@/lib/time";
+import {
+  addDaysToDateString,
+  formatDateLabel,
+  formatDateShortLabel,
+} from "@/lib/time";
+
+function formatActiveRangeLabel(
+  startDate: string,
+  endDate: string,
+  todayDate: string,
+): string {
+  if (startDate === endDate) {
+    const dayLabel = formatDateLabel(startDate);
+    return startDate === todayDate ? `Today · ${dayLabel}` : dayLabel;
+  }
+  return `${formatDateShortLabel(startDate)} – ${formatDateShortLabel(endDate)}`;
+}
 
 export function DateRangeFilter({
   basePath,
@@ -15,6 +31,7 @@ export function DateRangeFilter({
   isDefaultRange,
   todayDate,
   extraParams,
+  clearBehavior = "omit-params",
 }: {
   basePath: string;
   startDate: string;
@@ -22,6 +39,8 @@ export function DateRangeFilter({
   isDefaultRange: boolean;
   todayDate: string;
   extraParams?: Record<string, string>;
+  /** `today` clears to the page default (no start/end). `omit-params` same URL shape for History's longer default. */
+  clearBehavior?: "today" | "omit-params";
 }) {
   const router = useRouter();
   const headingId = useId();
@@ -29,6 +48,7 @@ export function DateRangeFilter({
   const [start, setStart] = useState(startDate);
   const [end, setEnd] = useState(endDate);
   const invalidRange = !start || !end || end < start;
+  const rangeLabel = formatActiveRangeLabel(startDate, endDate, todayDate);
 
   function buildUrl(params: { start?: string; end?: string }): string {
     const search = new URLSearchParams(extraParams);
@@ -40,7 +60,11 @@ export function DateRangeFilter({
 
   function apply() {
     if (invalidRange) return;
-    router.push(buildUrl({ start, end }));
+    if (start === todayDate && end === todayDate && clearBehavior === "today") {
+      router.push(buildUrl({}));
+    } else {
+      router.push(buildUrl({ start, end }));
+    }
     setOpen(false);
   }
 
@@ -55,10 +79,11 @@ export function DateRangeFilter({
   }
 
   return (
-    <>
+    <div className="history-filter-bar">
       <button
         type="button"
         className="button-secondary button-compact date-range-trigger"
+        aria-label={`Filter dates, currently ${rangeLabel}`}
         onClick={() => {
           setStart(startDate);
           setEnd(endDate);
@@ -66,10 +91,18 @@ export function DateRangeFilter({
         }}
       >
         <CalendarDotsIcon size={16} weight="bold" aria-hidden="true" />
-        {isDefaultRange
-          ? "Filter dates"
-          : `${formatDateShortLabel(startDate)} – ${formatDateShortLabel(endDate)}`}
+        <span className="date-range-trigger-label">{rangeLabel}</span>
       </button>
+      {!isDefaultRange ? (
+        <button
+          type="button"
+          className="icon-button date-range-clear"
+          aria-label="Clear date filter"
+          onClick={clear}
+        >
+          <XIcon size={16} weight="bold" aria-hidden="true" />
+        </button>
+      ) : null}
       <Modal
         open={open}
         onClose={() => setOpen(false)}
@@ -95,6 +128,7 @@ export function DateRangeFilter({
           label="Start date"
           value={start}
           max={end}
+          todayDate={todayDate}
           onChange={setStart}
         />
         <DateField
@@ -103,6 +137,7 @@ export function DateRangeFilter({
           value={end}
           min={start}
           max={todayDate}
+          todayDate={todayDate}
           onChange={setEnd}
         />
         {invalidRange ? (
@@ -124,6 +159,6 @@ export function DateRangeFilter({
           </button>
         </div>
       </Modal>
-    </>
+    </div>
   );
 }

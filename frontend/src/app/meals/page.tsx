@@ -19,15 +19,12 @@ import { ViewToggle, type CollectionView } from "@/components/ui/view-toggle";
 import { getKathmanduDate } from "@/lib/daily-summary";
 import { getMeals, type Meal } from "@/lib/meals";
 import {
-  addDaysToDateString,
   formatDateLabel,
   formatKathmanduTime,
   getKathmanduLocalDate,
 } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
-
-const DEFAULT_RANGE_DAYS = 30;
 
 function groupMealsByDate(meals: Meal[]): Array<[string, Meal[]]> {
   const groups = new Map<string, Meal[]>();
@@ -70,10 +67,10 @@ function EmptyMeals({ isDefaultRange }: { isDefaultRange: boolean }) {
   return (
     <EmptyState
       id="no-meals-title"
-      title={isDefaultRange ? "No meals logged" : "No meals in this range"}
+      title={isDefaultRange ? "No meals logged today" : "No meals in this range"}
       description={
         isDefaultRange
-          ? "Log a meal to start your nutrition history."
+          ? "Log a meal to start today’s nutrition history."
           : "Nothing was logged in the selected dates."
       }
       icon={<BowlFoodIcon size={24} weight="regular" />}
@@ -107,7 +104,7 @@ export default async function MealsPage({
   const params = await searchParams;
   const today = getKathmanduDate();
   const endDate = params.end ?? today;
-  const startDate = params.start ?? addDaysToDateString(endDate, -DEFAULT_RANGE_DAYS);
+  const startDate = params.start ?? today;
   const isDefaultRange = !params.start && !params.end;
   const view: CollectionView = params.view === "grid" ? "grid" : "list";
 
@@ -124,7 +121,11 @@ export default async function MealsPage({
               basePath="/meals"
               view={view}
               preferenceKey="nirantar:view:meals"
-              params={{ start: startDate, end: endDate }}
+              params={
+                isDefaultRange
+                  ? undefined
+                  : { start: startDate, end: endDate }
+              }
             />
             <DateRangeFilter
               basePath="/meals"
@@ -132,6 +133,7 @@ export default async function MealsPage({
               endDate={endDate}
               isDefaultRange={isDefaultRange}
               todayDate={today}
+              clearBehavior="today"
               extraParams={{ view }}
             />
             <Link href="/meals/new" className="button-primary">

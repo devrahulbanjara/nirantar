@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
 from typing import Annotated, Literal
@@ -358,6 +358,25 @@ class RecentWorkoutsQuery(BaseModel):
         if value is not None and value.tzinfo is None:
             raise ValueError("before must be timezone-aware")
         return value
+
+
+class WorkoutHistoryQuery(BaseModel):
+    start_date: date
+    end_date: date
+    limit: int = Field(default=100, ge=1, le=200)
+
+    @model_validator(mode="after")
+    def validate_range(self) -> "WorkoutHistoryQuery":
+        if self.end_date < self.start_date:
+            raise ValueError("end_date must be on or after start_date")
+        return self
+
+
+class WorkoutHistoryRead(BaseModel):
+    start_date: date
+    end_date: date
+    workout_count: int
+    workouts: list[WorkoutRead]
 
 
 class ExerciseHistoryQuery(BaseModel):

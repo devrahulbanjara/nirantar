@@ -27,11 +27,13 @@ export function Calendar({
   onChange,
   min,
   max,
+  todayDate,
 }: {
   value: string;
   onChange: (value: string) => void;
   min?: string;
   max?: string;
+  todayDate?: string;
 }) {
   const selected = parseDate(value);
   const [visible, setVisible] = useState({ year: selected.year, month: selected.month });
@@ -68,18 +70,26 @@ export function Calendar({
           if (!day) return <span key={`empty-${index}`} />;
           const next = dateValue(visible.year, visible.month, day);
           const disabled = Boolean((min && next < min) || (max && next > max));
+          const isToday = todayDate === next;
+          const isSelected = next === value;
+          const dayLabel = new Intl.DateTimeFormat("en-US", { dateStyle: "full" }).format(
+            new Date(visible.year, visible.month - 1, day),
+          );
           return (
             <button
               type="button"
               className="calendar-day"
-              data-selected={next === value || undefined}
-              aria-label={new Intl.DateTimeFormat("en-US", { dateStyle: "full" }).format(new Date(visible.year, visible.month - 1, day))}
-              aria-pressed={next === value}
+              data-selected={isSelected || undefined}
+              data-today={isToday || undefined}
+              aria-label={isToday ? `Today, ${dayLabel}` : dayLabel}
+              aria-current={isToday ? "date" : undefined}
+              aria-pressed={isSelected}
               disabled={disabled}
               onClick={() => onChange(next)}
               key={next}
             >
-              {day}
+              <span className="calendar-day-number">{day}</span>
+              {isToday ? <span className="calendar-day-today-mark">Today</span> : null}
             </button>
           );
         })}

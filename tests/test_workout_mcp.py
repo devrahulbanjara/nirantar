@@ -57,6 +57,7 @@ async def test_mcp_tools_log_and_retrieve_workout() -> None:
         assert {
             "log_workout",
             "get_recent_workouts",
+            "get_workouts",
             "get_exercise_history",
             "get_workout",
             "edit_workout",
@@ -73,6 +74,14 @@ async def test_mcp_tools_log_and_retrieve_workout() -> None:
         recent = _as_list(recent_result.structured_content or recent_result.data)
         assert len(recent) == 1
         assert recent[0]["id"] == created["id"]
+
+        range_result = await client.call_tool(
+            "get_workouts",
+            {"start_date": "2026-08-16", "end_date": "2026-08-16"},
+        )
+        ranged = _as_mapping(range_result.structured_content or range_result.data)
+        assert ranged["workout_count"] == 1
+        assert ranged["workouts"][0]["id"] == created["id"]
 
         history_result = await client.call_tool(
             "get_exercise_history",

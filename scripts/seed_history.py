@@ -1,18 +1,21 @@
-"""Seed a realistic multi-month history for one Clerk user.
+"""Seed realistic multi-month history for the local development Clerk user.
 
 Generation is deterministic: the same user id, week count, and end date always
 produce the same rows, so re-running only fills gaps instead of duplicating.
 
-Usage:
-    NIRANTAR_SEED_USER_ID=user_xxx uv run python scripts/seed_history.py
-    uv run python scripts/seed_history.py --user-id user_xxx --weeks 16
+Run from the repository root with uv:
+
+    uv run python scripts/seed_history.py
+
+To generate a different history length:
+
+    uv run python scripts/seed_history.py --weeks 24
 """
 
 from __future__ import annotations
 
 import argparse
 import asyncio
-import os
 import random
 from dataclasses import dataclass, field
 from datetime import date, datetime, time, timedelta
@@ -41,6 +44,7 @@ from nirantar.services.weights import WeightService
 from nirantar.services.workouts import WorkoutService
 
 DEFAULT_WEEKS = 16
+SEED_USER_ID = "user_3HzhQfWPlSSgQwsADzZiO0UeJMv"
 
 # Nepali training week: Saturday is the rest day, so the split runs
 # Sunday / Monday / Wednesday / Thursday. date.weekday(): Mon=0 .. Sun=6.
@@ -861,19 +865,12 @@ async def seed(owner_id: str, weeks: int) -> None:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--user-id",
-        default=os.environ.get("NIRANTAR_SEED_USER_ID", "").strip(),
-        help="Clerk user id that will own the seeded rows",
-    )
-    parser.add_argument(
         "--weeks",
         type=int,
         default=DEFAULT_WEEKS,
         help=f"Weeks of history to generate (default {DEFAULT_WEEKS})",
     )
     args = parser.parse_args()
-    if not args.user_id:
-        parser.error("Pass --user-id or set NIRANTAR_SEED_USER_ID")
     if args.weeks < 1:
         parser.error("--weeks must be at least 1")
     return args
@@ -881,4 +878,4 @@ def parse_args() -> argparse.Namespace:
 
 if __name__ == "__main__":
     parsed = parse_args()
-    asyncio.run(seed(parsed.user_id, parsed.weeks))
+    asyncio.run(seed(SEED_USER_ID, parsed.weeks))
