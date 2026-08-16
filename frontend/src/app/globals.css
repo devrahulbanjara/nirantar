@@ -380,6 +380,10 @@ button {
   .summary-grid {
     grid-template-columns: minmax(0, 1.2fr) minmax(0, 1.2fr) minmax(240px, 0.8fr);
   }
+
+  .weight-card {
+    align-self: start;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
