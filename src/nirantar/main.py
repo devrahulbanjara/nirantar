@@ -4,7 +4,7 @@ from collections.abc import AsyncIterator
 from fastapi import FastAPI
 from fastmcp.utilities.lifespan import combine_lifespans
 
-from nirantar.api import weights_router, workouts_router
+from nirantar.api import meals_router, weights_router, workouts_router
 from nirantar.db.session import dispose_engine, get_engine
 from nirantar.mcp.server import mcp
 
@@ -26,6 +26,7 @@ app = FastAPI(
 )
 app.include_router(workouts_router)
 app.include_router(weights_router)
+app.include_router(meals_router)
 app.mount("/mcp", mcp_app)
 
 

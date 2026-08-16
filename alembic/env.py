@@ -13,6 +13,8 @@ from nirantar.models import (  # noqa: F401
     ExerciseGroup,
     ExerciseGroupMember,
     ExerciseSet,
+    FoodItem,
+    Meal,
     WorkoutExercise,
     WorkoutSession,
 )
