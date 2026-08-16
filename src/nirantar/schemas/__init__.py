@@ -1,3 +1,12 @@
+from nirantar.schemas.meals import (
+    FoodItemCreate,
+    FoodItemRead,
+    MealCreate,
+    MealEditRequest,
+    MealHistoryRead,
+    MealRead,
+)
+from nirantar.schemas.summaries import DailySummaryRead
 from nirantar.schemas.workouts import (
     DropsetCreate,
     DropsetRead,
@@ -18,6 +27,7 @@ from nirantar.schemas.workouts import (
 )
 
 __all__ = [
+    "DailySummaryRead",
     "FoodItemCreate",
     "FoodItemRead",
     "MealCreate",
@@ -41,11 +51,3 @@ __all__ = [
     "WorkoutCreate",
     "WorkoutRead",
 ]
-from nirantar.schemas.meals import (
-    FoodItemCreate,
-    FoodItemRead,
-    MealCreate,
-    MealEditRequest,
-    MealHistoryRead,
-    MealRead,
-)

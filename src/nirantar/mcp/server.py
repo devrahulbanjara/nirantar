@@ -14,6 +14,7 @@ from nirantar.schemas.meals import (
     MealHistoryRead,
     MealRead,
 )
+from nirantar.schemas.summaries import DailySummaryRead
 from nirantar.schemas.workouts import (
     ExerciseHistoryEntry,
     ExerciseHistoryQuery,
@@ -34,6 +35,7 @@ from nirantar.schemas.weights import (
 )
 from nirantar.services.errors import DomainError
 from nirantar.services.meals import MealService
+from nirantar.services.summaries import DailySummaryService
 from nirantar.services.weights import WeightService
 from nirantar.services.workouts import WorkoutService
 
@@ -49,6 +51,21 @@ mcp = FastMCP(
 
 def _tool_error(exc: DomainError) -> ToolError:
     return ToolError(exc.message)
+
+
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    }
+)
+async def get_daily_summary(summary_date: date) -> DailySummaryRead:
+    """Summarize workouts, meals, nutrition, and body weight for a local date."""
+    factory = get_session_factory()
+    async with factory() as session:
+        return await DailySummaryService(session).get_daily_summary(summary_date)
 
 
 @mcp.tool(
