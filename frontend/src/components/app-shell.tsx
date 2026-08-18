@@ -1,8 +1,12 @@
+"use client";
+
 import {
   BarbellIcon,
   BowlFoodIcon,
   CalendarDotsIcon,
+  GearIcon,
   HouseIcon,
+  MoonIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import { Show, UserButton } from "@clerk/nextjs";
 import type { Icon } from "@phosphor-icons/react";
@@ -12,7 +16,7 @@ import type { ReactNode } from "react";
 import { BrandLogo } from "@/components/auth-shell";
 import { clerkAppearance } from "@/lib/clerk-appearance";
 
-export type NavigationDestination = "today" | "workouts" | "meals" | "history";
+export type NavigationDestination = "today" | "workouts" | "meals" | "sleep" | "history";
 
 type NavigationItem = {
   destination: NavigationDestination;
@@ -30,6 +34,7 @@ const navigation: NavigationItem[] = [
     href: "/workouts",
   },
   { destination: "meals", label: "Meals", icon: BowlFoodIcon, href: "/meals" },
+  { destination: "sleep", label: "Sleep", icon: MoonIcon, href: "/sleep" },
   {
     destination: "history",
     label: "History",
@@ -38,7 +43,7 @@ const navigation: NavigationItem[] = [
   },
 ];
 
-function Navigation({ activeDestination }: { activeDestination: NavigationDestination }) {
+function Navigation({ activeDestination }: { activeDestination: NavigationDestination | null }) {
   return (
     <nav className="app-navigation" aria-label="Primary navigation">
       {navigation.map(({ destination, label, icon: NavigationIcon, href }) => {
@@ -98,7 +103,11 @@ function AccountControls({ layout }: { layout: "header" | "sidebar" }) {
         )}
       </Show>
       <Show when="signed-in">
-        <UserButton appearance={clerkAppearance} />
+        <UserButton appearance={clerkAppearance}>
+          <UserButton.MenuItems>
+            <UserButton.Link label="Settings" labelIcon={<GearIcon size={16} />} href="/settings" />
+          </UserButton.MenuItems>
+        </UserButton>
       </Show>
     </div>
   );
@@ -108,7 +117,7 @@ export function AppShell({
   activeDestination,
   children,
 }: {
-  activeDestination: NavigationDestination;
+  activeDestination: NavigationDestination | null;
   children: ReactNode;
 }) {
   return (

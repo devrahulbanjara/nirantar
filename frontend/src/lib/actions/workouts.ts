@@ -103,7 +103,10 @@ export type WorkoutEditOperation =
       rpe?: number | null;
       notes?: string | null;
     }
-  | { operation: "remove_set"; set_id: string; cascade_dropsets?: boolean };
+  | { operation: "remove_set"; set_id: string; cascade_dropsets?: boolean }
+  | { operation: "add_superset"; order: number; notes?: string | null; workout_exercise_ids: string[] }
+  | { operation: "update_superset"; superset_id: string; order?: number; notes?: string | null; workout_exercise_ids?: string[] }
+  | { operation: "remove_superset"; superset_id: string };
 
 export async function editWorkout(
   workoutId: string,

@@ -2,9 +2,13 @@ from datetime import date, datetime, timezone
 
 import pytest
 
+from nirantar.schemas.sleep import SleepCreate
+from nirantar.schemas.targets import TargetPatch
 from nirantar.schemas.weights import WeightCreate
 from nirantar.services.meals import MealService
+from nirantar.services.sleep import SleepService
 from nirantar.services.summaries import DailySummaryService
+from nirantar.services.targets import TargetService
 from nirantar.services.weights import WeightService
 from nirantar.services.workouts import WorkoutService
 from tests.helpers import TEST_USER_ID, sample_meal, sample_workout
@@ -21,6 +25,20 @@ async def test_daily_summary_combines_workouts_meals_nutrition_and_weight(
     await MealService(db_session, TEST_USER_ID).log_meal(sample_meal())
     await WeightService(db_session, TEST_USER_ID).log_weight(
         WeightCreate(weight_kg="73", measured_on=date(2026, 8, 16))
+    )
+    await TargetService(db_session, TEST_USER_ID).set_targets(
+        TargetPatch(
+            calorie_target_kcal="2100",
+            protein_target_g="140",
+            goal_weight_kg="70",
+            target_workout_days_per_week=4,
+        )
+    )
+    await SleepService(db_session, TEST_USER_ID).log_sleep(
+        SleepCreate(
+            sleep_start=datetime(2026, 8, 15, 22, tzinfo=timezone.utc),
+            sleep_end=datetime(2026, 8, 16, 5, tzinfo=timezone.utc),
+        )
     )
 
     summary = await DailySummaryService(db_session, TEST_USER_ID).get_daily_summary(
@@ -43,8 +61,16 @@ async def test_daily_summary_combines_workouts_meals_nutrition_and_weight(
     assert calories.known_item_count == 1
     assert calories.missing_item_count == 2
     assert calories.complete is False
+    assert calories.target_value == 2100
+    assert calories.percentage_of_target == 10
+    assert summary.meals.nutrition.protein_g.target_value == 140
+    assert summary.sleep is not None
+    assert summary.sleep.hours_slept == 7
     assert summary.body_weight is not None
     assert summary.body_weight.weight_kg == 73
+    assert summary.body_weight_goal is not None
+    assert summary.body_weight_goal.weight_difference_from_goal_kg == 3
+    assert summary.body_weight_goal.is_at_goal is False
 
 
 @pytest.mark.asyncio
@@ -56,9 +82,7 @@ async def test_daily_summary_uses_kathmandu_boundaries(db_session) -> None:
         sample_meal(eaten_at=datetime(2026, 8, 16, 18, 15, tzinfo=timezone.utc))
     )
     await WorkoutService(db_session, TEST_USER_ID).log_workout(
-        sample_workout(
-            check_in_at=datetime(2026, 8, 15, 18, 20, tzinfo=timezone.utc)
-        )
+        sample_workout(check_in_at=datetime(2026, 8, 15, 18, 20, tzinfo=timezone.utc))
     )
 
     summary = await DailySummaryService(db_session, TEST_USER_ID).get_daily_summary(

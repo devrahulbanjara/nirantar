@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 
 import { ExerciseBuilder } from "@/components/workout-form/exercise-builder";
 import { ExistingExerciseEditor } from "@/components/workout-form/existing-exercise-editor";
+import { ExistingGroupsEditor } from "@/components/workout-form/existing-groups-editor";
 import { draftExerciseToInput, emptyExercise, type DraftExercise } from "@/components/workout-form/types";
 import { StaleConflictDialog } from "@/components/stale-conflict-dialog";
 import {
@@ -331,31 +332,14 @@ export function EditWorkoutForm({ initialWorkout }: { initialWorkout: Workout })
         )}
       </section>
 
-      {workout.groups.length > 0 ? (
-        <section className="editor-section">
-          <h2 className="editor-section-title">Supersets</h2>
-          <p className="field-hint">
-            Supersets are set when a workout is logged and can’t be changed here.
-          </p>
-          <ul className="groups-editor-list">
-            {workout.groups
-              .slice()
-              .sort((a, b) => a.group_order - b.group_order)
-              .map((group, index) => (
-                <li className="groups-editor-chip" key={group.id}>
-                  <span>
-                    <strong>Superset {index + 1}:</strong>{" "}
-                    {group.members
-                      .slice()
-                      .sort((a, b) => a.member_order - b.member_order)
-                      .map((member) => member.exercise_name)
-                      .join(" + ")}
-                  </span>
-                </li>
-              ))}
-          </ul>
-        </section>
-      ) : null}
+      <section className="editor-section">
+        <h2 className="editor-section-title">Supersets</h2>
+        <ExistingGroupsEditor
+          exercises={workout.exercises}
+          groups={workout.groups}
+          runOp={runOp}
+        />
+      </section>
     </div>
   );
 }

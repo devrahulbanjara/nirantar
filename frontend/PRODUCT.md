@@ -15,7 +15,7 @@ tested first against its owner's use in Nepal.
 
 ## Product Purpose
 
-Nirantar makes workout, meal, and body-weight history trustworthy and easy to
+Nirantar makes workout, meal, sleep, and body-weight history trustworthy and easy to
 record. Success means the user can log complete records quickly, review the
 saved truth, and rely on deterministic summaries without an AI dependency.
 
@@ -35,7 +35,8 @@ interface and high-level MCP operations over the same backend services.
 
 - Log and review workouts, ordered exercises, sets, dropsets, and supersets.
 - Log and review meals with ordered food items and nullable nutrition values.
-- Log daily body weight and retrieve deterministic daily summaries.
+- Log sleep and daily body weight, set optional targets, and retrieve deterministic summaries.
+- Ask MCP clients for computed trends and independent consistency streaks.
 - Authenticated through Clerk, with email, Apple, Facebook, and Google sign-in,
   sign-up, and account controls.
 - Each signed-in user owns their own history.

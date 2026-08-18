@@ -9,6 +9,8 @@ from sqlalchemy.orm import selectinload
 from nirantar.config import get_settings
 from nirantar.models.meals import FoodItem, Meal
 from nirantar.models.weights import BodyWeightEntry
+from nirantar.models.sleep import SleepEntry
+from nirantar.models.targets import UserTarget
 from nirantar.models.workouts import (
     ExerciseSetType,
     WorkoutExercise,
@@ -16,12 +18,14 @@ from nirantar.models.workouts import (
 )
 from nirantar.schemas.summaries import (
     DailySummaryRead,
+    BodyWeightGoalRead,
     MealDailySummaryRead,
     NutrientTotalRead,
     NutritionSummaryRead,
     WorkoutDailySummaryRead,
 )
 from nirantar.schemas.weights import WeightRead
+from nirantar.schemas.sleep import SleepRead
 
 
 class DailySummaryService:
@@ -48,6 +52,13 @@ class DailySummaryService:
                 BodyWeightEntry.measured_on == summary_date
             )
         )
+        sleep = await self.session.scalar(
+            select(SleepEntry).where(
+                SleepEntry.owner_id == self.owner_id,
+                SleepEntry.sleep_date == summary_date,
+            )
+        )
+        targets = await self.session.get(UserTarget, self.owner_id)
 
         completed = [item for item in workouts if item.check_out_at is not None]
         duration_seconds = sum(
@@ -86,16 +97,38 @@ class DailySummaryService:
                     calories_kcal=self._nutrient_total(
                         food_items,
                         "calories_kcal",
+                        targets.calorie_target_kcal if targets is not None else None,
                     ),
-                    protein_g=self._nutrient_total(food_items, "protein_g"),
+                    protein_g=self._nutrient_total(
+                        food_items,
+                        "protein_g",
+                        targets.protein_target_g if targets is not None else None,
+                    ),
                     carbohydrates_g=self._nutrient_total(
                         food_items,
                         "carbohydrates_g",
+                        targets.carb_target_g if targets is not None else None,
                     ),
-                    fat_g=self._nutrient_total(food_items, "fat_g"),
+                    fat_g=self._nutrient_total(
+                        food_items,
+                        "fat_g",
+                        targets.fat_target_g if targets is not None else None,
+                    ),
                 ),
             ),
+            sleep=SleepRead.model_validate(sleep) if sleep is not None else None,
             body_weight=WeightRead.model_validate(weight) if weight is not None else None,
+            body_weight_goal=(
+                BodyWeightGoalRead(
+                    goal_weight_kg=targets.goal_weight_kg,
+                    weight_difference_from_goal_kg=weight.weight_kg - targets.goal_weight_kg,
+                    is_at_goal=abs(weight.weight_kg - targets.goal_weight_kg) <= Decimal("0.3"),
+                )
+                if weight is not None
+                and targets is not None
+                and targets.goal_weight_kg is not None
+                else None
+            ),
         )
 
     def _date_bounds(self, summary_date: date) -> tuple[datetime, datetime]:
@@ -142,14 +175,20 @@ class DailySummaryService:
     def _nutrient_total(
         items: list[FoodItem],
         field_name: str,
+        target_value: Decimal | None = None,
     ) -> NutrientTotalRead:
         values = [getattr(item, field_name) for item in items]
         known_values = [value for value in values if value is not None]
+        known_total = sum(known_values, start=Decimal("0")) if known_values else None
         return NutrientTotalRead(
-            known_total=(
-                sum(known_values, start=Decimal("0")) if known_values else None
-            ),
+            known_total=known_total,
             known_item_count=len(known_values),
             missing_item_count=len(values) - len(known_values),
             complete=len(known_values) == len(values),
+            target_value=target_value,
+            percentage_of_target=(
+                known_total / target_value * Decimal("100")
+                if known_total is not None and target_value is not None
+                else None
+            ),
         )

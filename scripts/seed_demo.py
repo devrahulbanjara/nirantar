@@ -10,9 +10,12 @@ from sqlalchemy import select
 from nirantar.config import get_settings
 from nirantar.db.session import dispose_engine, get_session_factory
 from nirantar.models.meals import Meal
+from nirantar.models.sleep import SleepEntry
 from nirantar.models.weights import BodyWeightEntry
 from nirantar.models.workouts import WorkoutSession
 from nirantar.schemas.meals import FoodItemCreate, MealCreate
+from nirantar.schemas.sleep import SleepCreate
+from nirantar.schemas.targets import TargetPatch
 from nirantar.schemas.weights import WeightCreate
 from nirantar.schemas.workouts import (
     DropsetCreate,
@@ -23,6 +26,8 @@ from nirantar.schemas.workouts import (
     WorkoutCreate,
 )
 from nirantar.services.meals import MealService
+from nirantar.services.sleep import SleepService
+from nirantar.services.targets import TargetService
 from nirantar.services.weights import WeightService
 from nirantar.services.workouts import WorkoutService
 
@@ -221,13 +226,21 @@ def demo_workouts(today: date) -> list[WorkoutCreate]:
                 exercise(
                     "Dumbbell Curl",
                     1,
-                    [set_entry(1, "10", 12), set_entry(2, "12.5", 9), set_entry(3, "12.5", 8)],
+                    [
+                        set_entry(1, "10", 12),
+                        set_entry(2, "12.5", 9),
+                        set_entry(3, "12.5", 8),
+                    ],
                     client_ref="curl",
                 ),
                 exercise(
                     "Rope Pushdown",
                     2,
-                    [set_entry(1, "25", 13), set_entry(2, "30", 10), set_entry(3, "30", 9)],
+                    [
+                        set_entry(1, "25", 13),
+                        set_entry(2, "30", 10),
+                        set_entry(3, "30", 9),
+                    ],
                     client_ref="pushdown",
                 ),
             ],
@@ -333,10 +346,22 @@ async def seed() -> None:
     timezone = ZoneInfo(get_settings().user_timezone)
     today = datetime.now(timezone).date()
     factory = get_session_factory()
-    created = {"workouts": 0, "meals": 0, "weights": 0}
-    skipped = {"workouts": 0, "meals": 0, "weights": 0}
+    created = {"workouts": 0, "meals": 0, "weights": 0, "sleep": 0}
+    skipped = {"workouts": 0, "meals": 0, "weights": 0, "sleep": 0}
 
     async with factory() as session:
+        target_service = TargetService(session, owner_id)
+        if (await target_service.get_targets()).targets is None:
+            await target_service.set_targets(
+                TargetPatch(
+                    calorie_target_kcal="2200",
+                    protein_target_g="140",
+                    carb_target_g="250",
+                    fat_target_g="70",
+                    goal_weight_kg="72",
+                    target_workout_days_per_week=4,
+                )
+            )
         for payload in demo_workouts(today):
             exists = await session.scalar(
                 select(WorkoutSession.id).where(
@@ -369,7 +394,7 @@ async def seed() -> None:
             exists = await session.scalar(
                 select(BodyWeightEntry.id).where(
                     BodyWeightEntry.owner_id == owner_id,
-                    BodyWeightEntry.measured_on == payload.measured_on
+                    BodyWeightEntry.measured_on == payload.measured_on,
                 )
             )
             if exists:
@@ -378,19 +403,42 @@ async def seed() -> None:
             await WeightService(session, owner_id).log_weight(payload)
             created["weights"] += 1
 
+        for days_ago in range(7):
+            wake_date = today - timedelta(days=days_ago)
+            exists = await session.scalar(
+                select(SleepEntry.id).where(
+                    SleepEntry.owner_id == owner_id,
+                    SleepEntry.sleep_date == wake_date,
+                )
+            )
+            if exists:
+                skipped["sleep"] += 1
+                continue
+            start = local_datetime(wake_date - timedelta(days=1), 22, 30)
+            await SleepService(session, owner_id).log_sleep(
+                SleepCreate(
+                    sleep_start=start,
+                    sleep_end=local_datetime(wake_date, 6, 30),
+                    quality_rating=4,
+                )
+            )
+            created["sleep"] += 1
+
     await dispose_engine()
     print(
         "Created "
         f"{created['workouts']} workouts, "
         f"{created['meals']} meals, and "
-        f"{created['weights']} weight entries."
+        f"{created['weights']} weight entries, "
+        f"{created['sleep']} sleep entries, and targets."
     )
     if any(skipped.values()):
         print(
             "Skipped "
             f"{skipped['workouts']} workouts, "
             f"{skipped['meals']} meals, and "
-            f"{skipped['weights']} weight entries already present."
+            f"{skipped['weights']} weight entries, and "
+            f"{skipped['sleep']} sleep entries already present."
         )
 
 

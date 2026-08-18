@@ -21,6 +21,7 @@ from nirantar.schemas.workouts import (
     AddDropsetOperation,
     AddExerciseOperation,
     AddSetOperation,
+    AddSupersetOperation,
     DropsetRead,
     ExerciseGroupRead,
     ExerciseHistoryEntry,
@@ -31,17 +32,19 @@ from nirantar.schemas.workouts import (
     RecentWorkoutsQuery,
     RemoveExerciseOperation,
     RemoveSetOperation,
-    SetRead,
+    RemoveSupersetOperation,
     SetCreate,
+    SetRead,
     SetType,
+    UpdateExerciseOperation,
+    UpdateSetOperation,
+    UpdateSupersetOperation,
+    UpdateWorkoutOperation,
     WorkoutCreate,
     WorkoutDeleteRequest,
     WorkoutDeleteResult,
     WorkoutEditRequest,
     WorkoutRead,
-    UpdateExerciseOperation,
-    UpdateSetOperation,
-    UpdateWorkoutOperation,
 )
 from nirantar.services.errors import (
     ConflictDomainError,
@@ -189,7 +192,9 @@ class WorkoutService:
             await self.session.flush()
 
             exercise_by_ref: dict[str, WorkoutExercise] = {}
-            for exercise_payload in sorted(payload.exercises, key=lambda item: item.order):
+            for exercise_payload in sorted(
+                payload.exercises, key=lambda item: item.order
+            ):
                 exercise = WorkoutExercise(
                     workout_session_id=workout.id,
                     exercise_name=exercise_payload.name.strip(),
@@ -301,6 +306,7 @@ class WorkoutService:
                 for exercise in workout.exercises
                 for item in exercise.sets
             }
+            groups = {item.id: item for item in workout.groups}
             self._validate_operation_conflicts(payload)
 
             removed_exercises = {
@@ -313,17 +319,66 @@ class WorkoutService:
                 for operation in payload.operations
                 if isinstance(operation, RemoveSetOperation)
             }
+            removed_groups = {
+                operation.superset_id
+                for operation in payload.operations
+                if isinstance(operation, RemoveSupersetOperation)
+            }
+
+            final_group_orders: dict[object, int] = {
+                group_id: group.group_order
+                for group_id, group in groups.items()
+                if group_id not in removed_groups
+            }
+            final_group_members: dict[object, list[UUID]] = {
+                group_id: [
+                    member.workout_exercise_id
+                    for member in sorted(
+                        group.members, key=lambda item: item.member_order
+                    )
+                ]
+                for group_id, group in groups.items()
+                if group_id not in removed_groups
+            }
+            for operation in payload.operations:
+                if isinstance(operation, UpdateSupersetOperation):
+                    group = self._group_in_workout(groups, operation.superset_id)
+                    if group.id in removed_groups:
+                        raise ValidationDomainError(
+                            "A superset cannot be changed in the same request that removes it"
+                        )
+                    if "order" in operation.model_fields_set:
+                        final_group_orders[group.id] = operation.order
+                    if "workout_exercise_ids" in operation.model_fields_set:
+                        final_group_members[group.id] = (
+                            operation.workout_exercise_ids or []
+                        )
+                elif isinstance(operation, AddSupersetOperation):
+                    key = ("new-group", id(operation))
+                    final_group_orders[key] = operation.order
+                    final_group_members[key] = operation.workout_exercise_ids
+
+            self._require_unique_orders(
+                list(final_group_orders.values()),
+                "Superset order values must be unique within a workout",
+            )
+            for member_ids in final_group_members.values():
+                if len(member_ids) < 2:
+                    raise ValidationDomainError(
+                        "A superset requires at least two workout exercises"
+                    )
+                for exercise_id in member_ids:
+                    self._exercise_in_workout(exercises, exercise_id)
 
             for exercise_id in removed_exercises:
                 exercise = self._exercise_in_workout(exercises, exercise_id)
                 if any(
-                    member.workout_exercise_id == exercise_id
-                    for group in workout.groups
-                    for member in group.members
+                    exercise_id in member_ids
+                    for member_ids in final_group_members.values()
                 ):
                     raise ValidationDomainError(
                         "Cannot remove an exercise that belongs to a superset; "
-                        "superset editing is not supported yet"
+                        "remove it from every superset in the same edit"
                     )
                 if any(
                     isinstance(operation, AddSetOperation)
@@ -352,7 +407,10 @@ class WorkoutService:
             removed_sets.update(cascaded_set_ids)
             for set_id in removed_sets:
                 target = sets.get(set_id)
-                if target is not None and target.workout_exercise_id in removed_exercises:
+                if (
+                    target is not None
+                    and target.workout_exercise_id in removed_exercises
+                ):
                     raise ValidationDomainError(
                         "Do not remove sets separately from an exercise being removed"
                     )
@@ -378,12 +436,16 @@ class WorkoutService:
                     if "check_out_at" in operation.model_fields_set:
                         final_check_out = operation.check_out_at
                 elif isinstance(operation, UpdateExerciseOperation):
-                    exercise = self._exercise_in_workout(exercises, operation.exercise_id)
+                    exercise = self._exercise_in_workout(
+                        exercises, operation.exercise_id
+                    )
                     self._reject_removed_exercise(exercise.id, removed_exercises)
                     if "order" in operation.model_fields_set:
                         final_exercise_orders[exercise.id] = operation.order
                 elif isinstance(operation, AddExerciseOperation):
-                    final_exercise_orders[("new", id(operation))] = operation.exercise.order
+                    final_exercise_orders[("new", id(operation))] = (
+                        operation.exercise.order
+                    )
                 elif isinstance(operation, UpdateSetOperation):
                     target = self._set_in_workout(sets, operation.set_id)
                     self._reject_removed_set(target, removed_sets, removed_exercises)
@@ -428,16 +490,34 @@ class WorkoutService:
             original_exercise_orders = {
                 item.id: item.exercise_order for item in workout.exercises
             }
-            original_set_orders = {
-                item.id: item.set_order for item in sets.values()
+            original_set_orders = {item.id: item.set_order for item in sets.values()}
+            original_group_orders = {
+                item.id: item.group_order for item in workout.groups
             }
-            stage_base = max(
-                [*original_exercise_orders.values(), *original_set_orders.values(), 0]
-            ) + len(original_exercise_orders) + len(original_set_orders) + 100
+            stage_base = (
+                max(
+                    [
+                        *original_exercise_orders.values(),
+                        *original_set_orders.values(),
+                        *original_group_orders.values(),
+                        0,
+                    ]
+                )
+                + len(original_exercise_orders)
+                + len(original_set_orders)
+                + 100
+            )
             for index, exercise in enumerate(workout.exercises, start=1):
                 exercise.exercise_order = stage_base + index
-            for index, item in enumerate(sets.values(), start=len(workout.exercises) + 1):
+            for index, item in enumerate(
+                sets.values(), start=len(workout.exercises) + 1
+            ):
                 item.set_order = stage_base + index
+            for index, group in enumerate(
+                workout.groups,
+                start=len(workout.exercises) + len(sets) + 1,
+            ):
+                group.group_order = stage_base + index
             await self.session.flush()
 
             for exercise_id, order in original_exercise_orders.items():
@@ -447,9 +527,39 @@ class WorkoutService:
                 )
             for set_id, order in original_set_orders.items():
                 sets[set_id].set_order = final_set_orders.get(set_id, order)
+            for group_id, order in original_group_orders.items():
+                if group_id in final_group_orders:
+                    groups[group_id].group_order = final_group_orders[group_id]
 
-            for operation in payload.operations:
-                await self._apply_operation(workout, exercises, sets, operation)
+            remove_group_operations = tuple(
+                operation
+                for operation in payload.operations
+                if isinstance(operation, RemoveSupersetOperation)
+            )
+            other_group_operations = tuple(
+                operation
+                for operation in payload.operations
+                if isinstance(
+                    operation, (AddSupersetOperation, UpdateSupersetOperation)
+                )
+            )
+            for operation in remove_group_operations:
+                await self._apply_operation(workout, exercises, sets, groups, operation)
+            if remove_group_operations:
+                await self.session.flush()
+            ordered_group_operations = (
+                *remove_group_operations,
+                *other_group_operations,
+            )
+            for operation in (
+                *other_group_operations,
+                *(
+                    item
+                    for item in payload.operations
+                    if item not in ordered_group_operations
+                ),
+            ):
+                await self._apply_operation(workout, exercises, sets, groups, operation)
 
             workout.updated_at = func.now()
             await self.session.commit()
@@ -514,10 +624,20 @@ class WorkoutService:
     ) -> ExerciseSet:
         target = sets.get(set_id)
         if target is None:
-            raise ValidationDomainError(
-                f"Set {set_id} does not belong to this workout"
-            )
+            raise ValidationDomainError(f"Set {set_id} does not belong to this workout")
         return target
+
+    @staticmethod
+    def _group_in_workout(
+        groups: dict[UUID, ExerciseGroup],
+        group_id: UUID,
+    ) -> ExerciseGroup:
+        group = groups.get(group_id)
+        if group is None:
+            raise ValidationDomainError(
+                f"Superset {group_id} does not belong to this workout"
+            )
+        return group
 
     @staticmethod
     def _reject_removed_exercise(
@@ -535,10 +655,7 @@ class WorkoutService:
         removed_sets: set[UUID],
         removed_exercises: set[UUID],
     ) -> None:
-        if (
-            target.id in removed_sets
-            or target.workout_exercise_id in removed_exercises
-        ):
+        if target.id in removed_sets or target.workout_exercise_id in removed_exercises:
             raise ValidationDomainError(
                 "A set cannot be changed in the same request that removes it"
             )
@@ -553,10 +670,13 @@ class WorkoutService:
         workout_updates = 0
         exercise_targets: set[UUID] = set()
         set_targets: set[UUID] = set()
+        group_targets: set[UUID] = set()
         for operation in payload.operations:
             if isinstance(operation, UpdateWorkoutOperation):
                 workout_updates += 1
-            elif isinstance(operation, (UpdateExerciseOperation, RemoveExerciseOperation)):
+            elif isinstance(
+                operation, (UpdateExerciseOperation, RemoveExerciseOperation)
+            ):
                 if operation.exercise_id in exercise_targets:
                     raise ValidationDomainError(
                         "An exercise may be updated or removed only once per request"
@@ -568,6 +688,14 @@ class WorkoutService:
                         "A set may be updated or removed only once per request"
                     )
                 set_targets.add(operation.set_id)
+            elif isinstance(
+                operation, (UpdateSupersetOperation, RemoveSupersetOperation)
+            ):
+                if operation.superset_id in group_targets:
+                    raise ValidationDomainError(
+                        "A superset may be updated or removed only once per request"
+                    )
+                group_targets.add(operation.superset_id)
         if workout_updates > 1:
             raise ValidationDomainError(
                 "Workout details may be updated only once per request"
@@ -589,9 +717,9 @@ class WorkoutService:
                 or target.workout_exercise_id in removed_exercises
             ):
                 continue
-            orders_by_scope[
-                (target.workout_exercise_id, target.parent_set_id)
-            ].append(final_set_orders[set_id])
+            orders_by_scope[(target.workout_exercise_id, target.parent_set_id)].append(
+                final_set_orders[set_id]
+            )
 
         for operation in payload.operations:
             if isinstance(operation, AddSetOperation):
@@ -600,9 +728,9 @@ class WorkoutService:
                 )
             elif isinstance(operation, AddDropsetOperation):
                 parent = sets[operation.parent_set_id]
-                orders_by_scope[
-                    (parent.workout_exercise_id, parent.id)
-                ].append(operation.dropset.order)
+                orders_by_scope[(parent.workout_exercise_id, parent.id)].append(
+                    operation.dropset.order
+                )
 
         for orders in orders_by_scope.values():
             self._require_unique_orders(
@@ -615,6 +743,7 @@ class WorkoutService:
         workout: WorkoutSession,
         exercises: dict[UUID, WorkoutExercise],
         sets: dict[UUID, ExerciseSet],
+        groups: dict[UUID, ExerciseGroup],
         operation: object,
     ) -> None:
         if isinstance(operation, UpdateWorkoutOperation):
@@ -691,6 +820,56 @@ class WorkoutService:
 
         if isinstance(operation, RemoveSetOperation):
             await self.session.delete(sets[operation.set_id])
+            return
+
+        if isinstance(operation, AddSupersetOperation):
+            group = ExerciseGroup(
+                workout_session_id=workout.id,
+                group_type="superset",
+                group_order=operation.order,
+                notes=operation.notes,
+            )
+            self.session.add(group)
+            await self.session.flush()
+            for member_order, exercise_id in enumerate(
+                operation.workout_exercise_ids,
+                start=1,
+            ):
+                self.session.add(
+                    ExerciseGroupMember(
+                        exercise_group_id=group.id,
+                        workout_exercise_id=exercise_id,
+                        member_order=member_order,
+                    )
+                )
+            return
+
+        if isinstance(operation, UpdateSupersetOperation):
+            group = groups[operation.superset_id]
+            if "order" in operation.model_fields_set:
+                group.group_order = operation.order
+            if "notes" in operation.model_fields_set:
+                group.notes = operation.notes
+            if "workout_exercise_ids" in operation.model_fields_set:
+                for member in tuple(group.members):
+                    await self.session.delete(member)
+                await self.session.flush()
+                group.members.clear()
+                for member_order, exercise_id in enumerate(
+                    operation.workout_exercise_ids,
+                    start=1,
+                ):
+                    self.session.add(
+                        ExerciseGroupMember(
+                            exercise_group_id=group.id,
+                            workout_exercise_id=exercise_id,
+                            member_order=member_order,
+                        )
+                    )
+            return
+
+        if isinstance(operation, RemoveSupersetOperation):
+            await self.session.delete(groups[operation.superset_id])
 
     async def _add_top_level_set(
         self,
@@ -749,14 +928,20 @@ class WorkoutService:
     ) -> list[ExerciseHistoryEntry]:
         statement: Select[tuple[WorkoutExercise]] = (
             select(WorkoutExercise)
-            .join(WorkoutSession, WorkoutExercise.workout_session_id == WorkoutSession.id)
+            .join(
+                WorkoutSession, WorkoutExercise.workout_session_id == WorkoutSession.id
+            )
             .options(
                 selectinload(WorkoutExercise.sets),
                 selectinload(WorkoutExercise.session),
             )
-            .where(func.lower(WorkoutExercise.exercise_name) == query.exercise_name.lower())
+            .where(
+                func.lower(WorkoutExercise.exercise_name) == query.exercise_name.lower()
+            )
             .where(WorkoutSession.owner_id == self.owner_id)
-            .order_by(WorkoutSession.check_in_at.desc(), WorkoutExercise.exercise_order.asc())
+            .order_by(
+                WorkoutSession.check_in_at.desc(), WorkoutExercise.exercise_order.asc()
+            )
             .limit(query.limit)
         )
         if query.start_at is not None:

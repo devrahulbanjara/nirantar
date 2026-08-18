@@ -1,6 +1,6 @@
 "use client";
 
-import { PencilSimpleIcon, PlusIcon, WarningCircleIcon } from "@phosphor-icons/react";
+import { GaugeIcon, PencilSimpleIcon, WarningCircleIcon } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 
@@ -108,7 +108,7 @@ export function WeightEntryDialog({
         {existing ? (
           <PencilSimpleIcon size={16} weight="bold" aria-hidden="true" />
         ) : (
-          <PlusIcon size={18} weight="bold" aria-hidden="true" />
+          <GaugeIcon size={18} weight="bold" aria-hidden="true" />
         )}
         {triggerLabel}
       </button>

@@ -197,7 +197,9 @@ async def test_edit_requires_explicit_dropset_cascade(db_session) -> None:
 
 
 @pytest.mark.asyncio
-async def test_edit_rejects_grouped_exercise_removal_and_stale_version(db_session) -> None:
+async def test_edit_rejects_grouped_exercise_removal_and_stale_version(
+    db_session,
+) -> None:
     service = WorkoutService(db_session, TEST_USER_ID)
     created = await service.log_workout(sample_workout())
 
@@ -271,6 +273,138 @@ async def test_remove_ungrouped_exercise_and_delete_workout(db_session) -> None:
         ),
     )
     assert result.deleted is True
-    assert await db_session.scalar(select(func.count()).select_from(WorkoutSession)) == 0
-    assert await db_session.scalar(select(func.count()).select_from(WorkoutExercise)) == 0
+    assert (
+        await db_session.scalar(select(func.count()).select_from(WorkoutSession)) == 0
+    )
+    assert (
+        await db_session.scalar(select(func.count()).select_from(WorkoutExercise)) == 0
+    )
     assert await db_session.scalar(select(func.count()).select_from(ExerciseSet)) == 0
+
+
+async def test_edit_workout_replaces_and_removes_supersets_atomically(
+    db_session,
+) -> None:
+    service = WorkoutService(db_session, TEST_USER_ID)
+    created = await service.log_workout(sample_workout())
+    curl, pushdown = created.exercises
+    original_group = created.groups[0]
+
+    edited = await service.edit_workout(
+        created.id,
+        WorkoutEditRequest.model_validate(
+            {
+                "expected_updated_at": created.updated_at,
+                "operations": [
+                    {
+                        "operation": "update_superset",
+                        "superset_id": str(original_group.id),
+                        "order": 2,
+                        "notes": "Alternating arms",
+                        "workout_exercise_ids": [str(pushdown.id), str(curl.id)],
+                    },
+                    {
+                        "operation": "add_superset",
+                        "order": 1,
+                        "notes": "Primary pairing",
+                        "workout_exercise_ids": [str(curl.id), str(pushdown.id)],
+                    },
+                ],
+            }
+        ),
+    )
+
+    assert [group.group_order for group in edited.groups] == [1, 2]
+    assert [member.workout_exercise_id for member in edited.groups[1].members] == [
+        pushdown.id,
+        curl.id,
+    ]
+
+    removed = await service.edit_workout(
+        edited.id,
+        WorkoutEditRequest.model_validate(
+            {
+                "expected_updated_at": edited.updated_at,
+                "operations": [
+                    {
+                        "operation": "remove_superset",
+                        "superset_id": str(edited.groups[0].id),
+                    },
+                    {
+                        "operation": "update_superset",
+                        "superset_id": str(edited.groups[1].id),
+                        "workout_exercise_ids": [str(pushdown.id), str(curl.id)],
+                    },
+                ],
+            }
+        ),
+    )
+    assert len(removed.groups) == 1
+
+
+async def test_edit_workout_replaces_superset_order_independently_of_operation_order(
+    db_session,
+) -> None:
+    service = WorkoutService(db_session, TEST_USER_ID)
+    created = await service.log_workout(sample_workout())
+    curl, pushdown = created.exercises
+
+    edited = await service.edit_workout(
+        created.id,
+        WorkoutEditRequest.model_validate(
+            {
+                "expected_updated_at": created.updated_at,
+                "operations": [
+                    {
+                        "operation": "add_superset",
+                        "order": 1,
+                        "notes": "Replacement",
+                        "workout_exercise_ids": [str(pushdown.id), str(curl.id)],
+                    },
+                    {
+                        "operation": "remove_superset",
+                        "superset_id": str(created.groups[0].id),
+                    },
+                ],
+            }
+        ),
+    )
+
+    assert len(edited.groups) == 1
+    assert edited.groups[0].group_order == 1
+    assert edited.groups[0].notes == "Replacement"
+    assert [member.workout_exercise_id for member in edited.groups[0].members] == [
+        pushdown.id,
+        curl.id,
+    ]
+
+
+async def test_edit_workout_allows_grouped_exercise_removal_when_group_is_removed(
+    db_session,
+) -> None:
+    service = WorkoutService(db_session, TEST_USER_ID)
+    created = await service.log_workout(sample_workout())
+
+    edited = await service.edit_workout(
+        created.id,
+        WorkoutEditRequest.model_validate(
+            {
+                "expected_updated_at": created.updated_at,
+                "operations": [
+                    {
+                        "operation": "remove_superset",
+                        "superset_id": str(created.groups[0].id),
+                    },
+                    {
+                        "operation": "remove_exercise",
+                        "exercise_id": str(created.exercises[0].id),
+                    },
+                ],
+            }
+        ),
+    )
+
+    assert [exercise.exercise_name for exercise in edited.exercises] == [
+        "Tricep Pushdown"
+    ]
+    assert edited.groups == []

@@ -20,6 +20,11 @@ The MVP is successful when the user can:
 
 The first real gym session should become Day 1 of the long-term dataset.
 
+The current product extension also supports independently optional targets,
+derived sleep intervals, conversational trends, and independent streaks. These
+remain deterministic service calculations; there is no coaching model, cron
+job, target history, or trends table.
+
 ## Immediate Architecture
 
 ```text
@@ -114,6 +119,14 @@ get_meal
 edit_meal
 delete_meal
 get_daily_summary
+get_targets
+set_targets
+log_sleep
+get_sleep
+get_sleep_history
+edit_sleep
+get_trends
+get_streaks
 ```
 
 ### `log_workout`
