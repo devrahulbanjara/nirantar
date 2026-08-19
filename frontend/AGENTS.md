@@ -7,3 +7,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+## Nirantar UI contract
+
+- Read `DESIGN.md` completely before changing any product UI, landing, auth, or shared frontend component.
+- Treat `DESIGN.md` as the single visual and interaction source of truth. Do not create a competing page-local design system or silently import defaults from a component library.
+- Build mobile first, then verify the same layout system at `375px`, `768px`, `1024px`, and `1440px` with Playwright before calling UI work complete.
+- Reuse the primitives and patterns named in the `Component system` section of `DESIGN.md`. If a reusable pattern is missing, define its contract there when adding it.
+- Airbnb is a craft reference only. Preserve Nirantar's fitness language, data density, crimson accent, deterministic facts, and accessibility requirements.

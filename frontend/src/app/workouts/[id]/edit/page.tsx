@@ -1,9 +1,10 @@
-import { ArrowLeftIcon, WarningCircleIcon } from "@phosphor-icons/react/dist/ssr";
-import Link from "next/link";
+import { WarningCircleIcon } from "@phosphor-icons/react/dist/ssr";
 import { notFound } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
 import { EditWorkoutForm } from "@/components/workout-form/edit-workout-form";
+import { BackButton } from "@/components/ui/back-button";
+import { FeedbackState } from "@/components/ui/feedback-state";
 import { getWorkout } from "@/lib/workouts";
 
 export const dynamic = "force-dynamic";
@@ -22,20 +23,17 @@ export default async function EditWorkoutPage({
     <AppShell activeDestination="workouts">
       <main className="editor-page">
         <header className="editor-page-heading">
-          <Link href={`/workouts/${id}`} className="text-link editor-back-link">
-            <ArrowLeftIcon size={16} weight="bold" aria-hidden="true" />
-            Workout
-          </Link>
+          <BackButton fallbackHref={`/workouts/${id}`} label="Back to workout" />
           <h1>Edit workout</h1>
         </header>
         {result.status === "unavailable" ? (
-          <section className="workouts-state" aria-labelledby="edit-workout-error-title">
-            <WarningCircleIcon size={24} weight="regular" aria-hidden="true" />
-            <div>
-              <h2 id="edit-workout-error-title">This workout is unavailable</h2>
-              <p>Refresh to try again.</p>
-            </div>
-          </section>
+          <FeedbackState
+            id="edit-workout-error-title"
+            title="This workout is unavailable"
+            description="Refresh to try again."
+            icon={<WarningCircleIcon size={24} weight="regular" />}
+            tone="warning"
+          />
         ) : (
           <EditWorkoutForm initialWorkout={result.workout} />
         )}

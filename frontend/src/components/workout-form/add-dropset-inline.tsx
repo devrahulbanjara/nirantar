@@ -15,7 +15,7 @@ export function AddDropsetInline({
   onAdd: (dropset: DropsetInput) => Promise<{ ok: boolean; message?: string }>;
 }) {
   const [open, setOpen] = useState(false);
-  const [values, setValues] = useState({ weight_kg: "", reps: "", rir: "", rpe: "" });
+  const [values, setValues] = useState({ weight_kg: "", reps: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,7 +23,7 @@ export function AddDropsetInline({
     return (
       <button
         type="button"
-        className="text-link dropset-add"
+        className="button-secondary button-compact dropset-add"
         onClick={() => setOpen(true)}
       >
         <PlusIcon size={14} weight="bold" aria-hidden="true" />
@@ -44,12 +44,10 @@ export function AddDropsetInline({
       order: nextOrder,
       weight_kg: toDecimal(values.weight_kg),
       reps: toInt(values.reps),
-      rir: toDecimal(values.rir),
-      rpe: toDecimal(values.rpe),
     });
     setSaving(false);
     if (result.ok) {
-      setValues({ weight_kg: "", reps: "", rir: "", rpe: "" });
+      setValues({ weight_kg: "", reps: "" });
       setOpen(false);
     } else {
       setError(result.message ?? "Could not add this dropset.");

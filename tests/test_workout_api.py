@@ -24,13 +24,28 @@ async def test_api_log_and_retrieve_workout(api_client: AsyncClient) -> None:
     assert recent[0]["id"] == created["id"]
 
     history_response = await api_client.get(
-        "/workouts/exercise-history",
-        params={"exercise_name": "Bicep Curl"},
+        "/workouts",
+        params={"start_date": "2026-08-16", "end_date": "2026-08-16"},
     )
     assert history_response.status_code == 200
     history = history_response.json()
-    assert history[0]["exercise_name"] == "Bicep Curl"
-    assert len(history[0]["sets"][-1]["dropsets"]) == 2
+    assert history["workout_count"] == 1
+    assert history["workouts"][0]["id"] == created["id"]
+
+    invalid_range = await api_client.get(
+        "/workouts",
+        params={"start_date": "2026-08-17", "end_date": "2026-08-16"},
+    )
+    assert invalid_range.status_code == 422
+
+    exercise_history_response = await api_client.get(
+        "/workouts/exercise-history",
+        params={"exercise_name": "Bicep Curl"},
+    )
+    assert exercise_history_response.status_code == 200
+    exercise_history = exercise_history_response.json()
+    assert exercise_history[0]["exercise_name"] == "Bicep Curl"
+    assert len(exercise_history[0]["sets"][-1]["dropsets"]) == 2
 
 
 @pytest.mark.asyncio

@@ -39,70 +39,49 @@ export function FoodItemFields({
           onChange={(event) => onChange("unit", event.target.value)}
         />
       </label>
-      <label className="set-field set-field-optional">
-        <span className="set-field-label">Calories</span>
-        <span className="set-field-with-unit">
-          <input
-            className="set-field-input"
-            type="number"
-            inputMode="decimal"
-            min={0}
-            step={1}
-            aria-label={`${labelPrefix} calories`}
-            value={values.calories_kcal}
-            onChange={(event) => onChange("calories_kcal", event.target.value)}
-          />
-          <span className="set-field-unit">kcal</span>
-        </span>
-      </label>
-      <label className="set-field set-field-optional">
-        <span className="set-field-label">Protein</span>
-        <span className="set-field-with-unit">
-          <input
-            className="set-field-input"
-            type="number"
-            inputMode="decimal"
-            min={0}
-            step={0.5}
-            aria-label={`${labelPrefix} protein`}
-            value={values.protein_g}
-            onChange={(event) => onChange("protein_g", event.target.value)}
-          />
-          <span className="set-field-unit">g</span>
-        </span>
-      </label>
-      <label className="set-field set-field-optional">
-        <span className="set-field-label">Carbs</span>
-        <span className="set-field-with-unit">
-          <input
-            className="set-field-input"
-            type="number"
-            inputMode="decimal"
-            min={0}
-            step={0.5}
-            aria-label={`${labelPrefix} carbohydrates`}
-            value={values.carbohydrates_g}
-            onChange={(event) => onChange("carbohydrates_g", event.target.value)}
-          />
-          <span className="set-field-unit">g</span>
-        </span>
-      </label>
-      <label className="set-field set-field-optional">
-        <span className="set-field-label">Fat</span>
-        <span className="set-field-with-unit">
-          <input
-            className="set-field-input"
-            type="number"
-            inputMode="decimal"
-            min={0}
-            step={0.5}
-            aria-label={`${labelPrefix} fat`}
-            value={values.fat_g}
-            onChange={(event) => onChange("fat_g", event.target.value)}
-          />
-          <span className="set-field-unit">g</span>
-        </span>
-      </label>
+      <details
+        className="optional-fields-disclosure food-nutrition-disclosure"
+        open={
+          Boolean(
+            values.calories_kcal ||
+              values.protein_g ||
+              values.carbohydrates_g ||
+              values.fat_g,
+          ) || undefined
+        }
+      >
+        <summary>Nutrition (optional)</summary>
+        <div className="optional-fields-grid nutrition-fields-grid">
+          <label className="set-field set-field-optional">
+            <span className="set-field-label">Calories</span>
+            <span className="set-field-with-unit">
+              <input className="set-field-input" type="number" inputMode="decimal" min={0} step={1} aria-label={`${labelPrefix} calories`} value={values.calories_kcal} onChange={(event) => onChange("calories_kcal", event.target.value)} />
+              <span className="set-field-unit">kcal</span>
+            </span>
+          </label>
+          <label className="set-field set-field-optional">
+            <span className="set-field-label">Protein</span>
+            <span className="set-field-with-unit">
+              <input className="set-field-input" type="number" inputMode="decimal" min={0} step={0.5} aria-label={`${labelPrefix} protein`} value={values.protein_g} onChange={(event) => onChange("protein_g", event.target.value)} />
+              <span className="set-field-unit">g</span>
+            </span>
+          </label>
+          <label className="set-field set-field-optional">
+            <span className="set-field-label">Carbs</span>
+            <span className="set-field-with-unit">
+              <input className="set-field-input" type="number" inputMode="decimal" min={0} step={0.5} aria-label={`${labelPrefix} carbohydrates`} value={values.carbohydrates_g} onChange={(event) => onChange("carbohydrates_g", event.target.value)} />
+              <span className="set-field-unit">g</span>
+            </span>
+          </label>
+          <label className="set-field set-field-optional">
+            <span className="set-field-label">Fat</span>
+            <span className="set-field-with-unit">
+              <input className="set-field-input" type="number" inputMode="decimal" min={0} step={0.5} aria-label={`${labelPrefix} fat`} value={values.fat_g} onChange={(event) => onChange("fat_g", event.target.value)} />
+              <span className="set-field-unit">g</span>
+            </span>
+          </label>
+        </div>
+      </details>
     </div>
   );
 }

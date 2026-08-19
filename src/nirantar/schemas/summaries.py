@@ -1,10 +1,10 @@
 from datetime import date
 from decimal import Decimal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, model_validator
 
-from nirantar.schemas.weights import WeightRead
 from nirantar.schemas.sleep import SleepRead
+from nirantar.schemas.weights import WeightRead
 
 
 class NutrientTotalRead(BaseModel):
@@ -53,3 +53,29 @@ class DailySummaryRead(BaseModel):
     sleep: SleepRead | None
     body_weight: WeightRead | None
     body_weight_goal: BodyWeightGoalRead | None
+
+
+class WorkoutActivityQuery(BaseModel):
+    start_date: date
+    end_date: date
+
+    @model_validator(mode="after")
+    def validate_range(self) -> "WorkoutActivityQuery":
+        if self.end_date < self.start_date:
+            raise ValueError("end_date must be on or after start_date")
+        if (self.end_date - self.start_date).days > 400:
+            raise ValueError("date range must be 400 days or fewer")
+        return self
+
+
+class WorkoutActivityDayRead(BaseModel):
+    date: date
+    workout_count: int = Field(ge=0)
+
+
+class WorkoutActivityRead(BaseModel):
+    start_date: date
+    end_date: date
+    timezone: str
+    active_day_count: int
+    days: list[WorkoutActivityDayRead]

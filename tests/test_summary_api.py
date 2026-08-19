@@ -39,3 +39,32 @@ async def test_daily_summary_api(api_client: AsyncClient, db_session) -> None:
 async def test_daily_summary_api_rejects_invalid_date(api_client: AsyncClient) -> None:
     response = await api_client.get("/summaries/daily/not-a-date")
     assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_workout_activity_api(api_client: AsyncClient, db_session) -> None:
+    await WorkoutService(db_session, TEST_USER_ID).log_workout(sample_workout())
+
+    response = await api_client.get(
+        "/summaries/workout-activity",
+        params={"start_date": "2026-08-01", "end_date": "2026-08-16"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["start_date"] == "2026-08-01"
+    assert payload["end_date"] == "2026-08-16"
+    assert payload["timezone"] == "Asia/Kathmandu"
+    assert payload["active_day_count"] == 1
+    assert payload["days"] == [{"date": "2026-08-16", "workout_count": 1}]
+
+
+@pytest.mark.asyncio
+async def test_workout_activity_api_rejects_invalid_range(
+    api_client: AsyncClient,
+) -> None:
+    response = await api_client.get(
+        "/summaries/workout-activity",
+        params={"start_date": "2026-08-17", "end_date": "2026-08-16"},
+    )
+    assert response.status_code == 422

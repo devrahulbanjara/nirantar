@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 
 import { Modal } from "@/components/modal";
+import { DateField } from "@/components/ui/date-field";
 import { editWeight, logWeight } from "@/lib/actions/weights";
 import type { WeightEntry } from "@/lib/weights";
 import { formatDateShortLabel, nowAsKathmanduInputValue } from "@/lib/time";
@@ -116,25 +117,20 @@ export function WeightEntryDialog({
         open={open}
         onClose={() => setOpen(false)}
         labelledBy={headingId}
-        variant="sheet"
+        variant="responsive-dialog"
       >
         <h2 className="modal-heading" id={headingId}>
           {activeExisting ? "Correct body weight" : "Log body weight"}
         </h2>
         {notice ? <p className="field-hint">{notice}</p> : null}
         {!activeExisting ? (
-          <div className="field">
-            <label className="field-label" htmlFor="weight-measured-on">
-              Date
-            </label>
-            <input
-              id="weight-measured-on"
-              className="field-input"
-              type="date"
-              value={measuredOn}
-              onChange={(event) => setMeasuredOn(event.target.value)}
-            />
-          </div>
+          <DateField
+            id="weight-measured-on"
+            label="Date"
+            value={measuredOn}
+            todayDate={defaultDate}
+            onChange={setMeasuredOn}
+          />
         ) : (
           <p className="field-hint">{formatDateShortLabel(activeExisting.measured_on)}</p>
         )}

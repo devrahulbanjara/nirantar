@@ -7,6 +7,9 @@ import {
 import { notFound } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
+import { BackButton } from "@/components/ui/back-button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { FeedbackState } from "@/components/ui/feedback-state";
 import { WorkoutDetailActions } from "@/components/workouts/workout-detail-actions";
 import { getWorkout, type ExerciseSet, type WorkoutExercise } from "@/lib/workouts";
 import { formatDurationBetween, formatKathmanduDateTime, formatKathmanduTime } from "@/lib/time";
@@ -34,13 +37,6 @@ function SetRow({ set, index }: { set: ExerciseSet; index: number }) {
         <span className="set-row-order">{index + 1}</span>
         <span className="set-row-type">{setTypeLabel(set.set_type)}</span>
         <span className="set-row-value">{formatSetValue(set)}</span>
-        {set.rir !== null || set.rpe !== null ? (
-          <span className="set-row-effort">
-            {set.rir !== null ? `RIR ${set.rir}` : null}
-            {set.rir !== null && set.rpe !== null ? " · " : null}
-            {set.rpe !== null ? `RPE ${set.rpe}` : null}
-          </span>
-        ) : null}
       </div>
       {set.dropsets.length > 0 ? (
         <ol className="dropset-list">
@@ -51,13 +47,6 @@ function SetRow({ set, index }: { set: ExerciseSet; index: number }) {
             <li className="dropset-row" key={dropset.id}>
               <span className="dropset-row-label">Drop {dropIndex + 1}</span>
               <span className="set-row-value">{formatSetValue(dropset)}</span>
-              {dropset.rir !== null || dropset.rpe !== null ? (
-                <span className="set-row-effort">
-                  {dropset.rir !== null ? `RIR ${dropset.rir}` : null}
-                  {dropset.rir !== null && dropset.rpe !== null ? " · " : null}
-                  {dropset.rpe !== null ? `RPE ${dropset.rpe}` : null}
-                </span>
-              ) : null}
             </li>
           ))}
         </ol>
@@ -96,13 +85,13 @@ function ExerciseCard({ exercise }: { exercise: WorkoutExercise }) {
 
 function UnavailableWorkout() {
   return (
-    <section className="workouts-state" aria-labelledby="workout-error-title">
-      <WarningCircleIcon size={24} weight="regular" aria-hidden="true" />
-      <div>
-        <h2 id="workout-error-title">This workout is unavailable</h2>
-        <p>Refresh to try again.</p>
-      </div>
-    </section>
+    <FeedbackState
+      id="workout-error-title"
+      title="This workout is unavailable"
+      description="Refresh to try again."
+      icon={<WarningCircleIcon size={24} weight="regular" />}
+      tone="warning"
+    />
   );
 }
 
@@ -118,13 +107,14 @@ export default async function WorkoutDetailPage({
 
   return (
     <AppShell activeDestination="workouts">
-      <main className="editor-page">
+      <main className="page-container resource-detail-page">
         {result.status === "unavailable" ? (
           <UnavailableWorkout />
         ) : (
           <>
             <header className="detail-heading">
               <div>
+                <BackButton fallbackHref="/workouts" label="Back to workouts" />
                 <p className="local-date">
                   {formatKathmanduDateTime(result.workout.check_in_at)}
                   {result.workout.check_out_at
@@ -180,12 +170,13 @@ export default async function WorkoutDetailPage({
             </dl>
 
             {result.workout.exercises.length === 0 ? (
-              <section className="workouts-state" aria-labelledby="no-exercises-title">
-                <BarbellIcon size={24} weight="regular" aria-hidden="true" />
-                <div>
-                  <h2 id="no-exercises-title">No exercises recorded</h2>
-                </div>
-              </section>
+              <EmptyState
+                id="no-exercises-title"
+                title="No exercises recorded"
+                description="This workout has no performed exercises yet."
+                icon={<BarbellIcon size={20} weight="regular" />}
+                variant="nested"
+              />
             ) : (
               <div className="workout-exercise-list">
                 {result.workout.exercises

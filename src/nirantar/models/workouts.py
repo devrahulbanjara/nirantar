@@ -132,14 +132,6 @@ class ExerciseSet(Base, TimestampMixin):
         ),
         CheckConstraint("reps IS NULL OR reps >= 0", name="reps_nonnegative"),
         CheckConstraint(
-            "rir IS NULL OR (rir >= 0 AND rir <= 10)",
-            name="rir_range",
-        ),
-        CheckConstraint(
-            "rpe IS NULL OR (rpe >= 0 AND rpe <= 10)",
-            name="rpe_range",
-        ),
-        CheckConstraint(
             "parent_set_id IS NULL OR parent_set_id <> id",
             name="not_own_parent",
         ),
@@ -196,8 +188,6 @@ class ExerciseSet(Base, TimestampMixin):
         nullable=True,
     )
     reps: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    rir: Mapped[Optional[Decimal]] = mapped_column(Numeric(3, 1), nullable=True)
-    rpe: Mapped[Optional[Decimal]] = mapped_column(Numeric(3, 1), nullable=True)
     parent_set_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("exercise_sets.id", ondelete="CASCADE"),

@@ -17,18 +17,14 @@ import type { ExerciseSet } from "@/lib/workouts";
 type EditableValues = {
   weight_kg: string;
   reps: string;
-  rir: string;
-  rpe: string;
 };
 
 type OpResult = { ok: boolean; message?: string };
 
-function toValues(set: Pick<ExerciseSet, "weight_kg" | "reps" | "rir" | "rpe">): EditableValues {
+function toValues(set: Pick<ExerciseSet, "weight_kg" | "reps">): EditableValues {
   return {
     weight_kg: decimalToEditValue(set.weight_kg),
     reps: set.reps === null ? "" : String(set.reps),
-    rir: decimalToEditValue(set.rir),
-    rpe: decimalToEditValue(set.rpe),
   };
 }
 
@@ -39,7 +35,7 @@ export function EditableSetRow({
   onRemove,
   onCommit,
 }: {
-  set: Pick<ExerciseSet, "id" | "weight_kg" | "reps" | "rir" | "rpe">;
+  set: Pick<ExerciseSet, "id" | "weight_kg" | "reps">;
   label: string;
   hasDropsets?: boolean;
   onRemove: () => Promise<OpResult>;
@@ -67,12 +63,6 @@ export function EditableSetRow({
     }
     if (values.reps !== committed.reps) {
       changes.reps = toInt(values.reps);
-    }
-    if (values.rir !== committed.rir) {
-      changes.rir = toDecimal(values.rir);
-    }
-    if (values.rpe !== committed.rpe) {
-      changes.rpe = toDecimal(values.rpe);
     }
     if (Object.keys(changes).length === 0) return;
 

@@ -1,8 +1,6 @@
-import Link from "next/link";
-import { ArrowLeftIcon } from "@phosphor-icons/react/dist/ssr";
-
 import { AppShell } from "@/components/app-shell";
 import { NewMealForm } from "@/components/meal-form/new-meal-form";
+import { BackButton } from "@/components/ui/back-button";
 
 export const dynamic = "force-dynamic";
 
@@ -11,10 +9,7 @@ export default function NewMealPage() {
     <AppShell activeDestination="meals">
       <main className="editor-page">
         <header className="editor-page-heading">
-          <Link href="/meals" className="text-link editor-back-link">
-            <ArrowLeftIcon size={16} weight="bold" aria-hidden="true" />
-            Meals
-          </Link>
+          <BackButton fallbackHref="/meals" label="Back to meals" />
           <h1>Log meal</h1>
         </header>
         <NewMealForm />

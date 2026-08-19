@@ -27,7 +27,13 @@ export default async function SleepPage({
         <header className="workouts-page-heading">
           <h1>Sleep</h1>
           <div className="page-heading-actions">
-            <DateRangeFilter basePath="/sleep" startDate={startDate} endDate={endDate} isDefaultRange={!params.start && !params.end} />
+            <DateRangeFilter
+              basePath="/sleep"
+              startDate={startDate}
+              endDate={endDate}
+              isDefaultRange={!params.start && !params.end}
+              todayDate={today}
+            />
             <SleepEntryDialog triggerClassName="button-primary" />
           </div>
         </header>

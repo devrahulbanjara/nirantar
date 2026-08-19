@@ -15,8 +15,6 @@ export type DraftDropset = {
   key: string;
   weight_kg: string;
   reps: string;
-  rir: string;
-  rpe: string;
   notes: string;
 };
 
@@ -25,8 +23,6 @@ export type DraftSet = {
   type: "warmup" | "working";
   weight_kg: string;
   reps: string;
-  rir: string;
-  rpe: string;
   notes: string;
   dropsets: DraftDropset[];
 };
@@ -43,8 +39,6 @@ export function emptyDropset(): DraftDropset {
     key: nextKey("drop"),
     weight_kg: "",
     reps: "",
-    rir: "",
-    rpe: "",
     notes: "",
   };
 }
@@ -55,10 +49,16 @@ export function emptySet(type: DraftSet["type"] = "working"): DraftSet {
     type,
     weight_kg: "",
     reps: "",
-    rir: "",
-    rpe: "",
     notes: "",
     dropsets: [],
+  };
+}
+
+export function duplicateSet(set: DraftSet): DraftSet {
+  return {
+    ...emptySet(set.type),
+    weight_kg: set.weight_kg,
+    reps: set.reps,
   };
 }
 
@@ -83,17 +83,11 @@ export function toInt(value: string): number | null {
 export function validateSetValues(values: {
   weight_kg: string;
   reps: string;
-  rir: string;
-  rpe: string;
 }): string | null {
   const weight = toDecimal(values.weight_kg);
   if (weight !== null && weight < 0) return "Weight cannot be negative.";
   const reps = toInt(values.reps);
   if (reps !== null && reps < 0) return "Reps cannot be negative.";
-  const rir = toDecimal(values.rir);
-  if (rir !== null && (rir < 0 || rir > 10)) return "RIR must be between 0 and 10.";
-  const rpe = toDecimal(values.rpe);
-  if (rpe !== null && (rpe < 0 || rpe > 10)) return "RPE must be between 0 and 10.";
   return null;
 }
 
@@ -105,8 +99,6 @@ export function draftDropsetToInput(
     order,
     weight_kg: toDecimal(draft.weight_kg),
     reps: toInt(draft.reps),
-    rir: toDecimal(draft.rir),
-    rpe: toDecimal(draft.rpe),
     notes: draft.notes.trim() || null,
   };
 }
@@ -117,8 +109,6 @@ export function draftSetToInput(draft: DraftSet, order: number): SetInput {
     type: draft.type,
     weight_kg: toDecimal(draft.weight_kg),
     reps: toInt(draft.reps),
-    rir: toDecimal(draft.rir),
-    rpe: toDecimal(draft.rpe),
     notes: draft.notes.trim() || null,
     dropsets: draft.dropsets.map((dropset, index) =>
       draftDropsetToInput(dropset, index + 1),

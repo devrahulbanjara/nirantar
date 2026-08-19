@@ -29,6 +29,9 @@ export const clerkAppearance = {
     socialButtonsBlockButton: "clerk-secondary-button",
     formFieldInput: "clerk-input",
     footerActionLink: "clerk-link",
+    userButtonBox: "clerk-user-button-box",
+    userButtonTrigger: "clerk-user-button-trigger",
+    avatarBox: "clerk-avatar-box",
   },
 } as const;
 

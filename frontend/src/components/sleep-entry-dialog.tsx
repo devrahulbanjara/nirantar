@@ -66,7 +66,12 @@ export function SleepEntryDialog({
         {existing ? <PencilSimpleIcon size={17} weight="bold" /> : <MoonIcon size={18} weight="bold" />}
         {triggerLabel}
       </button>
-      <Modal open={open} onClose={() => setOpen(false)} labelledBy={headingId} variant="sheet">
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        labelledBy={headingId}
+        variant="responsive-dialog"
+      >
         <h2 className="modal-heading" id={headingId}>{existing ? "Correct sleep" : "Log sleep"}</h2>
         <p className="field-hint">Sleep is attributed to the local date you woke up.</p>
         <div className="field">

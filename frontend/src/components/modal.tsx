@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 
-export type ModalVariant = "dialog" | "sheet";
+export type ModalVariant = "dialog" | "responsive-dialog";
 
 export function Modal({
   open,

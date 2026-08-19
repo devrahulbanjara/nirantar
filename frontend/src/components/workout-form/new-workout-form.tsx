@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { createWorkout, type WorkoutCreateInput } from "@/lib/actions/workouts";
+import { DateTimeField } from "@/components/ui/date-time-field";
 import { kathmanduInputValueToIso, nowAsKathmanduInputValue } from "@/lib/time";
 
 import { GroupsEditor, type DraftGroup } from "@/components/workout-form/groups-editor";
@@ -98,70 +99,60 @@ export function NewWorkoutForm() {
         </p>
       ) : null}
 
-      <section className="editor-section">
-        <h2 className="editor-section-title">Session</h2>
-        <div className="field">
-          <label className="field-label" htmlFor="check-in-at">
-            Check-in
-          </label>
-          <input
+      <details className="editor-section optional-section-disclosure optional-editor-section">
+        <summary>Session details</summary>
+        <div className="session-details-fields">
+          <DateTimeField
             id="check-in-at"
-            className="field-input"
-            type="datetime-local"
+            label="Check-in"
             value={checkInAt}
-            onChange={(event) => setCheckInAt(event.target.value)}
+            onChange={setCheckInAt}
           />
-        </div>
-        <label className="checkbox-field">
-          <input
-            type="checkbox"
-            checked={stillCheckedIn}
-            onChange={(event) => setStillCheckedIn(event.target.checked)}
-          />
-          Still checked in
-        </label>
-        {!stillCheckedIn ? (
+          <label className="checkbox-field">
+            <input
+              type="checkbox"
+              checked={stillCheckedIn}
+              onChange={(event) => setStillCheckedIn(event.target.checked)}
+            />
+            Still checked in
+          </label>
+          {!stillCheckedIn ? (
+            <DateTimeField
+              id="check-out-at"
+              label="Check-out"
+              value={checkOutAt}
+              onChange={setCheckOutAt}
+            />
+          ) : null}
           <div className="field">
-            <label className="field-label" htmlFor="check-out-at">
-              Check-out
+            <label className="field-label" htmlFor="workout-title">
+              Title (optional)
             </label>
             <input
-              id="check-out-at"
+              id="workout-title"
               className="field-input"
-              type="datetime-local"
-              value={checkOutAt}
-              onChange={(event) => setCheckOutAt(event.target.value)}
+              type="text"
+              placeholder="Arms, Push day, Upper body…"
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
             />
           </div>
-        ) : null}
-        <div className="field">
-          <label className="field-label" htmlFor="workout-title">
-            Title (optional)
-          </label>
-          <input
-            id="workout-title"
-            className="field-input"
-            type="text"
-            placeholder="Arms, Push day, Upper body…"
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-          />
+          <div className="field">
+            <label className="field-label" htmlFor="workout-notes">
+              Notes (optional)
+            </label>
+            <textarea
+              id="workout-notes"
+              className="field-textarea"
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+            />
+          </div>
         </div>
-        <div className="field">
-          <label className="field-label" htmlFor="workout-notes">
-            Notes (optional)
-          </label>
-          <textarea
-            id="workout-notes"
-            className="field-textarea"
-            value={notes}
-            onChange={(event) => setNotes(event.target.value)}
-          />
-        </div>
-      </section>
+      </details>
 
       <section className="editor-section">
-        <h2 className="editor-section-title">Exercises</h2>
+        <h2 className="editor-section-title">Exercises and sets</h2>
         <div className="exercise-builder-list">
           {exercises.map((exercise, index) => (
             <ExerciseBuilder
@@ -180,7 +171,7 @@ export function NewWorkoutForm() {
         </div>
         <button
           type="button"
-          className="button-secondary"
+          className="button-secondary workout-add-exercise"
           onClick={() => setExercises([...exercises, emptyExercise()])}
         >
           <PlusIcon size={18} weight="bold" aria-hidden="true" />
@@ -188,10 +179,10 @@ export function NewWorkoutForm() {
         </button>
       </section>
 
-      <section className="editor-section">
-        <h2 className="editor-section-title">Supersets (optional)</h2>
+      <details className="editor-section optional-section-disclosure optional-editor-section">
+        <summary>Supersets (optional)</summary>
         <GroupsEditor exercises={exercises} groups={groups} onChange={setGroups} />
-      </section>
+      </details>
 
       <div className="sticky-action-bar">
         <button

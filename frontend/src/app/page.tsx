@@ -2,8 +2,8 @@ import {
   BarbellIcon,
   BowlFoodIcon,
   CheckCircleIcon,
-  GaugeIcon,
   FireIcon,
+  GaugeIcon,
   MoonIcon,
   WarningCircleIcon,
 } from "@phosphor-icons/react/dist/ssr";
@@ -14,8 +14,15 @@ import Link from "next/link";
 
 import { AppShell } from "@/components/app-shell";
 import { Landing } from "@/components/landing";
-import { WeightEntryDialog } from "@/components/weight-entry-dialog";
 import { SleepEntryDialog } from "@/components/sleep-entry-dialog";
+import { WorkoutActivityCalendar } from "@/components/workout-activity-calendar";
+import { FeedbackState } from "@/components/ui/feedback-state";
+import {
+  PageContainer,
+  PageHeader,
+  SectionHeader,
+} from "@/components/ui/page-layout";
+import { WeightEntryDialog } from "@/components/weight-entry-dialog";
 import {
   formatKathmanduDate,
   getDailySummary,
@@ -24,6 +31,11 @@ import {
   type NutrientTotal,
 } from "@/lib/daily-summary";
 import { getStreaks, type Streaks } from "@/lib/insights";
+import { addDaysToDateString } from "@/lib/time";
+import {
+  buildActivityCells,
+  getWorkoutActivity,
+} from "@/lib/workout-activity";
 
 export const dynamic = "force-dynamic";
 
@@ -46,15 +58,35 @@ function formatNutrient(
   })} ${unit}`;
 }
 
-function NutrientProgress({ nutrient, unit }: { nutrient: NutrientTotal; unit: "kcal" | "g" }) {
+function NutrientProgress({
+  nutrient,
+  unit,
+}: {
+  nutrient: NutrientTotal;
+  unit: "kcal" | "g";
+}) {
   const actual = formatNutrient(nutrient, unit);
   if (nutrient.target_value === null) return <h2>{actual}</h2>;
-  const target = Number(nutrient.target_value).toLocaleString("en-US", { maximumFractionDigits: 1 });
-  const percentage = Math.max(0, Math.min(100, Number(nutrient.percentage_of_target ?? 0)));
+  const target = Number(nutrient.target_value).toLocaleString("en-US", {
+    maximumFractionDigits: 1,
+  });
+  const percentage = Math.max(
+    0,
+    Math.min(100, Number(nutrient.percentage_of_target ?? 0)),
+  );
   return (
     <>
-      <h2>{actual.replace(` ${unit}`, "")} / {target} {unit}</h2>
-      <div className="target-progress" role="progressbar" aria-label={`${unit === "kcal" ? "Energy" : "Protein"} target progress`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(percentage)}>
+      <h2>
+        {actual.replace(` ${unit}`, "")} / {target} {unit}
+      </h2>
+      <div
+        className="target-progress"
+        role="progressbar"
+        aria-label={`${unit === "kcal" ? "Energy" : "Protein"} target progress`}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(percentage)}
+      >
         <span style={{ width: `${percentage}%` }} />
       </div>
     </>
@@ -63,13 +95,25 @@ function NutrientProgress({ nutrient, unit }: { nutrient: NutrientTotal; unit: "
 
 function EmptySummary() {
   return (
-    <section className="status-panel" aria-labelledby="summary-unavailable-title">
-      <WarningCircleIcon size={24} weight="regular" aria-hidden="true" />
-      <div>
-        <h2 id="summary-unavailable-title">Today’s summary is unavailable</h2>
-        <p>Refresh to try again.</p>
-      </div>
-    </section>
+    <FeedbackState
+      id="summary-unavailable-title"
+      title="Today’s summary is unavailable"
+      description="Refresh to try again."
+      icon={<WarningCircleIcon size={24} weight="regular" />}
+      tone="warning"
+    />
+  );
+}
+
+function UnavailableActivity() {
+  return (
+    <FeedbackState
+      id="workout-activity-unavailable-title"
+      title="Workout activity is unavailable"
+      description="Refresh to try again."
+      icon={<WarningCircleIcon size={24} weight="regular" />}
+      tone="warning"
+    />
   );
 }
 
@@ -92,7 +136,13 @@ function NutritionCompleteness({ nutrient }: { nutrient: NutrientTotal }) {
   );
 }
 
-function SummaryContent({ summary, streaks }: { summary: DailySummary; streaks: Streaks | null }) {
+function SummaryContent({
+  summary,
+  streaks,
+}: {
+  summary: DailySummary;
+  streaks: Streaks | null;
+}) {
   const workoutStatus = summary.workouts.open_workout_count
     ? `${summary.workouts.open_workout_count} open`
     : summary.workouts.completed_workout_count
@@ -110,7 +160,10 @@ function SummaryContent({ summary, streaks }: { summary: DailySummary; streaks: 
             <p className="eyebrow">Workout</p>
             <h2>{workoutStatus}</h2>
             {streaks && streaks.workouts.target_workout_days_per_week !== null ? (
-              <p className="card-subline">{streaks.workouts.workout_days_logged_this_week}/{streaks.workouts.target_workout_days_per_week} this week</p>
+              <p className="card-subline">
+                {streaks.workouts.workout_days_logged_this_week}/
+                {streaks.workouts.target_workout_days_per_week} this week
+              </p>
             ) : null}
           </div>
         </div>
@@ -139,7 +192,10 @@ function SummaryContent({ summary, streaks }: { summary: DailySummary; streaks: 
           </span>
           <div>
             <p className="eyebrow">Nutrition</p>
-            <NutrientProgress nutrient={summary.meals.nutrition.calories_kcal} unit="kcal" />
+            <NutrientProgress
+              nutrient={summary.meals.nutrition.calories_kcal}
+              unit="kcal"
+            />
           </div>
         </div>
         {summary.meals.meal_count > 0 ? (
@@ -147,7 +203,12 @@ function SummaryContent({ summary, streaks }: { summary: DailySummary; streaks: 
             <dl className="nutrition-row">
               <div>
                 <dt>Protein</dt>
-                <dd><NutrientProgress nutrient={summary.meals.nutrition.protein_g} unit="g" /></dd>
+                <dd>
+                  <NutrientProgress
+                    nutrient={summary.meals.nutrition.protein_g}
+                    unit="g"
+                  />
+                </dd>
               </div>
             </dl>
             <NutritionCompleteness
@@ -159,10 +220,21 @@ function SummaryContent({ summary, streaks }: { summary: DailySummary; streaks: 
 
       <article className="summary-card sleep-card">
         <div className="card-heading">
-          <span className="icon-surface" aria-hidden="true"><MoonIcon size={22} weight="bold" /></span>
-          <div><p className="eyebrow">Sleep</p><h2>{summary.sleep ? `${Number(summary.sleep.hours_slept).toFixed(1)} hrs` : "Not logged"}</h2></div>
+          <span className="icon-surface" aria-hidden="true">
+            <MoonIcon size={22} weight="bold" />
+          </span>
+          <div>
+            <p className="eyebrow">Sleep</p>
+            <h2>
+              {summary.sleep
+                ? `${Number(summary.sleep.hours_slept).toFixed(1)} hrs`
+                : "Not logged"}
+            </h2>
+          </div>
         </div>
-        {summary.sleep?.quality_rating ? <p className="card-note">Quality {summary.sleep.quality_rating}/5</p> : null}
+        {summary.sleep?.quality_rating ? (
+          <p className="card-note">Quality {summary.sleep.quality_rating}/5</p>
+        ) : null}
       </article>
 
       <article className="summary-card weight-card">
@@ -197,30 +269,35 @@ function SummaryContent({ summary, streaks }: { summary: DailySummary; streaks: 
 }
 
 export default async function Home() {
-  // Signed-out visitors get the landing surface; the daily summary is only
-  // fetched once there is a session to fetch it for.
   const { userId } = await auth();
   if (!userId) {
     return <Landing />;
   }
 
   const today = getKathmanduDate();
-  const result = await getDailySummary(today);
-  const streakResult = await getStreaks();
+  const activityStart = addDaysToDateString(today, -364);
+  const [result, activityResult, streakResult] = await Promise.all([
+    getDailySummary(today),
+    getWorkoutActivity(activityStart, today),
+    getStreaks(),
+  ]);
   const streaks = streakResult.ok ? streakResult.data : null;
 
   return (
     <AppShell activeDestination="today">
-      <main className="today-page">
-        <header className="page-heading">
-          <div>
-            <p className="local-date">{formatKathmanduDate(today)}</p>
-            <h1>Today</h1>
-          </div>
-          {streaks && streaks.meals.current_streak_days > 0 ? (
-            <span className="streak-badge"><FireIcon size={17} weight="fill" aria-hidden="true" />{streaks.meals.current_streak_days} day streak</span>
-          ) : null}
-        </header>
+      <PageContainer>
+        <PageHeader
+          title="Today"
+          eyebrow={formatKathmanduDate(today)}
+          actions={
+            streaks && streaks.meals.current_streak_days > 0 ? (
+              <span className="streak-badge">
+                <FireIcon size={17} weight="fill" aria-hidden="true" />
+                {streaks.meals.current_streak_days} day streak
+              </span>
+            ) : null
+          }
+        />
 
         <div className="quick-actions">
           <Link href="/workouts/new" className="button-primary">
@@ -241,21 +318,41 @@ export default async function Home() {
           />
           <SleepEntryDialog
             triggerClassName="button-secondary"
-            existing={result.status === "ready" ? result.summary.sleep ?? undefined : undefined}
+            existing={
+              result.status === "ready" ? result.summary.sleep ?? undefined : undefined
+            }
           />
         </div>
 
         <section className="daily-section" id="today-summary" aria-labelledby="daily-summary-title">
-          <div className="section-heading">
-            <h2 id="daily-summary-title">Daily summary</h2>
-          </div>
+          <SectionHeader id="daily-summary-title" title="Daily summary" />
           {result.status === "ready" ? (
             <SummaryContent summary={result.summary} streaks={streaks} />
           ) : (
             <EmptySummary />
           )}
         </section>
-      </main>
+
+        <section
+          className="daily-section"
+          id="workout-activity"
+          aria-labelledby="workout-activity-title"
+        >
+          <SectionHeader id="workout-activity-title" title="Workout activity" />
+          {activityResult.status === "ready" ? (
+            <WorkoutActivityCalendar
+              cells={buildActivityCells(
+                activityStart,
+                today,
+                activityResult.activity.days,
+              )}
+              activeDayCount={activityResult.activity.active_day_count}
+            />
+          ) : (
+            <UnavailableActivity />
+          )}
+        </section>
+      </PageContainer>
     </AppShell>
   );
 }

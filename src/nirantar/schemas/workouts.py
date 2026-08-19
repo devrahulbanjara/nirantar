@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
 from typing import Annotated, Literal
@@ -17,8 +17,6 @@ class DropsetCreate(BaseModel):
     order: int = Field(gt=0)
     weight_kg: Decimal | None = Field(default=None, ge=0)
     reps: int | None = Field(default=None, ge=0)
-    rir: Decimal | None = Field(default=None, ge=0, le=10)
-    rpe: Decimal | None = Field(default=None, ge=0, le=10)
     notes: str | None = None
     client_ref: str | None = None
 
@@ -28,8 +26,6 @@ class SetCreate(BaseModel):
     type: SetType
     weight_kg: Decimal | None = Field(default=None, ge=0)
     reps: int | None = Field(default=None, ge=0)
-    rir: Decimal | None = Field(default=None, ge=0, le=10)
-    rpe: Decimal | None = Field(default=None, ge=0, le=10)
     notes: str | None = None
     client_ref: str | None = None
     dropsets: list[DropsetCreate] = Field(default_factory=list)
@@ -202,8 +198,6 @@ class UpdateSetOperation(BaseModel):
     order: int | None = Field(default=None, gt=0)
     weight_kg: Decimal | None = Field(default=None, ge=0)
     reps: int | None = Field(default=None, ge=0)
-    rir: Decimal | None = Field(default=None, ge=0, le=10)
-    rpe: Decimal | None = Field(default=None, ge=0, le=10)
     notes: str | None = None
 
     @model_validator(mode="after")
@@ -316,8 +310,6 @@ class DropsetRead(BaseModel):
     set_type: SetType
     weight_kg: Decimal | None
     reps: int | None
-    rir: Decimal | None
-    rpe: Decimal | None
     notes: str | None
     parent_set_id: UUID
 
@@ -330,8 +322,6 @@ class SetRead(BaseModel):
     set_type: SetType
     weight_kg: Decimal | None
     reps: int | None
-    rir: Decimal | None
-    rpe: Decimal | None
     notes: str | None
     parent_set_id: UUID | None = None
     dropsets: list[DropsetRead] = Field(default_factory=list)
@@ -389,8 +379,6 @@ class ExerciseHistorySetRead(BaseModel):
     set_type: SetType
     weight_kg: Decimal | None
     reps: int | None
-    rir: Decimal | None
-    rpe: Decimal | None
     notes: str | None
     parent_set_id: UUID | None
     dropsets: list[DropsetRead] = Field(default_factory=list)
@@ -416,6 +404,25 @@ class RecentWorkoutsQuery(BaseModel):
         if value is not None and value.tzinfo is None:
             raise ValueError("before must be timezone-aware")
         return value
+
+
+class WorkoutHistoryQuery(BaseModel):
+    start_date: date
+    end_date: date
+    limit: int = Field(default=100, ge=1, le=200)
+
+    @model_validator(mode="after")
+    def validate_range(self) -> "WorkoutHistoryQuery":
+        if self.end_date < self.start_date:
+            raise ValueError("end_date must be on or after start_date")
+        return self
+
+
+class WorkoutHistoryRead(BaseModel):
+    start_date: date
+    end_date: date
+    workout_count: int
+    workouts: list[WorkoutRead]
 
 
 class ExerciseHistoryQuery(BaseModel):

@@ -23,6 +23,8 @@ from nirantar.schemas.workouts import (
     SetRead,
     SetType,
     WorkoutCreate,
+    WorkoutHistoryQuery,
+    WorkoutHistoryRead,
     WorkoutRead,
 )
 
@@ -49,5 +51,7 @@ __all__ = [
     "SetRead",
     "SetType",
     "WorkoutCreate",
+    "WorkoutHistoryQuery",
+    "WorkoutHistoryRead",
     "WorkoutRead",
 ]

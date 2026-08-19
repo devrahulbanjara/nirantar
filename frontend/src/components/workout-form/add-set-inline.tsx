@@ -16,7 +16,7 @@ export function AddSetInline({
 }) {
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<"warmup" | "working">("working");
-  const [values, setValues] = useState({ weight_kg: "", reps: "", rir: "", rpe: "" });
+  const [values, setValues] = useState({ weight_kg: "", reps: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -46,13 +46,11 @@ export function AddSetInline({
       type,
       weight_kg: toDecimal(values.weight_kg),
       reps: toInt(values.reps),
-      rir: toDecimal(values.rir),
-      rpe: toDecimal(values.rpe),
       dropsets: [],
     });
     setSaving(false);
     if (result.ok) {
-      setValues({ weight_kg: "", reps: "", rir: "", rpe: "" });
+      setValues({ weight_kg: "", reps: "" });
       setOpen(false);
     } else {
       setError(result.message ?? "Could not add this set.");

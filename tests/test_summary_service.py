@@ -3,6 +3,7 @@ from datetime import date, datetime, timezone
 import pytest
 
 from nirantar.schemas.sleep import SleepCreate
+from nirantar.schemas.summaries import WorkoutActivityQuery
 from nirantar.schemas.targets import TargetPatch
 from nirantar.schemas.weights import WeightCreate
 from nirantar.services.meals import MealService
@@ -11,7 +12,7 @@ from nirantar.services.summaries import DailySummaryService
 from nirantar.services.targets import TargetService
 from nirantar.services.weights import WeightService
 from nirantar.services.workouts import WorkoutService
-from tests.helpers import TEST_USER_ID, sample_meal, sample_workout
+from tests.helpers import NEPAL, TEST_USER_ID, sample_meal, sample_workout
 
 
 @pytest.mark.asyncio
@@ -105,3 +106,54 @@ async def test_empty_daily_summary_reports_no_invented_values(db_session) -> Non
     assert summary.meals.nutrition.protein_g.known_total is None
     assert summary.meals.nutrition.protein_g.complete is True
     assert summary.body_weight is None
+
+
+@pytest.mark.asyncio
+async def test_workout_activity_groups_by_kathmandu_day(db_session) -> None:
+    service = DailySummaryService(db_session, TEST_USER_ID)
+    # 18:20 UTC on Aug 15 → 00:05 NPT on Aug 16
+    await WorkoutService(db_session, TEST_USER_ID).log_workout(
+        sample_workout(
+            check_in_at=datetime(2026, 8, 15, 18, 20, tzinfo=timezone.utc),
+        )
+    )
+    await WorkoutService(db_session, TEST_USER_ID).log_workout(
+        sample_workout(
+            check_in_at=datetime(2026, 8, 16, 7, 5, tzinfo=NEPAL),
+        )
+    )
+    await WorkoutService(db_session, TEST_USER_ID).log_workout(
+        sample_workout(
+            check_in_at=datetime(2026, 8, 15, 7, 5, tzinfo=NEPAL),
+        )
+    )
+
+    activity = await service.get_workout_activity(
+        WorkoutActivityQuery(start_date=date(2026, 8, 15), end_date=date(2026, 8, 16))
+    )
+
+    assert activity.timezone == "Asia/Kathmandu"
+    assert activity.active_day_count == 2
+    assert [(day.date, day.workout_count) for day in activity.days] == [
+        (date(2026, 8, 15), 1),
+        (date(2026, 8, 16), 2),
+    ]
+
+
+@pytest.mark.asyncio
+async def test_workout_activity_empty_range(db_session) -> None:
+    activity = await DailySummaryService(db_session, TEST_USER_ID).get_workout_activity(
+        WorkoutActivityQuery(start_date=date(2026, 1, 1), end_date=date(2026, 1, 31))
+    )
+    assert activity.active_day_count == 0
+    assert activity.days == []
+
+
+@pytest.mark.asyncio
+async def test_workout_activity_is_owner_scoped(db_session) -> None:
+    await WorkoutService(db_session, TEST_USER_ID).log_workout(sample_workout())
+    activity = await DailySummaryService(db_session, "user_friend").get_workout_activity(
+        WorkoutActivityQuery(start_date=date(2026, 8, 16), end_date=date(2026, 8, 16))
+    )
+    assert activity.active_day_count == 0
+    assert activity.days == []

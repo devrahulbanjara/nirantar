@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime, timezone
 from decimal import Decimal
 
 import pytest
@@ -14,6 +14,7 @@ from nirantar.schemas.workouts import (
     WorkoutCreate,
     WorkoutDeleteRequest,
     WorkoutEditRequest,
+    WorkoutHistoryQuery,
 )
 from nirantar.services.errors import ConflictDomainError, ValidationDomainError
 from nirantar.services.workouts import WorkoutService
@@ -49,8 +50,6 @@ async def test_log_workout_rolls_back_on_invalid_child(db_session) -> None:
         type=SetType.WORKING,
         weight_kg=Decimal("10"),
         reps=10,
-        rir=None,
-        rpe=None,
         notes=None,
         client_ref=None,
         dropsets=[],
@@ -96,6 +95,28 @@ async def test_recent_workouts_are_ordered(db_session) -> None:
     recent = await service.get_recent_workouts(RecentWorkoutsQuery(limit=10))
     assert [item.title for item in recent] == ["Later", "Earlier"]
     assert recent[0].exercises[0].sets[0].set_order == 1
+
+
+@pytest.mark.asyncio
+async def test_get_workouts_uses_kathmandu_calendar_boundaries(db_session) -> None:
+    service = WorkoutService(db_session, TEST_USER_ID)
+    await service.log_workout(
+        sample_workout(
+            check_in_at=datetime(2026, 8, 15, 18, 20, tzinfo=timezone.utc),
+        )
+    )
+    await service.log_workout(
+        sample_workout(
+            check_in_at=datetime(2026, 8, 16, 18, 20, tzinfo=timezone.utc),
+        )
+    )
+
+    history = await service.get_workouts(
+        WorkoutHistoryQuery(start_date=date(2026, 8, 16), end_date=date(2026, 8, 16))
+    )
+
+    assert history.workout_count == 1
+    assert history.workouts[0].check_in_at.astimezone(NEPAL).date() == date(2026, 8, 16)
 
 
 @pytest.mark.asyncio

@@ -1,6 +1,17 @@
 export const KATHMANDU_TIMEZONE = "Asia/Kathmandu";
 export const KATHMANDU_OFFSET = "+05:45";
 
+export function getKathmanduDate(now = new Date()): string {
+  const parts = new Intl.DateTimeFormat("en", {
+    timeZone: KATHMANDU_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(now);
+  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
 export function nowAsKathmanduInputValue(now = new Date()): string {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: KATHMANDU_TIMEZONE,
@@ -94,6 +105,16 @@ export function formatDateLabel(date: string): string {
     weekday: "long",
     day: "numeric",
     month: "long",
+  }).format(new Date(`${date}T00:00:00${KATHMANDU_OFFSET}`));
+}
+
+export function formatDateFullLabel(date: string): string {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: KATHMANDU_TIMEZONE,
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   }).format(new Date(`${date}T00:00:00${KATHMANDU_OFFSET}`));
 }
 

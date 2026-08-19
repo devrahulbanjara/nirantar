@@ -2,6 +2,8 @@ import { CheckCircleIcon, WarningCircleIcon } from "@phosphor-icons/react/dist/s
 import { notFound } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
+import { BackButton } from "@/components/ui/back-button";
+import { FeedbackState } from "@/components/ui/feedback-state";
 import { MealDetailActions } from "@/components/meals/meal-detail-actions";
 import { getMeal, type FoodItem } from "@/lib/meals";
 import { formatKathmanduDateTime } from "@/lib/time";
@@ -79,19 +81,20 @@ export default async function MealDetailPage({
 
   return (
     <AppShell activeDestination="meals">
-      <main className="editor-page">
+      <main className="page-container resource-detail-page">
         {result.status === "unavailable" ? (
-          <section className="workouts-state" aria-labelledby="meal-error-title">
-            <WarningCircleIcon size={24} weight="regular" aria-hidden="true" />
-            <div>
-              <h2 id="meal-error-title">This meal is unavailable</h2>
-              <p>Refresh to try again.</p>
-            </div>
-          </section>
+          <FeedbackState
+            id="meal-error-title"
+            title="This meal is unavailable"
+            description="Refresh to try again."
+            icon={<WarningCircleIcon size={24} weight="regular" />}
+            tone="warning"
+          />
         ) : (
           <>
             <header className="detail-heading">
               <div>
+                <BackButton fallbackHref="/meals" label="Back to meals" />
                 <p className="local-date">
                   {formatKathmanduDateTime(result.meal.eaten_at)}
                 </p>

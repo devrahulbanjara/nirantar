@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -14,6 +14,8 @@ from nirantar.schemas.workouts import (
     WorkoutDeleteRequest,
     WorkoutDeleteResult,
     WorkoutEditRequest,
+    WorkoutHistoryQuery,
+    WorkoutHistoryRead,
     WorkoutRead,
 )
 from nirantar.services.errors import (
@@ -50,6 +52,27 @@ async def log_workout(
         return await service.log_workout(payload)
     except DomainError as exc:
         raise _http_error(exc) from exc
+
+
+@router.get("")
+async def get_workouts(
+    db: DBSession,
+    user_id: CurrentUserId,
+    start_date: Annotated[date, Query()],
+    end_date: Annotated[date, Query()],
+    limit: Annotated[int, Query(ge=1, le=200)] = 100,
+) -> WorkoutHistoryRead:
+    if end_date < start_date:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="end_date must be on or after start_date",
+        )
+    query = WorkoutHistoryQuery(
+        start_date=start_date,
+        end_date=end_date,
+        limit=limit,
+    )
+    return await WorkoutService(db, user_id).get_workouts(query)
 
 
 @router.get("/recent")

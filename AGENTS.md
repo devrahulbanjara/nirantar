@@ -82,7 +82,6 @@ Do not add without an explicit requirement:
 - Warm-up and working sets have no parent; a dropset requires a top-level working-set parent in the same performed exercise.
 - Do not allow nested dropsets in V1.
 - Weight and reps cannot be negative.
-- Validate nullable RIR and RPE ranges.
 - Count working sets, dropsets, and physical sets separately.
 
 ### Supersets and Nutrition

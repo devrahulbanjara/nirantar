@@ -15,8 +15,6 @@ export type DropsetInput = {
   order: number;
   weight_kg?: number | null;
   reps?: number | null;
-  rir?: number | null;
-  rpe?: number | null;
   notes?: string | null;
 };
 
@@ -25,8 +23,6 @@ export type SetInput = {
   type: "warmup" | "working";
   weight_kg?: number | null;
   reps?: number | null;
-  rir?: number | null;
-  rpe?: number | null;
   notes?: string | null;
   client_ref?: string | null;
   dropsets?: DropsetInput[];
@@ -99,8 +95,6 @@ export type WorkoutEditOperation =
       order?: number;
       weight_kg?: number | null;
       reps?: number | null;
-      rir?: number | null;
-      rpe?: number | null;
       notes?: string | null;
     }
   | { operation: "remove_set"; set_id: string; cascade_dropsets?: boolean }

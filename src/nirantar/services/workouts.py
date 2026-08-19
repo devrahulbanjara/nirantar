@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, time, timedelta
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import Select, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from nirantar.config import get_settings
 from nirantar.models.workouts import (
     ExerciseGroup,
     ExerciseGroupMember,
@@ -44,6 +46,8 @@ from nirantar.schemas.workouts import (
     WorkoutDeleteRequest,
     WorkoutDeleteResult,
     WorkoutEditRequest,
+    WorkoutHistoryQuery,
+    WorkoutHistoryRead,
     WorkoutRead,
 )
 from nirantar.services.errors import (
@@ -86,8 +90,6 @@ def _assemble_sets(sets: list[ExerciseSet]) -> list[SetRead]:
                 set_type=_set_type(child.set_type),
                 weight_kg=child.weight_kg,
                 reps=child.reps,
-                rir=child.rir,
-                rpe=child.rpe,
                 notes=child.notes,
                 parent_set_id=child.parent_set_id,
             )
@@ -103,8 +105,6 @@ def _assemble_sets(sets: list[ExerciseSet]) -> list[SetRead]:
                 set_type=_set_type(parent.set_type),
                 weight_kg=parent.weight_kg,
                 reps=parent.reps,
-                rir=parent.rir,
-                rpe=parent.rpe,
                 notes=parent.notes,
                 parent_set_id=None,
                 dropsets=dropsets,
@@ -175,9 +175,16 @@ def _session_load_options() -> tuple:
 class WorkoutService:
     """Shared workout domain operations for FastAPI and MCP."""
 
-    def __init__(self, session: AsyncSession, owner_id: str) -> None:
+    def __init__(
+        self,
+        session: AsyncSession,
+        owner_id: str,
+        *,
+        user_timezone: str | None = None,
+    ) -> None:
         self.session = session
         self.owner_id = owner_id
+        self.user_timezone = user_timezone or get_settings().user_timezone
 
     async def log_workout(self, payload: WorkoutCreate) -> WorkoutRead:
         try:
@@ -217,8 +224,6 @@ class WorkoutService:
                         set_type=ExerciseSetType(set_payload.type.value),
                         weight_kg=set_payload.weight_kg,
                         reps=set_payload.reps,
-                        rir=set_payload.rir,
-                        rpe=set_payload.rpe,
                         notes=set_payload.notes,
                         parent_set_id=None,
                     )
@@ -236,8 +241,6 @@ class WorkoutService:
                                 set_type=ExerciseSetType.DROPSET,
                                 weight_kg=drop_payload.weight_kg,
                                 reps=drop_payload.reps,
-                                rir=drop_payload.rir,
-                                rpe=drop_payload.rpe,
                                 notes=drop_payload.notes,
                                 parent_set_id=parent.id,
                             )
@@ -795,8 +798,6 @@ class WorkoutService:
                     set_type=ExerciseSetType.DROPSET,
                     weight_kg=operation.dropset.weight_kg,
                     reps=operation.dropset.reps,
-                    rir=operation.dropset.rir,
-                    rpe=operation.dropset.rpe,
                     notes=operation.dropset.notes,
                     parent_set_id=parent.id,
                 )
@@ -809,8 +810,6 @@ class WorkoutService:
                 "order": "set_order",
                 "weight_kg": "weight_kg",
                 "reps": "reps",
-                "rir": "rir",
-                "rpe": "rpe",
                 "notes": "notes",
             }
             for input_name, model_name in field_map.items():
@@ -882,8 +881,6 @@ class WorkoutService:
             set_type=ExerciseSetType(payload.type.value),
             weight_kg=payload.weight_kg,
             reps=payload.reps,
-            rir=payload.rir,
-            rpe=payload.rpe,
             notes=payload.notes,
             parent_set_id=None,
         )
@@ -897,8 +894,6 @@ class WorkoutService:
                     set_type=ExerciseSetType.DROPSET,
                     weight_kg=drop_payload.weight_kg,
                     reps=drop_payload.reps,
-                    rir=drop_payload.rir,
-                    rpe=drop_payload.rpe,
                     notes=drop_payload.notes,
                     parent_set_id=parent.id,
                 )
@@ -921,6 +916,35 @@ class WorkoutService:
         result = await self.session.execute(statement)
         sessions = result.scalars().unique().all()
         return [_to_workout_read(item) for item in sessions]
+
+    async def get_workouts(self, query: WorkoutHistoryQuery) -> WorkoutHistoryRead:
+        timezone = ZoneInfo(self.user_timezone)
+        start_at = datetime.combine(query.start_date, time.min, tzinfo=timezone)
+        end_at = datetime.combine(
+            query.end_date + timedelta(days=1),
+            time.min,
+            tzinfo=timezone,
+        )
+        statement: Select[tuple[WorkoutSession]] = (
+            select(WorkoutSession)
+            .options(*_session_load_options())
+            .where(
+                WorkoutSession.owner_id == self.owner_id,
+                WorkoutSession.check_in_at >= start_at,
+                WorkoutSession.check_in_at < end_at,
+            )
+            .order_by(WorkoutSession.check_in_at.desc(), WorkoutSession.id.asc())
+            .limit(query.limit)
+        )
+        result = await self.session.execute(statement)
+        sessions = result.scalars().unique().all()
+        workouts = [_to_workout_read(item) for item in sessions]
+        return WorkoutHistoryRead(
+            start_date=query.start_date,
+            end_date=query.end_date,
+            workout_count=len(workouts),
+            workouts=workouts,
+        )
 
     async def get_exercise_history(
         self,
@@ -970,8 +994,6 @@ class WorkoutService:
                             set_type=item.set_type,
                             weight_kg=item.weight_kg,
                             reps=item.reps,
-                            rir=item.rir,
-                            rpe=item.rpe,
                             notes=item.notes,
                             parent_set_id=item.parent_set_id,
                             dropsets=item.dropsets,
