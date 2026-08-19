@@ -9,6 +9,7 @@ from fastmcp.server.dependencies import get_access_token
 
 from nirantar.config import get_settings
 from nirantar.db.session import get_session_factory
+from nirantar.schemas.insights import StreaksRead, TrendsQuery, TrendsRead
 from nirantar.schemas.meals import (
     MealCreate,
     MealDeleteRequest,
@@ -18,7 +19,24 @@ from nirantar.schemas.meals import (
     MealHistoryRead,
     MealRead,
 )
+from nirantar.schemas.sleep import (
+    SleepCreate,
+    SleepEditRequest,
+    SleepForDateResult,
+    SleepHistoryQuery,
+    SleepHistoryRead,
+    SleepRead,
+)
 from nirantar.schemas.summaries import DailySummaryRead
+from nirantar.schemas.targets import TargetPatch, TargetResult
+from nirantar.schemas.weights import (
+    WeightCreate,
+    WeightForDateResult,
+    WeightHistoryQuery,
+    WeightHistoryRead,
+    WeightRead,
+    WeightUpdate,
+)
 from nirantar.schemas.workouts import (
     ExerciseHistoryEntry,
     ExerciseHistoryQuery,
@@ -31,17 +49,12 @@ from nirantar.schemas.workouts import (
     WorkoutHistoryRead,
     WorkoutRead,
 )
-from nirantar.schemas.weights import (
-    WeightCreate,
-    WeightForDateResult,
-    WeightHistoryQuery,
-    WeightHistoryRead,
-    WeightRead,
-    WeightUpdate,
-)
 from nirantar.services.errors import DomainError
+from nirantar.services.insights import InsightService
 from nirantar.services.meals import MealService
+from nirantar.services.sleep import SleepService
 from nirantar.services.summaries import DailySummaryService
+from nirantar.services.targets import TargetService
 from nirantar.services.weights import WeightService
 from nirantar.services.workouts import WorkoutService
 
@@ -64,7 +77,7 @@ mcp_well_known_routes = _auth.get_well_known_routes(mcp_path="/")
 mcp = FastMCP(
     "Nirantar",
     instructions=(
-        "Log, retrieve, correct, and delete workouts, meals, and daily body-weight "
+        "Log, retrieve, correct, and delete workouts, meals, sleep, and daily body-weight "
         "records. Read a record before editing or deleting it, pass its updated_at "
         "value, and obtain explicit confirmation before deletion."
     ),
@@ -176,7 +189,9 @@ async def edit_meal(meal_id: UUID, edit: MealEditRequest) -> MealRead:
     factory = get_session_factory()
     async with factory() as session:
         try:
-            return await MealService(session, _current_user_id()).edit_meal(meal_id, edit)
+            return await MealService(session, _current_user_id()).edit_meal(
+                meal_id, edit
+            )
         except DomainError as exc:
             raise _tool_error(exc) from exc
 
@@ -406,7 +421,9 @@ async def get_weight_history(
     query = WeightHistoryQuery(start_date=start_date, end_date=end_date)
     factory = get_session_factory()
     async with factory() as session:
-        return await WeightService(session, _current_user_id()).get_weight_history(query)
+        return await WeightService(session, _current_user_id()).get_weight_history(
+            query
+        )
 
 
 @mcp.tool(
@@ -430,3 +447,138 @@ async def edit_weight(
             )
         except DomainError as exc:
             raise _tool_error(exc) from exc
+
+
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    }
+)
+async def get_targets() -> TargetResult:
+    """Get the current independently optional fitness targets, if any."""
+    factory = get_session_factory()
+    async with factory() as session:
+        return await TargetService(session, _current_user_id()).get_targets()
+
+
+@mcp.tool(
+    annotations={
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": False,
+    }
+)
+async def set_targets(targets: TargetPatch) -> TargetResult:
+    """Partially set or explicitly clear fitness targets for the current user."""
+    factory = get_session_factory()
+    async with factory() as session:
+        try:
+            return await TargetService(session, _current_user_id()).set_targets(targets)
+        except DomainError as exc:
+            raise _tool_error(exc) from exc
+
+
+@mcp.tool(
+    annotations={
+        "readOnlyHint": False,
+        "destructiveHint": False,
+        "idempotentHint": False,
+        "openWorldHint": False,
+    }
+)
+async def log_sleep(sleep: SleepCreate) -> SleepRead:
+    """Log a sleep interval; wake date and hours are derived in the user's timezone."""
+    factory = get_session_factory()
+    async with factory() as session:
+        try:
+            return await SleepService(session, _current_user_id()).log_sleep(sleep)
+        except DomainError as exc:
+            raise _tool_error(exc) from exc
+
+
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    }
+)
+async def get_sleep(sleep_date: date) -> SleepForDateResult:
+    """Get the sleep entry attributed to one local wake date, if present."""
+    factory = get_session_factory()
+    async with factory() as session:
+        return await SleepService(session, _current_user_id()).get_sleep(sleep_date)
+
+
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    }
+)
+async def get_sleep_history(start_date: date, end_date: date) -> SleepHistoryRead:
+    """List sleep entries for an inclusive local wake-date range."""
+    query = SleepHistoryQuery(start_date=start_date, end_date=end_date)
+    factory = get_session_factory()
+    async with factory() as session:
+        return await SleepService(session, _current_user_id()).get_sleep_history(query)
+
+
+@mcp.tool(
+    annotations={
+        "readOnlyHint": False,
+        "destructiveHint": True,
+        "idempotentHint": False,
+        "openWorldHint": False,
+    }
+)
+async def edit_sleep(sleep_id: UUID, edit: SleepEditRequest) -> SleepRead:
+    """Atomically correct a sleep interval or optional details using its current version."""
+    factory = get_session_factory()
+    async with factory() as session:
+        try:
+            return await SleepService(session, _current_user_id()).edit_sleep(
+                sleep_id, edit
+            )
+        except DomainError as exc:
+            raise _tool_error(exc) from exc
+
+
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    }
+)
+async def get_trends(start_date: date, end_date: date) -> TrendsRead:
+    """Compute deterministic nutrition, weight, workout, sleep, and coverage trends."""
+    query = TrendsQuery(start_date=start_date, end_date=end_date)
+    factory = get_session_factory()
+    async with factory() as session:
+        return await InsightService(session, _current_user_id()).get_trends(
+            query.start_date, query.end_date
+        )
+
+
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+        "destructiveHint": False,
+        "idempotentHint": True,
+        "openWorldHint": False,
+    }
+)
+async def get_streaks() -> StreaksRead:
+    """Get meal, sleep, and weight streaks plus weekly workout consistency."""
+    factory = get_session_factory()
+    async with factory() as session:
+        return await InsightService(session, _current_user_id()).get_streaks()

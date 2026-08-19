@@ -6,6 +6,8 @@ export type NutrientTotal = {
   known_item_count: number;
   missing_item_count: number;
   complete: boolean;
+  target_value: string | null;
+  percentage_of_target: string | null;
 };
 
 export type DailySummary = {
@@ -20,6 +22,17 @@ export type DailySummary = {
     dropset_count: number;
     physical_set_count: number;
   };
+  sleep: {
+    id: string;
+    sleep_date: string;
+    sleep_start: string;
+    sleep_end: string;
+    hours_slept: string;
+    quality_rating: number | null;
+    notes: string | null;
+    created_at: string;
+    updated_at: string;
+  } | null;
   meals: {
     meal_count: number;
     food_item_count: number;
@@ -37,6 +50,11 @@ export type DailySummary = {
     notes: string | null;
     created_at: string;
     updated_at: string;
+  } | null;
+  body_weight_goal: {
+    goal_weight_kg: string;
+    weight_difference_from_goal_kg: string;
+    is_at_goal: boolean;
   } | null;
 };
 

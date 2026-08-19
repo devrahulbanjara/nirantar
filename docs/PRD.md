@@ -1,5 +1,15 @@
 # Nirantar Product Requirements Document
 
+## Current Targets, Sleep, Trends, and Streaks Scope
+
+- Users may set or clear calorie, macro, goal-weight, and weekly workout targets.
+- Sleep requires a bedtime and wake time; wake date and duration are derived.
+- Today compares known energy and protein with targets, shows sleep and a goal-weight delta.
+- Claude can request inclusive-range trends and independent meal, sleep, and weight streaks.
+- Workout consistency is weekly progress plus days since the last workout, never a daily streak.
+- All calendar bucketing uses the configured user timezone; the week starts Sunday.
+- No reminders, notifications, target history, trends page, precomputation, or additional measurements are included.
+
 ## Document Purpose
 
 This document defines the long-term product vision and end goal for Nirantar.

@@ -15,6 +15,8 @@ from nirantar.models import (  # noqa: F401
     ExerciseSet,
     FoodItem,
     Meal,
+    SleepEntry,
+    UserTarget,
     WorkoutExercise,
     WorkoutSession,
 )

@@ -1,3 +1,6 @@
+from nirantar.models.sleep import SleepEntry
+from nirantar.models.targets import UserTarget
+from nirantar.models.weights import BodyWeightEntry
 from nirantar.models.workouts import (
     ExerciseGroup,
     ExerciseGroupMember,
@@ -6,17 +9,18 @@ from nirantar.models.workouts import (
     WorkoutExercise,
     WorkoutSession,
 )
-from nirantar.models.weights import BodyWeightEntry
 
 __all__ = [
-    "FoodItem",
-    "Meal",
+    "BodyWeightEntry",
     "ExerciseGroup",
     "ExerciseGroupMember",
     "ExerciseSet",
     "ExerciseSetType",
+    "FoodItem",
+    "Meal",
+    "SleepEntry",
+    "UserTarget",
     "WorkoutExercise",
     "WorkoutSession",
-    "BodyWeightEntry",
 ]
 from nirantar.models.meals import FoodItem, Meal

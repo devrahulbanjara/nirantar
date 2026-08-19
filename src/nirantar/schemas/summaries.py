@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field, model_validator
 
+from nirantar.schemas.sleep import SleepRead
 from nirantar.schemas.weights import WeightRead
 
 
@@ -11,6 +12,8 @@ class NutrientTotalRead(BaseModel):
     known_item_count: int
     missing_item_count: int
     complete: bool
+    target_value: Decimal | None = None
+    percentage_of_target: Decimal | None = None
 
 
 class NutritionSummaryRead(BaseModel):
@@ -36,12 +39,20 @@ class MealDailySummaryRead(BaseModel):
     nutrition: NutritionSummaryRead
 
 
+class BodyWeightGoalRead(BaseModel):
+    goal_weight_kg: Decimal
+    weight_difference_from_goal_kg: Decimal
+    is_at_goal: bool
+
+
 class DailySummaryRead(BaseModel):
     date: date
     timezone: str
     workouts: WorkoutDailySummaryRead
     meals: MealDailySummaryRead
+    sleep: SleepRead | None
     body_weight: WeightRead | None
+    body_weight_goal: BodyWeightGoalRead | None
 
 
 class WorkoutActivityQuery(BaseModel):

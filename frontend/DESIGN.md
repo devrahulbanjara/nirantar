@@ -157,14 +157,21 @@ Use a 4px base grid.
 
 ## Navigation
 
-Mobile navigation uses four persistent destinations:
+Mobile navigation uses five persistent destinations:
 
 1. Today
 2. Workouts
 3. Meals
-4. History
+4. Sleep
+5. History
 
 Use a bottom navigation bar on mobile and a compact side or top navigation on larger screens. Body weight belongs on Today or History; it does not need a permanent navigation item.
+
+Settings is reached from the signed-in account menu rather than added as a sixth
+persistent destination. Today uses four equal quick actions and four summary
+cards: workout, nutrition, sleep, and body weight. Only an active meal streak is
+shown near the date; workout consistency is weekly target progress, never a
+daily workout streak.
 
 The current destination needs an icon and label. Use one consistent SVG icon family; prefer Phosphor if no project icon library exists. Do not hand-draw routine icons or use emoji as interface icons. Never use a sparkle icon; label AI and MCP features directly instead.
 
@@ -360,7 +367,7 @@ When a new pattern is truly reusable, update this component inventory in the sam
 ### History and Summaries
 
 - Date grouping uses the user's `Asia/Kathmandu` calendar day.
-- Filters open in a bottom sheet on mobile and an anchored panel on desktop.
+- Filters open in a bottom sheet on mobile and a centered dialog on desktop.
 - Body-weight list view stays compact; grid view uses balanced two-column cards on desktop and one column on mobile. Neither view stretches low-density rows across the full desktop grid.
 - Summary tiles show one fact each and do not imply unavailable data.
 - The Today workout-activity calendar is a presence chart only; exact counts stay in cell labels and the linked Workouts day filter.
@@ -377,6 +384,7 @@ When a new pattern is truly reusable, update this component inventory in the sam
 ### Sheets, Dialogs, and Feedback
 
 - Use bottom sheets for short mobile choices and filters.
+- Present the same form and filter popups as centered dialogs on tablet and desktop.
 - Use dialogs for destructive confirmation and stale-edit conflicts.
 - Confirm permanent deletion with the exact record name or ID and explain the result.
 - Toasts confirm completed actions but never carry the only error explanation.

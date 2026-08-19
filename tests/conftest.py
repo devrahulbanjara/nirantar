@@ -1,14 +1,14 @@
 from collections.abc import AsyncIterator, Iterator
 
 import pytest
+from fastmcp.server.auth import AccessToken
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
-from fastmcp.server.auth import AccessToken
 
+import nirantar.mcp.server as mcp_server
 from nirantar.auth import require_user
 from nirantar.db.session import dispose_engine, get_session_factory
 from nirantar.main import app
-import nirantar.mcp.server as mcp_server
 from tests.helpers import TEST_USER_ID
 
 
@@ -39,6 +39,8 @@ async def clean_workout_tables() -> AsyncIterator[None]:
             text(
                 """
                 TRUNCATE TABLE
+                    sleep_entries,
+                    user_targets,
                     food_items,
                     meals,
                     body_weight_entries,
@@ -61,6 +63,8 @@ async def clean_workout_tables() -> AsyncIterator[None]:
                 text(
                     """
                     TRUNCATE TABLE
+                        sleep_entries,
+                        user_targets,
                         food_items,
                         meals,
                         body_weight_entries,

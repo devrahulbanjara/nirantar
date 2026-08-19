@@ -62,7 +62,9 @@ class ExerciseCreate(BaseModel):
     def unique_set_orders(self) -> "ExerciseCreate":
         orders = [item.order for item in self.sets]
         if len(orders) != len(set(orders)):
-            raise ValueError("Top-level set order values must be unique within an exercise")
+            raise ValueError(
+                "Top-level set order values must be unique within an exercise"
+            )
         return self
 
 
@@ -214,6 +216,47 @@ class RemoveSetOperation(BaseModel):
     cascade_dropsets: bool = False
 
 
+class AddSupersetOperation(BaseModel):
+    operation: Literal["add_superset"]
+    order: int = Field(gt=0)
+    notes: str | None = None
+    workout_exercise_ids: list[UUID] = Field(min_length=2)
+
+    @model_validator(mode="after")
+    def unique_members(self) -> "AddSupersetOperation":
+        if len(self.workout_exercise_ids) != len(set(self.workout_exercise_ids)):
+            raise ValueError("Superset workout_exercise_ids must be unique")
+        return self
+
+
+class UpdateSupersetOperation(BaseModel):
+    operation: Literal["update_superset"]
+    superset_id: UUID
+    order: int | None = Field(default=None, gt=0)
+    notes: str | None = None
+    workout_exercise_ids: list[UUID] | None = Field(default=None, min_length=2)
+
+    @model_validator(mode="after")
+    def validate_patch(self) -> "UpdateSupersetOperation":
+        changed = self.model_fields_set - {"operation", "superset_id"}
+        if not changed:
+            raise ValueError("update_superset requires at least one changed field")
+        if "order" in changed and self.order is None:
+            raise ValueError("Superset order cannot be null")
+        if "workout_exercise_ids" in changed:
+            if self.workout_exercise_ids is None:
+                raise ValueError("Superset workout_exercise_ids cannot be null")
+            members = self.workout_exercise_ids
+            if len(members) != len(set(members)):
+                raise ValueError("Superset workout_exercise_ids must be unique")
+        return self
+
+
+class RemoveSupersetOperation(BaseModel):
+    operation: Literal["remove_superset"]
+    superset_id: UUID
+
+
 WorkoutEditOperation = Annotated[
     UpdateWorkoutOperation
     | AddExerciseOperation
@@ -222,7 +265,10 @@ WorkoutEditOperation = Annotated[
     | AddSetOperation
     | AddDropsetOperation
     | UpdateSetOperation
-    | RemoveSetOperation,
+    | RemoveSetOperation
+    | AddSupersetOperation
+    | UpdateSupersetOperation
+    | RemoveSupersetOperation,
     Field(discriminator="operation"),
 ]
 

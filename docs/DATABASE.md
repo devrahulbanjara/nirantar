@@ -13,6 +13,20 @@ The design prioritizes:
 - Simple MVP implementation.
 - Future extensibility without premature complexity.
 
+## Targets and Sleep Extension
+
+`user_targets` stores one mutable row per owner. Calorie, protein,
+carbohydrate, fat, goal-weight, and weekly workout targets are independently
+nullable; partial updates change only explicitly supplied fields.
+
+`sleep_entries` stores one complete interval per owner and local wake date.
+`sleep_start` and `sleep_end` are timezone-aware timestamps. The service derives
+`sleep_date` in `Asia/Kathmandu` and `hours_slept`; a unique constraint on
+`(owner_id, sleep_date)` prevents duplicate nights.
+
+Trends and streaks are live read-time aggregations over event tables. They have
+no persistence table or background synchronization job.
+
 ## Design Principles
 
 ### Use Standard PostgreSQL

@@ -27,9 +27,12 @@ from sqlalchemy import select
 from nirantar.config import get_settings
 from nirantar.db.session import dispose_engine, get_session_factory
 from nirantar.models.meals import Meal
+from nirantar.models.sleep import SleepEntry
 from nirantar.models.weights import BodyWeightEntry
 from nirantar.models.workouts import WorkoutSession
 from nirantar.schemas.meals import FoodItemCreate, MealCreate
+from nirantar.schemas.sleep import SleepCreate
+from nirantar.schemas.targets import TargetPatch
 from nirantar.schemas.weights import WeightCreate
 from nirantar.schemas.workouts import (
     DropsetCreate,
@@ -40,6 +43,8 @@ from nirantar.schemas.workouts import (
     WorkoutCreate,
 )
 from nirantar.services.meals import MealService
+from nirantar.services.sleep import SleepService
+from nirantar.services.targets import TargetService
 from nirantar.services.weights import WeightService
 from nirantar.services.workouts import WorkoutService
 
@@ -744,7 +749,9 @@ def _day_meals(
     return meals
 
 
-def build_plan(end_day: date, weeks: int, timezone: ZoneInfo, rng: random.Random) -> Plan:
+def build_plan(
+    end_day: date, weeks: int, timezone: ZoneInfo, rng: random.Random
+) -> Plan:
     """Generate the full history ending on `end_day` (inclusive)."""
     plan = Plan()
     start_day = end_day - timedelta(days=weeks * 7 - 1)
@@ -792,14 +799,27 @@ async def seed(owner_id: str, weeks: int) -> None:
     rng = random.Random(f"{owner_id}:{end_day.isoformat()}:{weeks}")
     plan = build_plan(end_day, weeks, timezone, rng)
 
-    created = {"workouts": 0, "meals": 0, "weights": 0}
-    skipped = {"workouts": 0, "meals": 0, "weights": 0}
+    created = {"workouts": 0, "meals": 0, "weights": 0, "sleep": 0}
+    skipped = {"workouts": 0, "meals": 0, "weights": 0, "sleep": 0}
     factory = get_session_factory()
 
     async with factory() as session:
         workouts = WorkoutService(session, owner_id)
         meals = MealService(session, owner_id)
         weights = WeightService(session, owner_id)
+        sleep = SleepService(session, owner_id)
+        target_service = TargetService(session, owner_id)
+        if (await target_service.get_targets()).targets is None:
+            await target_service.set_targets(
+                TargetPatch(
+                    calorie_target_kcal="2200",
+                    protein_target_g="140",
+                    carb_target_g="250",
+                    fat_target_g="70",
+                    goal_weight_kg="72",
+                    target_workout_days_per_week=4,
+                )
+            )
 
         for payload in plan.workouts:
             exists = await session.scalar(
@@ -841,6 +861,29 @@ async def seed(owner_id: str, weeks: int) -> None:
             await weights.log_weight(payload)
             created["weights"] += 1
 
+        for days_ago in range(weeks * 7):
+            wake_date = end_day - timedelta(days=days_ago)
+            exists = await session.scalar(
+                select(SleepEntry.id).where(
+                    SleepEntry.owner_id == owner_id,
+                    SleepEntry.sleep_date == wake_date,
+                )
+            )
+            if exists:
+                skipped["sleep"] += 1
+                continue
+            start = datetime.combine(
+                wake_date - timedelta(days=1), time(22, 30), tzinfo=timezone
+            )
+            await sleep.log_sleep(
+                SleepCreate(
+                    sleep_start=start,
+                    sleep_end=datetime.combine(wake_date, time(6, 30), tzinfo=timezone),
+                    quality_rating=4,
+                )
+            )
+            created["sleep"] += 1
+
     await dispose_engine()
 
     print(
@@ -851,14 +894,16 @@ async def seed(owner_id: str, weeks: int) -> None:
         "Created "
         f"{created['workouts']} workouts, "
         f"{created['meals']} meals, "
-        f"{created['weights']} weight entries."
+        f"{created['weights']} weight entries, "
+        f"{created['sleep']} sleep entries, and targets."
     )
     if any(skipped.values()):
         print(
             "Skipped "
             f"{skipped['workouts']} workouts, "
             f"{skipped['meals']} meals, "
-            f"{skipped['weights']} weight entries already present."
+            f"{skipped['weights']} weight entries, "
+            f"{skipped['sleep']} sleep entries already present."
         )
 
 

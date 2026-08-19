@@ -1,10 +1,18 @@
-from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastmcp.utilities.lifespan import combine_lifespans
 
-from nirantar.api import meals_router, summaries_router, weights_router, workouts_router
+from nirantar.api import (
+    insights_router,
+    meals_router,
+    sleep_router,
+    summaries_router,
+    targets_router,
+    weights_router,
+    workouts_router,
+)
 from nirantar.db.session import dispose_engine, get_engine
 from nirantar.mcp.server import mcp, mcp_well_known_routes
 
@@ -29,6 +37,9 @@ app.include_router(workouts_router)
 app.include_router(weights_router)
 app.include_router(meals_router)
 app.include_router(summaries_router)
+app.include_router(targets_router)
+app.include_router(sleep_router)
+app.include_router(insights_router)
 app.mount("/mcp", mcp_app)
 
 

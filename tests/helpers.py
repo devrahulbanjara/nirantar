@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
+from nirantar.schemas.meals import FoodItemCreate, MealCreate
 from nirantar.schemas.workouts import (
     DropsetCreate,
     ExerciseCreate,
@@ -8,7 +9,6 @@ from nirantar.schemas.workouts import (
     SetType,
     WorkoutCreate,
 )
-from nirantar.schemas.meals import FoodItemCreate, MealCreate
 
 NEPAL = timezone(timedelta(hours=5, minutes=45))
 TEST_USER_ID = "user_test_primary"

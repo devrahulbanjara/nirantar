@@ -2,8 +2,9 @@ import {
   BarbellIcon,
   BowlFoodIcon,
   CheckCircleIcon,
+  FireIcon,
   GaugeIcon,
-  PlusIcon,
+  MoonIcon,
   WarningCircleIcon,
 } from "@phosphor-icons/react/dist/ssr";
 
@@ -13,6 +14,7 @@ import Link from "next/link";
 
 import { AppShell } from "@/components/app-shell";
 import { Landing } from "@/components/landing";
+import { SleepEntryDialog } from "@/components/sleep-entry-dialog";
 import { WorkoutActivityCalendar } from "@/components/workout-activity-calendar";
 import { FeedbackState } from "@/components/ui/feedback-state";
 import {
@@ -28,6 +30,7 @@ import {
   type DailySummary,
   type NutrientTotal,
 } from "@/lib/daily-summary";
+import { getStreaks, type Streaks } from "@/lib/insights";
 import { addDaysToDateString } from "@/lib/time";
 import {
   buildActivityCells,
@@ -53,6 +56,41 @@ function formatNutrient(
   return `${Number(nutrient.known_total).toLocaleString("en-US", {
     maximumFractionDigits: 1,
   })} ${unit}`;
+}
+
+function NutrientProgress({
+  nutrient,
+  unit,
+}: {
+  nutrient: NutrientTotal;
+  unit: "kcal" | "g";
+}) {
+  const actual = formatNutrient(nutrient, unit);
+  if (nutrient.target_value === null) return <h2>{actual}</h2>;
+  const target = Number(nutrient.target_value).toLocaleString("en-US", {
+    maximumFractionDigits: 1,
+  });
+  const percentage = Math.max(
+    0,
+    Math.min(100, Number(nutrient.percentage_of_target ?? 0)),
+  );
+  return (
+    <>
+      <h2>
+        {actual.replace(` ${unit}`, "")} / {target} {unit}
+      </h2>
+      <div
+        className="target-progress"
+        role="progressbar"
+        aria-label={`${unit === "kcal" ? "Energy" : "Protein"} target progress`}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(percentage)}
+      >
+        <span style={{ width: `${percentage}%` }} />
+      </div>
+    </>
+  );
 }
 
 function EmptySummary() {
@@ -98,7 +136,13 @@ function NutritionCompleteness({ nutrient }: { nutrient: NutrientTotal }) {
   );
 }
 
-function SummaryContent({ summary }: { summary: DailySummary }) {
+function SummaryContent({
+  summary,
+  streaks,
+}: {
+  summary: DailySummary;
+  streaks: Streaks | null;
+}) {
   const workoutStatus = summary.workouts.open_workout_count
     ? `${summary.workouts.open_workout_count} open`
     : summary.workouts.completed_workout_count
@@ -115,6 +159,12 @@ function SummaryContent({ summary }: { summary: DailySummary }) {
           <div>
             <p className="eyebrow">Workout</p>
             <h2>{workoutStatus}</h2>
+            {streaks && streaks.workouts.target_workout_days_per_week !== null ? (
+              <p className="card-subline">
+                {streaks.workouts.workout_days_logged_this_week}/
+                {streaks.workouts.target_workout_days_per_week} this week
+              </p>
+            ) : null}
           </div>
         </div>
         {summary.workouts.workout_count > 0 ? (
@@ -141,32 +191,49 @@ function SummaryContent({ summary }: { summary: DailySummary }) {
             <BowlFoodIcon size={22} weight="bold" />
           </span>
           <div>
-            <p className="eyebrow">Meals</p>
-            <h2>
-              {summary.meals.meal_count === 0
-                ? "No meals logged"
-                : `${summary.meals.meal_count} logged`}
-            </h2>
+            <p className="eyebrow">Nutrition</p>
+            <NutrientProgress
+              nutrient={summary.meals.nutrition.calories_kcal}
+              unit="kcal"
+            />
           </div>
         </div>
         {summary.meals.meal_count > 0 ? (
           <>
             <dl className="nutrition-row">
               <div>
-                <dt>Energy</dt>
-                <dd>
-                  {formatNutrient(summary.meals.nutrition.calories_kcal, "kcal")}
-                </dd>
-              </div>
-              <div>
                 <dt>Protein</dt>
-                <dd>{formatNutrient(summary.meals.nutrition.protein_g, "g")}</dd>
+                <dd>
+                  <NutrientProgress
+                    nutrient={summary.meals.nutrition.protein_g}
+                    unit="g"
+                  />
+                </dd>
               </div>
             </dl>
             <NutritionCompleteness
               nutrient={summary.meals.nutrition.calories_kcal}
             />
           </>
+        ) : null}
+      </article>
+
+      <article className="summary-card sleep-card">
+        <div className="card-heading">
+          <span className="icon-surface" aria-hidden="true">
+            <MoonIcon size={22} weight="bold" />
+          </span>
+          <div>
+            <p className="eyebrow">Sleep</p>
+            <h2>
+              {summary.sleep
+                ? `${Number(summary.sleep.hours_slept).toFixed(1)} hrs`
+                : "Not logged"}
+            </h2>
+          </div>
+        </div>
+        {summary.sleep?.quality_rating ? (
+          <p className="card-note">Quality {summary.sleep.quality_rating}/5</p>
         ) : null}
       </article>
 
@@ -189,6 +256,13 @@ function SummaryContent({ summary }: { summary: DailySummary }) {
         {summary.body_weight?.notes ? (
           <p className="card-note">{summary.body_weight.notes}</p>
         ) : null}
+        {summary.body_weight && summary.body_weight_goal ? (
+          <p className="card-note">
+            {summary.body_weight_goal.is_at_goal
+              ? "At goal"
+              : `${Math.abs(Number(summary.body_weight_goal.weight_difference_from_goal_kg)).toFixed(1)} kg to ${Number(summary.body_weight_goal.weight_difference_from_goal_kg) > 0 ? "lose" : "gain"}`}
+          </p>
+        ) : null}
       </article>
     </div>
   );
@@ -202,23 +276,36 @@ export default async function Home() {
 
   const today = getKathmanduDate();
   const activityStart = addDaysToDateString(today, -364);
-  const [result, activityResult] = await Promise.all([
+  const [result, activityResult, streakResult] = await Promise.all([
     getDailySummary(today),
     getWorkoutActivity(activityStart, today),
+    getStreaks(),
   ]);
+  const streaks = streakResult.ok ? streakResult.data : null;
 
   return (
     <AppShell activeDestination="today">
       <PageContainer>
-        <PageHeader title="Today" eyebrow={formatKathmanduDate(today)} />
+        <PageHeader
+          title="Today"
+          eyebrow={formatKathmanduDate(today)}
+          actions={
+            streaks && streaks.meals.current_streak_days > 0 ? (
+              <span className="streak-badge">
+                <FireIcon size={17} weight="fill" aria-hidden="true" />
+                {streaks.meals.current_streak_days} day streak
+              </span>
+            ) : null
+          }
+        />
 
         <div className="quick-actions">
           <Link href="/workouts/new" className="button-primary">
-            <PlusIcon size={18} weight="bold" aria-hidden="true" />
+            <BarbellIcon size={18} weight="bold" aria-hidden="true" />
             Log workout
           </Link>
           <Link href="/meals/new" className="button-secondary">
-            <PlusIcon size={18} weight="bold" aria-hidden="true" />
+            <BowlFoodIcon size={18} weight="bold" aria-hidden="true" />
             Log meal
           </Link>
           <WeightEntryDialog
@@ -229,12 +316,18 @@ export default async function Home() {
               result.status === "ready" ? result.summary.body_weight ?? undefined : undefined
             }
           />
+          <SleepEntryDialog
+            triggerClassName="button-secondary"
+            existing={
+              result.status === "ready" ? result.summary.sleep ?? undefined : undefined
+            }
+          />
         </div>
 
         <section className="daily-section" id="today-summary" aria-labelledby="daily-summary-title">
           <SectionHeader id="daily-summary-title" title="Daily summary" />
           {result.status === "ready" ? (
-            <SummaryContent summary={result.summary} />
+            <SummaryContent summary={result.summary} streaks={streaks} />
           ) : (
             <EmptySummary />
           )}

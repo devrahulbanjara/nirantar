@@ -27,9 +27,11 @@ async def test_daily_summary_api(api_client: AsyncClient, db_session) -> None:
     assert summary["meals"]["nutrition"]["calories_kcal"] == {
         "known_total": "210.00",
         "known_item_count": 1,
-        "missing_item_count": 2,
-        "complete": False,
-    }
+            "missing_item_count": 2,
+            "complete": False,
+            "target_value": None,
+            "percentage_of_target": None,
+        }
     assert summary["body_weight"]["weight_kg"] == "73.000"
 
 
