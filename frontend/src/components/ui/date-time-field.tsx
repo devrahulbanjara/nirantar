@@ -76,21 +76,44 @@ export function DateTimeField({
         labelledBy={headingId}
         variant="responsive-dialog"
       >
-        <div className="date-time-picker">
-          <h2 className="modal-heading" id={headingId}>{label}</h2>
-          <Calendar
-            value={valueFor(draft.year, draft.month, draft.day, 0, 0).slice(0, 10)}
-            todayDate={getKathmanduDate()}
-            onChange={(next) => {
-              const selected = parts(`${next}T00:00`);
-              setDraft({ ...draft, year: selected.year, month: selected.month, day: selected.day });
-            }}
-          />
-          <div className="time-controls">
-            <label><span>Hour</span><select className="field-select" value={draft.hour} onChange={(event) => setDraft({ ...draft, hour: Number(event.target.value) })}>{Array.from({ length: 24 }, (_, hour) => <option value={hour} key={hour}>{String(hour).padStart(2, "0")}</option>)}</select></label>
-            <label><span>Minute</span><select className="field-select" value={draft.minute} onChange={(event) => setDraft({ ...draft, minute: Number(event.target.value) })}>{minutes.map((minute) => <option value={minute} key={minute}>{String(minute).padStart(2, "0")}</option>)}</select></label>
-          </div>
-          <div className="modal-actions"><button type="button" className="button-secondary" onClick={() => setOpen(false)}>Cancel</button><button type="button" className="button-primary" onClick={apply}>Apply date and time</button></div>
+        <h2 className="modal-heading" id={headingId}>{label}</h2>
+        <Calendar
+          value={valueFor(draft.year, draft.month, draft.day, 0, 0).slice(0, 10)}
+          todayDate={getKathmanduDate()}
+          onChange={(next) => {
+            const selected = parts(`${next}T00:00`);
+            setDraft({ ...draft, year: selected.year, month: selected.month, day: selected.day });
+          }}
+        />
+        <div className="time-controls">
+          <label>
+            <span>Hour</span>
+            <select
+              className="field-select"
+              value={draft.hour}
+              onChange={(event) => setDraft({ ...draft, hour: Number(event.target.value) })}
+            >
+              {Array.from({ length: 24 }, (_, hour) => (
+                <option value={hour} key={hour}>{String(hour).padStart(2, "0")}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>Minute</span>
+            <select
+              className="field-select"
+              value={draft.minute}
+              onChange={(event) => setDraft({ ...draft, minute: Number(event.target.value) })}
+            >
+              {minutes.map((minute) => (
+                <option value={minute} key={minute}>{String(minute).padStart(2, "0")}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div className="modal-actions">
+          <button type="button" className="button-secondary" onClick={() => setOpen(false)}>Cancel</button>
+          <button type="button" className="button-primary" onClick={apply}>Apply date and time</button>
         </div>
       </Modal>
     </div>

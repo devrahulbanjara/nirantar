@@ -17,10 +17,12 @@ export function PageContainer({
 export function PageHeader({
   title,
   eyebrow,
+  description,
   actions,
 }: {
   title: string;
   eyebrow?: ReactNode;
+  description?: ReactNode;
   actions?: ReactNode;
 }) {
   return (
@@ -28,6 +30,7 @@ export function PageHeader({
       <div className="page-header-copy">
         {eyebrow ? <p className="page-header-eyebrow">{eyebrow}</p> : null}
         <h1>{title}</h1>
+        {description ? <p className="page-description">{description}</p> : null}
       </div>
       {actions ? <div className="page-header-actions">{actions}</div> : null}
     </header>

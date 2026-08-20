@@ -1,8 +1,8 @@
 "use client";
 
-import { GaugeIcon, PencilSimpleIcon, WarningCircleIcon } from "@phosphor-icons/react";
+import { PencilSimpleIcon, PlusIcon, WarningCircleIcon } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
-import { useId, useState } from "react";
+import { useId, useState, type ReactNode } from "react";
 
 import { Modal } from "@/components/modal";
 import { DateField } from "@/components/ui/date-field";
@@ -25,11 +25,13 @@ export function WeightEntryDialog({
   defaultDate,
   triggerLabel,
   triggerClassName,
+  createIcon,
 }: {
   existing?: WeightEntry;
   defaultDate?: string;
   triggerLabel: string;
   triggerClassName: string;
+  createIcon?: ReactNode;
 }) {
   const router = useRouter();
   const headingId = useId();
@@ -109,7 +111,7 @@ export function WeightEntryDialog({
         {existing ? (
           <PencilSimpleIcon size={16} weight="bold" aria-hidden="true" />
         ) : (
-          <GaugeIcon size={18} weight="bold" aria-hidden="true" />
+          createIcon ?? <PlusIcon size={18} weight="bold" aria-hidden="true" />
         )}
         {triggerLabel}
       </button>

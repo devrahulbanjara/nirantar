@@ -41,6 +41,11 @@ Mode: **Operate**. Task completion and legibility take priority over decoration.
 - The editor saves a meal and all ordered food items as one aggregate.
 - Show per-item nutrition only when known and label incomplete totals honestly.
 
+### Sleep
+
+- Provide a date-grouped sleep list (default today, optional start–end range), new-sleep dialog, and edit dialog.
+- Bedtime and wake time use the shared calendar date-time picker. Sleep is attributed to the Nepal-local wake date.
+
 ### History
 
 - Combine date navigation with body-weight history.
@@ -183,7 +188,7 @@ This inventory is the shared contract for all current and future product surface
 
 - `PageContainer`: centered, full-width content with `16px` mobile, `24px` tablet, and `32px` desktop gutters; cap at `1120px`.
 - `ReadingColumn`: text and simple forms capped at `680px`; never stretch to fill a desktop canvas.
-- `PageHeader`: one page title, optional factual supporting copy, and visible primary action. Stack on mobile and align actions to the trailing edge on desktop.
+- `PageHeader`: one page title, optional factual supporting copy, optional description, and visible primary action. Stack on mobile and align actions to the trailing edge on desktop. Collection pages share this header: date-range filter, then the primary log action.
 - `Section`: groups one subject with a heading and optional action. Use spacing rather than a decorative container when no boundary is needed.
 - `ResponsiveGrid`: use deliberate columns, never auto-fit merely to fill space. Summary/list grids are 1 column on mobile, may become 2 at tablet, and only use 3 or 4 columns when each cell remains readable and comparable.
 - `FormLayout`: one column on mobile; at desktop use a `minmax(0, 680px)` form column and an optional `minmax(280px, 360px)` sticky summary rail, separated by `32px`.
@@ -196,7 +201,7 @@ All grid children must use `min-width: 0`. Long names wrap instead of forcing ho
 
 | Primitive | Required variants and behavior |
 | --- | --- |
-| `Button` | Primary, secondary, tertiary, destructive, icon-only, loading, and disabled. Minimum `48px` high for labeled primary actions and `44 × 44px` for every touch target. Create/log actions (`Log workout`, `Log meal`, `Log weight`, and matching empty-state CTAs) always show a decorative `PlusIcon` before the label; the label text itself never includes a `+` character. Edit triggers use a pencil icon, not plus. |
+| `Button` | Primary, secondary, tertiary, destructive, icon-only, loading, and disabled. Minimum `48px` high for labeled primary actions and `44 × 44px` for every touch target. Create/log actions (`Log workout`, `Log meal`, `Log sleep`, `Log weight`, and matching empty-state CTAs) always show a decorative `PlusIcon` before the label; the label text itself never includes a `+` character. Edit triggers use a pencil icon, not plus. Collection headers and empty states reuse that treatment. Today quick actions may keep destination icons. |
 | `IconButton` | One consistent icon family, visible hover/focus/pressed states, `aria-label`, and tooltip only when the meaning is not already visible. |
 | `Field` | Persistent label, control, unit/add-on when relevant, helper text, and associated error. Never use placeholder text as the label. |
 | `TextInput` | `56px` standard height, correct `inputMode` and autocomplete, `10px` radius, and no focus glow. |
@@ -221,7 +226,7 @@ All grid children must use `min-width: 0`. Long names wrap instead of forcing ho
 - `BottomNavigation`: fixed on mobile with safe-area padding, icon plus label, and no more than the four permanent destinations.
 - `DesktopNavigation`: aligned to the same `PageContainer` grid. Account controls remain visually secondary to product navigation.
 - `Breadcrumb` or `BackLink`: use on detail and edit flows when it clarifies the return destination. Do not duplicate browser history with ambiguous `Back` text.
-- `QuickActions`: Today may present `Log workout`, `Log meal`, and `Log weight` as immediately visible actions; they must not be hidden in an overflow menu. Use the same plus-before-label create treatment as collection headers and empty-state CTAs.
+- `QuickActions`: Today presents `Log workout`, `Log meal`, `Log weight`, and `Log sleep` as immediately visible actions; they must not be hidden in an overflow menu. Collection headers and empty-state CTAs use plus-before-label. Today’s four quick actions use destination icons.
 - `StickyActionBar`: mobile full-width save action that stays reachable above the bottom navigation. No panel background, border, or shadow behind the button—only the button itself. Desktop actions remain in normal flow or the summary rail unless persistence is necessary.
 - `Tabs`: use for peer views, not as a substitute for primary navigation or a multi-step form.
 
@@ -237,7 +242,7 @@ Dates are product data, not decorative labels. Parse, compare, and display calen
 - Provide distinct textual or programmatic states for today, selected, unavailable, and outside-month days. Selected uses `ink` or `primary` fill with sufficient contrast; today is never indicated by color alone.
 - Month navigation uses `44 × 44px` previous/next buttons and announces the visible month.
 - Support arrow-key day movement, Home/End within a week, Page Up/Page Down between months, Enter/Space selection, and Escape close when a popover is used.
-- On mobile, prefer the native date input when it is reliable for the flow; otherwise open a full-width bottom sheet. On desktop, use an anchored popover that stays within the viewport.
+- On mobile, open a full-width bottom sheet. On desktop, use a centered dialog. Do not use a native `date` input on product surfaces.
 
 #### `DateRangePicker`
 
@@ -250,9 +255,11 @@ Dates are product data, not decorative labels. Parse, compare, and display calen
 
 #### `DateTimeField` and `TimeField`
 
-- Use the appropriate native control where possible, with a visible Nepal-time note when ambiguity matters.
+- Use the shared calendar modal from `DatePicker` / `DateField` for every date or date-time choice, including meal eaten-at, workout check-in/out, and sleep bedtime/wake. Do not use native `date` or `datetime-local` pickers on product surfaces.
+- Keep a persistent label and a readable formatted value; the calendar button has an accessible name.
+- Date-time pickers add hour and minute selects beneath the same calendar. Applying the value is explicit.
 - Store and submit timezone-aware ISO 8601 values. Show the offset on detail or conflict surfaces where precision is important.
-- Check-out must visually and programmatically follow check-in; invalid ordering is reported beside the relevant field.
+- Check-out must visually and programmatically follow check-in; invalid ordering is reported beside the relevant field. Wake time must follow bedtime the same way.
 
 ### Overlays and disclosure
 
@@ -280,7 +287,8 @@ Mobile disclosure becomes a sheet only when the content remains a short choice o
 - `FoodItemRow`: name first, quantity and unit second, then only known nutrition. Unknown values read `Not provided`.
 - `NutritionCompleteness`: known total plus coverage, such as `Protein: 42 g · 2 of 3 items`; never substitutes zero for unknown.
 - `WeightEntry`: Nepal-local date, decimal `kg` value, correction state, and save feedback.
-- `HistoryFilterBar`: current date range and other active filters, clear affordances, and the responsive `DateRangePicker` disclosure. Implemented by the shared date-range filter bar on Workouts, Meals, and History.
+- `HistoryFilterBar`: current date range and other active filters, clear affordances, and the responsive `DateRangePicker` disclosure. Implemented by the shared date-range filter bar on Workouts, Meals, Sleep, and History.
+- `SleepCard`: Nepal-local wake date grouping, duration, bedtime–wake range, optional quality, and an edit action. Sleep has no detail route; the card is not a link.
 - `HistoryGroup`: local-date heading followed by exact records. Lists remain the source for exact values even when a trend chart is later added.
 
 ### Component state contract

@@ -1,14 +1,82 @@
-import { MoonIcon, WarningCircleIcon } from "@phosphor-icons/react/dist/ssr";
+import {
+  MoonIcon,
+  WarningCircleIcon,
+} from "@phosphor-icons/react/dist/ssr";
 
 import { AppShell } from "@/components/app-shell";
 import { DateRangeFilter } from "@/components/date-range-filter";
 import { SleepEntryDialog } from "@/components/sleep-entry-dialog";
+import {
+  AggregateCard,
+  AggregateCardHeader,
+  MetricList,
+} from "@/components/ui/aggregate-card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { FeedbackState } from "@/components/ui/feedback-state";
+import { PageContainer, PageHeader } from "@/components/ui/page-layout";
 import { getKathmanduDate } from "@/lib/daily-summary";
-import { getSleepHistory } from "@/lib/sleep";
-import { addDaysToDateString, formatDateLabel, formatKathmanduTime } from "@/lib/time";
+import { getSleepHistory, type SleepEntry } from "@/lib/sleep";
+import { formatDateLabel, formatKathmanduTime } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
-const DEFAULT_RANGE_DAYS = 30;
+
+function groupSleepByDate(entries: SleepEntry[]): Array<[string, SleepEntry[]]> {
+  const groups = new Map<string, SleepEntry[]>();
+  for (const entry of entries) {
+    groups.set(entry.sleep_date, [...(groups.get(entry.sleep_date) ?? []), entry]);
+  }
+  return [...groups.entries()];
+}
+
+function SleepCard({ entry }: { entry: SleepEntry }) {
+  return (
+    <AggregateCard>
+      <AggregateCardHeader
+        title={`${Number(entry.hours_slept).toFixed(1)} hrs`}
+        metadata={`${formatKathmanduTime(entry.sleep_start)} – ${formatKathmanduTime(entry.sleep_end)}`}
+        status={
+          <SleepEntryDialog
+            existing={entry}
+            triggerLabel="Edit"
+            triggerClassName="button-secondary button-compact"
+          />
+        }
+      />
+      {entry.notes ? <p className="exercise-preview">{entry.notes}</p> : null}
+      {entry.quality_rating ? (
+        <MetricList items={[{ label: "Quality", value: `${entry.quality_rating}/5` }]} />
+      ) : null}
+    </AggregateCard>
+  );
+}
+
+function EmptySleep({ isDefaultRange }: { isDefaultRange: boolean }) {
+  return (
+    <EmptyState
+      id="no-sleep-title"
+      title={isDefaultRange ? "No sleep logged today" : "No sleep in this range"}
+      description={
+        isDefaultRange
+          ? "Log a complete sleep interval to start today’s history."
+          : "Nothing was logged in the selected dates."
+      }
+      icon={<MoonIcon size={24} weight="regular" />}
+      action={<SleepEntryDialog triggerClassName="button-primary" />}
+    />
+  );
+}
+
+function UnavailableSleep() {
+  return (
+    <FeedbackState
+      id="sleep-error-title"
+      title="Sleep history is unavailable"
+      description="Refresh to try again."
+      icon={<WarningCircleIcon size={24} weight="regular" />}
+      tone="warning"
+    />
+  );
+}
 
 export default async function SleepPage({
   searchParams,
@@ -18,53 +86,49 @@ export default async function SleepPage({
   const params = await searchParams;
   const today = getKathmanduDate();
   const endDate = params.end ?? today;
-  const startDate = params.start ?? addDaysToDateString(endDate, -DEFAULT_RANGE_DAYS);
+  const startDate = params.start ?? today;
+  const isDefaultRange = !params.start && !params.end;
   const result = await getSleepHistory(startDate, endDate);
 
   return (
     <AppShell activeDestination="sleep">
-      <main className="workouts-page sleep-page">
-        <header className="workouts-page-heading">
-          <h1>Sleep</h1>
-          <div className="page-heading-actions">
-            <DateRangeFilter
-              basePath="/sleep"
-              startDate={startDate}
-              endDate={endDate}
-              isDefaultRange={!params.start && !params.end}
-              todayDate={today}
-            />
-            <SleepEntryDialog triggerClassName="button-primary" />
-          </div>
-        </header>
+      <PageContainer>
+        <PageHeader
+          title="Sleep"
+          actions={
+            <>
+              <DateRangeFilter
+                basePath="/sleep"
+                startDate={startDate}
+                endDate={endDate}
+                isDefaultRange={isDefaultRange}
+                todayDate={today}
+                clearBehavior="today"
+              />
+              <SleepEntryDialog triggerClassName="button-primary" />
+            </>
+          }
+        />
+
         {!result.ok ? (
-          <section className="workouts-state" role="alert">
-            <WarningCircleIcon size={24} />
-            <div><h2>Sleep history is unavailable</h2><p>Refresh to try again.</p></div>
-          </section>
+          <UnavailableSleep />
         ) : result.data.entries.length === 0 ? (
-          <section className="workouts-state">
-            <MoonIcon size={24} />
-            <div><h2>No sleep logged</h2><p>Log your first complete sleep interval.</p></div>
-          </section>
+          <EmptySleep isDefaultRange={isDefaultRange} />
         ) : (
-          <div className="sleep-list">
-            {result.data.entries.map((entry) => (
-              <article className="sleep-row" key={entry.id}>
-                <div>
-                  <h2>{entry.sleep_date === today ? "Today" : formatDateLabel(entry.sleep_date)}</h2>
-                  <p>{formatKathmanduTime(entry.sleep_start)} – {formatKathmanduTime(entry.sleep_end)}</p>
+          <div className="workout-groups collection" data-view="list">
+            {groupSleepByDate(result.data.entries).map(([date, entries]) => (
+              <section className="workout-day" key={date}>
+                <h2>{date === today ? "Today" : formatDateLabel(date)}</h2>
+                <div className="workout-list">
+                  {entries.map((entry) => (
+                    <SleepCard entry={entry} key={entry.id} />
+                  ))}
                 </div>
-                <dl>
-                  <div><dt>Sleep</dt><dd>{Number(entry.hours_slept).toFixed(1)} hrs</dd></div>
-                  {entry.quality_rating ? <div><dt>Quality</dt><dd>{entry.quality_rating}/5</dd></div> : null}
-                </dl>
-                <SleepEntryDialog existing={entry} triggerLabel="Edit" triggerClassName="button-secondary button-compact" />
-              </article>
+              </section>
             ))}
           </div>
         )}
-      </main>
+      </PageContainer>
     </AppShell>
   );
 }

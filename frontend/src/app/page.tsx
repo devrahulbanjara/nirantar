@@ -312,12 +312,14 @@ export default async function Home() {
             triggerLabel="Log weight"
             triggerClassName="button-secondary"
             defaultDate={today}
+            createIcon={<GaugeIcon size={18} weight="bold" aria-hidden="true" />}
             existing={
               result.status === "ready" ? result.summary.body_weight ?? undefined : undefined
             }
           />
           <SleepEntryDialog
             triggerClassName="button-secondary"
+            createIcon={<MoonIcon size={18} weight="bold" aria-hidden="true" />}
             existing={
               result.status === "ready" ? result.summary.sleep ?? undefined : undefined
             }

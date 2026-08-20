@@ -835,32 +835,6 @@ button:disabled {
   margin-top: 12px;
 }
 
-.sleep-list {
-  display: grid;
-  gap: 12px;
-}
-
-.sleep-row {
-  display: grid;
-  align-items: center;
-  gap: 16px;
-  border-bottom: 1px solid var(--hairline-soft);
-  padding: 16px 0;
-}
-
-.sleep-row h2,
-.sleep-row p,
-.sleep-row dl,
-.sleep-row dt,
-.sleep-row dd {
-  margin: 0;
-}
-
-.sleep-row h2 { font-size: 17px; }
-.sleep-row p, .sleep-row dt { color: var(--muted); font-size: 13px; }
-.sleep-row dl { display: flex; gap: 24px; }
-.sleep-row dd { font-weight: 650; font-variant-numeric: tabular-nums; }
-
 .navigation-item {
   display: flex;
   min-height: 66px;
@@ -972,22 +946,6 @@ a.navigation-item:hover {
     left: auto;
     width: min(400px, calc(100vw - 48px));
   }
-}
-
-.workouts-page-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 28px;
-}
-
-.workouts-page-heading h1 {
-  margin: 0;
-  font-size: 28px;
-  font-weight: 650;
-  letter-spacing: -0.025em;
-  line-height: 34px;
 }
 
 .workout-groups {
@@ -1110,8 +1068,8 @@ a.navigation-item:hover {
     border-color var(--interaction-duration) var(--interaction-ease);
 }
 
-.workout-list-card:hover,
-.aggregate-card:hover {
+a.workout-list-card:hover,
+a.aggregate-card:hover {
   border-color: var(--border-strong);
   background: var(--surface);
 }
@@ -1475,7 +1433,6 @@ a.navigation-item:hover {
 }
 
 @media (min-width: 744px) {
-  .sleep-row { grid-template-columns: minmax(0, 1fr) auto auto; }
   .settings-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 16px; }
 }
 
@@ -2273,14 +2230,7 @@ a.navigation-item:hover {
   }
 }
 
-/* Page-heading action groups (Meals, History) */
-
-.page-heading-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
+/* Shared date-range filter */
 
 .history-filter-bar {
   display: flex;

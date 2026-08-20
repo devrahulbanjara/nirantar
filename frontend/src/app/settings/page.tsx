@@ -1,5 +1,9 @@
+import { WarningCircleIcon } from "@phosphor-icons/react/dist/ssr";
+
 import { AppShell } from "@/components/app-shell";
 import { TargetsForm } from "@/components/targets-form";
+import { FeedbackState } from "@/components/ui/feedback-state";
+import { PageContainer, PageHeader } from "@/components/ui/page-layout";
 import { getTargets } from "@/lib/targets";
 
 export const dynamic = "force-dynamic";
@@ -8,22 +12,23 @@ export default async function SettingsPage() {
   const result = await getTargets();
   return (
     <AppShell activeDestination={null}>
-      <main className="form-page settings-page">
-        <header className="workouts-page-heading">
-          <div>
-            <h1>Settings</h1>
-            <p className="page-description">Set only the targets that matter to you.</p>
-          </div>
-        </header>
+      <PageContainer width="reading">
+        <PageHeader
+          title="Settings"
+          description="Set only the targets that matter to you."
+        />
         {result.ok ? (
           <TargetsForm targets={result.data.targets} />
         ) : (
-          <section className="workouts-state" role="alert">
-            <h2>Targets are unavailable</h2>
-            <p>Refresh to try again.</p>
-          </section>
+          <FeedbackState
+            id="targets-error-title"
+            title="Targets are unavailable"
+            description="Refresh to try again."
+            icon={<WarningCircleIcon size={24} weight="regular" />}
+            tone="warning"
+          />
         )}
-      </main>
+      </PageContainer>
     </AppShell>
   );
 }

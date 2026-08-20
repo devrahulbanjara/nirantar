@@ -5,14 +5,18 @@ export function AggregateCard({
   href,
   children,
 }: {
-  href: string;
+  href?: string;
   children: ReactNode;
 }) {
-  return (
-    <Link href={href} className="aggregate-card">
-      {children}
-    </Link>
-  );
+  if (href) {
+    return (
+      <Link href={href} className="aggregate-card">
+        {children}
+      </Link>
+    );
+  }
+
+  return <article className="aggregate-card">{children}</article>;
 }
 
 export function AggregateCardHeader({
