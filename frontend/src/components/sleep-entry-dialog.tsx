@@ -95,7 +95,7 @@ export function SleepEntryDialog({
   }
 
   return (
-    <>
+    <div className="entry-dialog-root">
       <button type="button" className={triggerClassName} onClick={openDialog}>
         {existing ? (
           <PencilSimpleIcon size={16} weight="bold" aria-hidden="true" />
@@ -141,6 +141,6 @@ export function SleepEntryDialog({
           <button type="button" className="button-primary" disabled={saving} onClick={save}>{saving ? "Saving…" : "Save sleep"}</button>
         </div>
       </Modal>
-    </>
+    </div>
   );
 }

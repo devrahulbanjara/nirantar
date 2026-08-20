@@ -106,7 +106,7 @@ export function WeightEntryDialog({
   }
 
   return (
-    <>
+    <div className="entry-dialog-root">
       <button type="button" className={triggerClassName} onClick={openDialog}>
         {existing ? (
           <PencilSimpleIcon size={16} weight="bold" aria-hidden="true" />
@@ -191,6 +191,6 @@ export function WeightEntryDialog({
           </button>
         </div>
       </Modal>
-    </>
+    </div>
   );
 }

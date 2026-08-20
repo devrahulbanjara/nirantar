@@ -458,8 +458,15 @@ button:disabled {
   margin-bottom: 28px;
 }
 
-.quick-actions > :is(.button-primary, .button-secondary) {
+.quick-actions > .entry-dialog-root {
+  display: flex;
+  min-width: 0;
+}
+
+.quick-actions > :is(.button-primary, .button-secondary),
+.quick-actions > .entry-dialog-root > :is(.button-primary, .button-secondary) {
   width: 100%;
+  white-space: nowrap;
 }
 
 .daily-section {
@@ -1308,7 +1315,14 @@ a.aggregate-card:hover {
     display: flex;
     width: fit-content;
     max-width: none;
+    flex-wrap: wrap;
     align-items: center;
+  }
+
+  .quick-actions > :is(.button-primary, .button-secondary),
+  .quick-actions > .entry-dialog-root > :is(.button-primary, .button-secondary) {
+    width: auto;
+    flex-shrink: 0;
   }
 
   .quick-actions > :first-child {
