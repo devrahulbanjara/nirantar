@@ -70,7 +70,7 @@ Do not design coaching claims, predicted outcomes, or nutrition advice. The prod
 
 ## Critical Flows
 
-1. Start a workout, add exercises and working sets on the live session page, then Finish. Use the completed-session editor for dropsets, supersets, title, and notes.
+1. Start a workout, add exercises and working sets on the live session page, optionally add dropsets from the exercise menu, then Finish. Use the completed-session editor for supersets, title, and notes.
 2. Open a workout, edit against its current `updated_at`, resolve stale conflicts without losing the draft, or delete with a two-click confirm dialog.
 3. Log a meal with multiple food items and save the aggregate once.
 4. Open, edit, reorder, or delete a meal with the same stale-write protection and two-click confirm dialog.
@@ -536,7 +536,8 @@ Dates are product data, not decorative labels. Parse, compare, and display calen
 - `ConfirmDialog`: states the exact record name or ID, consequence, and explicit destructive verb. The destructive action remains visually secondary until this step. Confirmation is a second click (`Cancel` plus the destructive verb), never a typed phrase or ID.
 - `DeleteRecordDialog`: used for workout and meal deletion, including discarding an open session. Same two-click confirm as `ConfirmDialog`, plus stale-write refresh when the record changed.
 - `StaleConflictDialog`: preserves the draft and clearly separates refresh, retry, and cancel outcomes.
-- `Menu`: secondary actions only. Primary save, log, edit, or recovery actions never live solely inside it.
+- `Menu`: secondary actions only. Primary save, log, edit, or recovery actions never live solely inside it. On a phone it is a bottom sheet; from tablet up it is a centered dialog. Each row is a full-width tertiary action. Destructive items use `tone="danger"`. Cancel stays secondary.
+- `ChoiceList`: a short list of mutually exclusive tappable rows inside a sheet or dialog. Each row has a title and optional metadata. Use it to pick a parent set, not as page navigation.
 - `BackButton`: the only in-app back affordance. It uses browser history when available, a route fallback for direct entry, the shared left-arrow treatment, a `44px` minimum target, and context-specific labels such as `Back to meals`. `collapseLabel="narrow"` hides the words below 744px and keeps the labelled arrow so a session toolbar stays one line. Do not create route-local back links or alternate hover treatments.
 - `ViewToggle`: the only list/grid selector. Icon-only options with accessible names (`List view`, `Grid view`), each a `44 × 44px` target. Workouts, meals, and weight use separate local-storage preference keys and retain the selected view through day navigation and filtering.
 - `DayNavigator`: the day control for Workouts and Meals. Left and right chevrons move one Nepal-local day, including tomorrow. Relative days show `Today`, `Yesterday`, or `Tomorrow` with the full weekday date underneath. Other days show a single weekday date with year. URL is `?date=YYYY-MM-DD`, omitted on today. Day navigation is not a filter: an empty day is first-use empty and still owns Start workout / Log meal for that day. Weight and Sleep keep `DateRangeFilter`.
@@ -547,7 +548,7 @@ Mobile disclosure becomes a sheet only when the content remains a short choice o
 
 - `DailySummary`: server-owned facts with honest missing and incomplete states; quick logging actions remain visible above the fold on a common phone. Domain cards lead with `DomainIcon` plus the hero metric. They do not repeat the domain name as an uppercase eyebrow. Empty nutrition is `Not provided` only; do not add a second empty sentence.
 - `WorkoutActivityCalendar`: Nepal-local year heatmap of workout presence (binary active/inactive). Compact cells, the workouts domain accent for active days, horizontal scroll on narrow viewports, tooltips and aria with exact workout counts, and day links into Workouts for that `?date=`.
-- `SessionLogger`: the default gym path. Sticky header with back, elapsed clock, and `Finish`. On a phone the back control is the labelled arrow only so the clock and `Finish` stay on one line. Add exercise by name only (no catalog, notes, photos, or Settings). Each new exercise starts with three empty working sets. Compact set table: SET, KG, REPS, check, remove. Empty cells use muted placeholders that turn ink when filled. Checkmarks are local to the device (`nirantar:set-complete:{id}`), not a server field. Enter kg and reps before checking a set. `Add set` appends another empty working set. `Start workout` stores the click instant including seconds so the elapsed clock begins at `0:00`. `Finish` sets `check_out_at` to the current instant. The empty session centres `Add exercise` with the prompt; `Discard workout` deletes the session after a two-click confirm dialog. Dropsets and supersets stay on the completed-session editor.
+- `SessionLogger`: the default gym path. Sticky header with back, elapsed clock, and `Finish`. On a phone the back control is the labelled arrow only so the clock and `Finish` stay on one line. Add exercise by name only (no catalog, notes, photos, or Settings). Each new exercise starts with three empty working sets. Compact set table: SET, KG, REPS, check, remove. Empty cells use muted placeholders that turn ink when filled. Checkmarks are local to the device (`nirantar:set-complete:{id}`), not a server field. Enter kg and reps before checking a set. `Add set` appends another empty working set. The exercise overflow menu offers `Add dropset` and `Delete exercise`; it does not delete immediately. `Add dropset` asks which working set to attach to, then nests an empty dropset under that parent with a rail. `Start workout` stores the click instant including seconds so the elapsed clock begins at `0:00`. `Finish` sets `check_out_at` to the current instant. The empty session centres `Add exercise` with the prompt; `Discard workout` deletes the session after a two-click confirm dialog. Supersets stay on the completed-session editor.
 - `WorkoutCard` and `WorkoutDetail`: stable order of local date/time, title, duration, set counts, completion state, and actions.
 - `ExerciseCard`: one performed exercise with ordered set rows and optional superset membership.
 - `SetRow`: order, textual set type, weight in kg, and reps aligned consistently. A dropset is indented beneath and visibly connected to its working-set parent by a rail, not by color alone.
@@ -634,13 +635,14 @@ When a new pattern is truly reusable, update this component inventory in the sam
 
 ### Workout Logging
 
-- The gym path is the live session logger. After-the-fact logging and dropsets/supersets stay on `/workouts/new` and the completed-session editor.
-- Optimize for one-handed phone use in the gym. Session timing, title, notes, warm-ups, dropsets, reorder, and supersets stay out of the default path.
+- The gym path is the live session logger. After-the-fact logging, supersets, title, and notes stay on `/workouts/new` and the completed-session editor. Dropsets can be added during a live session from the exercise overflow menu.
+- Optimize for one-handed phone use in the gym. Session timing, title, notes, warm-ups, reorder, and supersets stay out of the default path.
 - `Start workout` creates an open session and opens `/workouts/{id}/session`. If that Nepal-local day already has an open session, the same slot is `Continue workout`.
 - One exercise card contains its ordered working sets. Adding an exercise creates three empty working sets. Sets are deletable. Do not autofill from a previous set.
-- The primary logging row is a compact table: set index, kg, reps, check, remove. Placeholders stay muted until a value is typed.
+- The primary logging row is a compact table: set index, kg, reps, check, remove. Placeholders stay muted until a value is typed. A dropset is indented under its working-set parent with a rail and labelled `Drop n`.
 - Check a set only after kg and reps are entered. Completion is local, not a stored fact.
-- `Add set` remains on the current exercise; full-width `Add exercise` follows the exercise list.
+- `Add set` remains on the current exercise and always adds a working set. The overflow menu is `Add dropset` or `Delete exercise`. Picking a dropset parent is required so the link is explicit.
+- Full-width `Add exercise` follows the exercise list.
 - `Finish` is the header primary action and writes `check_out_at`. `Discard workout` is a tertiary danger action that deletes the session.
 - Keep `Save workout` sticky above the mobile bottom navigation on the after-the-fact editor without covering the last fields.
 

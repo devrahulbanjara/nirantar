@@ -3809,6 +3809,65 @@ a.aggregate-card:hover {
   flex: 0 0 auto;
 }
 
+.action-menu {
+  display: grid;
+  gap: 4px;
+  margin: 16px 0 20px;
+}
+
+.choice-list {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 20px;
+}
+
+.choice-row {
+  display: grid;
+  gap: 2px;
+  min-height: 52px;
+  align-content: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  padding: 10px 14px;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background-color var(--interaction-duration) var(--interaction-ease),
+    border-color var(--interaction-duration) var(--interaction-ease);
+}
+
+.choice-row:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  background: var(--surface-strong);
+}
+
+.choice-row:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.choice-row:disabled {
+  background: var(--action-disabled-bg);
+  color: var(--action-disabled-fg);
+}
+
+.choice-row-title {
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 22px;
+}
+
+.choice-row-meta {
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  line-height: 18px;
+}
+
 @media (min-width: 744px) {
   .modal[data-variant="responsive-dialog"][open] {
     align-items: center;
@@ -4122,9 +4181,22 @@ a.workout-activity-cell::after {
   gap: 4px;
 }
 
+.session-set-group {
+  display: grid;
+  gap: 4px;
+}
+
+.session-dropset-rail {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 2px 12px;
+  border-left: 2px solid var(--hairline);
+  padding-left: 10px;
+}
+
 .session-set-row {
   display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) minmax(0, 1fr) 44px 44px;
+  grid-template-columns: 52px minmax(0, 1fr) minmax(0, 1fr) 44px 44px;
   align-items: center;
   gap: 6px;
   min-height: 44px;
@@ -4149,6 +4221,13 @@ a.workout-activity-cell::after {
   font-variant-numeric: tabular-nums;
   font-weight: 650;
   text-align: center;
+}
+
+.session-set-row[data-kind="dropset"] .session-set-index {
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  line-height: 14px;
 }
 
 .session-set-row[data-complete] .session-set-index {

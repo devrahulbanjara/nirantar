@@ -5,6 +5,7 @@ import {
   DotsThreeVerticalIcon,
   MinusIcon,
   PlusIcon,
+  TrashIcon,
   WarningCircleIcon,
 } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
@@ -16,6 +17,8 @@ import { Modal } from "@/components/modal";
 import { StaleConflictDialog } from "@/components/stale-conflict-dialog";
 import { BackButton } from "@/components/ui/back-button";
 import { Button, IconButton } from "@/components/ui/button";
+import { ChoiceList } from "@/components/ui/choice-list";
+import { Menu } from "@/components/ui/menu";
 import {
   decimalToEditValue,
   emptyWorkingSets,
@@ -34,7 +37,7 @@ import {
   getKathmanduLocalDate,
   nowAsKathmanduIso,
 } from "@/lib/time";
-import type { ExerciseSet, Workout, WorkoutExercise } from "@/lib/workouts";
+import type { Dropset, ExerciseSet, Workout, WorkoutExercise } from "@/lib/workouts";
 
 type OpResult = { ok: boolean; message?: string };
 type DraftValues = { weight_kg: string; reps: string };
@@ -54,7 +57,7 @@ function saveComplete(workoutId: string, map: Record<string, boolean>) {
   localStorage.setItem(`${COMPLETE_PREFIX}${workoutId}`, JSON.stringify(map));
 }
 
-function valuesFromSet(set: ExerciseSet): DraftValues {
+function valuesFromSet(set: { weight_kg: string | null; reps: number | null }): DraftValues {
   return {
     weight_kg: decimalToEditValue(set.weight_kg),
     reps: set.reps === null ? "" : String(set.reps),
@@ -74,10 +77,109 @@ function topLevelSets(exercise: WorkoutExercise): ExerciseSet[] {
     .sort((a, b) => a.set_order - b.set_order);
 }
 
+function workingSets(exercise: WorkoutExercise): ExerciseSet[] {
+  return topLevelSets(exercise).filter((set) => set.set_type === "working");
+}
+
+type LoggedSet = {
+  id: string;
+  weight_kg: string | null;
+  reps: number | null;
+};
+
+function findLoggedSet(workout: Workout, setId: string): LoggedSet | null {
+  for (const exercise of workout.exercises) {
+    for (const set of exercise.sets) {
+      if (set.id === setId) return set;
+      const dropset = set.dropsets.find((item) => item.id === setId);
+      if (dropset) return dropset;
+    }
+  }
+  return null;
+}
+
+function setMeta(set: LoggedSet): string {
+  const kg = set.weight_kg === null ? "—" : String(Number(set.weight_kg));
+  const reps = set.reps === null ? "—" : String(set.reps);
+  return `${kg} kg × ${reps}`;
+}
+
+function sortedDropsets(set: ExerciseSet): Dropset[] {
+  return set.dropsets.slice().sort((a, b) => a.set_order - b.set_order);
+}
+
+function SessionLoggedRow({
+  set,
+  label,
+  kind,
+  values,
+  done,
+  onWeightChange,
+  onRepsChange,
+  onToggleComplete,
+  onRemove,
+}: {
+  set: LoggedSet;
+  label: string;
+  kind: "working" | "dropset";
+  values: DraftValues;
+  done: boolean;
+  onWeightChange: (value: string) => void;
+  onRepsChange: (value: string) => void;
+  onToggleComplete: () => void;
+  onRemove: () => void;
+}) {
+  const name = kind === "dropset" ? label : `Set ${label}`;
+  return (
+    <div
+      className="session-set-row"
+      role="row"
+      data-kind={kind}
+      data-complete={done || undefined}
+    >
+      <span className="session-set-index">{label}</span>
+      <input
+        className="session-set-input"
+        inputMode="decimal"
+        placeholder="kg"
+        aria-label={`${name} kg`}
+        value={values.weight_kg}
+        onChange={(event) => onWeightChange(event.target.value)}
+      />
+      <input
+        className="session-set-input"
+        inputMode="numeric"
+        placeholder="reps"
+        aria-label={`${name} reps`}
+        value={values.reps}
+        onChange={(event) => onRepsChange(event.target.value)}
+      />
+      <button
+        className="session-check"
+        type="button"
+        data-complete={done || undefined}
+        aria-pressed={done}
+        aria-label={done ? `${name} complete` : `Mark ${name} complete`}
+        onClick={onToggleComplete}
+      >
+        <CheckIcon size={16} weight="bold" aria-hidden="true" />
+      </button>
+      <IconButton
+        icon={MinusIcon}
+        label={`Remove ${name}`}
+        size="sm"
+        tone="danger"
+        onClick={onRemove}
+      />
+    </div>
+  );
+}
+
 export function SessionLogger({ initialWorkout }: { initialWorkout: Workout }) {
   const router = useRouter();
   const addHeadingId = useId();
   const nameInputId = useId();
+  const dropsetHeadingId = useId();
   const [workout, setWorkout] = useState(initialWorkout);
   const workoutRef = useRef(initialWorkout);
   const queueRef = useRef<Promise<unknown>>(Promise.resolve());
@@ -93,6 +195,8 @@ export function SessionLogger({ initialWorkout }: { initialWorkout: Workout }) {
   const [exerciseName, setExerciseName] = useState("");
   const [addingExercise, setAddingExercise] = useState(false);
   const [removeExerciseId, setRemoveExerciseId] = useState<string | null>(null);
+  const [menuExerciseId, setMenuExerciseId] = useState<string | null>(null);
+  const [dropsetExerciseId, setDropsetExerciseId] = useState<string | null>(null);
   const [discardOpen, setDiscardOpen] = useState(false);
   const [rowError, setRowError] = useState<string | null>(null);
   const [finishing, setFinishing] = useState(false);
@@ -158,11 +262,11 @@ export function SessionLogger({ initialWorkout }: { initialWorkout: Workout }) {
     }
   }
 
-  function displayValues(set: ExerciseSet): DraftValues {
+  function displayValues(set: LoggedSet): DraftValues {
     return drafts[set.id] ?? valuesFromSet(set);
   }
 
-  function scheduleSave(set: ExerciseSet, values: DraftValues) {
+  function scheduleSave(set: LoggedSet, values: DraftValues) {
     const existing = timersRef.current.get(set.id);
     if (existing) window.clearTimeout(existing);
     const timer = window.setTimeout(() => {
@@ -172,9 +276,7 @@ export function SessionLogger({ initialWorkout }: { initialWorkout: Workout }) {
         setRowError(validation);
         return;
       }
-      const current = workoutRef.current.exercises
-        .flatMap((exercise) => exercise.sets)
-        .find((item) => item.id === set.id);
+      const current = findLoggedSet(workoutRef.current, set.id);
       if (!current) return;
       const weight = toDecimal(values.weight_kg);
       const reps = toInt(values.reps);
@@ -193,7 +295,7 @@ export function SessionLogger({ initialWorkout }: { initialWorkout: Workout }) {
     timersRef.current.set(set.id, timer);
   }
 
-  function updateDraft(set: ExerciseSet, field: keyof DraftValues, value: string) {
+  function updateDraft(set: LoggedSet, field: keyof DraftValues, value: string) {
     const next = { ...displayValues(set), [field]: value };
     draftsRef.current = { ...draftsRef.current, [set.id]: next };
     setDrafts(draftsRef.current);
@@ -206,7 +308,7 @@ export function SessionLogger({ initialWorkout }: { initialWorkout: Workout }) {
     scheduleSave(set, next);
   }
 
-  function toggleComplete(set: ExerciseSet) {
+  function toggleComplete(set: LoggedSet) {
     const values = displayValues(set);
     if (!complete[set.id] && (values.weight_kg.trim() === "" || values.reps.trim() === "")) {
       setRowError("Enter kg and reps before checking this set.");
@@ -250,18 +352,42 @@ export function SessionLogger({ initialWorkout }: { initialWorkout: Workout }) {
     });
   }
 
-  async function handleRemoveSet(setId: string) {
+  async function handleAddDropset(parentId: string) {
+    const parent = workoutRef.current.exercises
+      .flatMap((exercise) => exercise.sets)
+      .find((set) => set.id === parentId);
+    if (!parent || parent.set_type !== "working") return;
+    const nextOrder = Math.max(0, ...parent.dropsets.map((item) => item.set_order)) + 1;
+    setDropsetExerciseId(null);
+    await runOp({
+      operation: "add_dropset",
+      parent_set_id: parent.id,
+      dropset: { order: nextOrder },
+    });
+  }
+
+  async function handleRemoveSet(set: ExerciseSet | Dropset) {
     const map = { ...complete };
-    delete map[setId];
+    delete map[set.id];
+    if ("dropsets" in set) {
+      for (const dropset of set.dropsets) delete map[dropset.id];
+    }
     setComplete(map);
     saveComplete(workout.id, map);
-    await runOp({ operation: "remove_set", set_id: setId, cascade_dropsets: true });
+    await runOp({
+      operation: "remove_set",
+      set_id: set.id,
+      cascade_dropsets: "dropsets" in set && set.dropsets.length > 0,
+    });
   }
 
   async function handleRemoveExercise(exerciseId: string) {
     const exercise = workoutRef.current.exercises.find((item) => item.id === exerciseId);
     const map = { ...complete };
-    for (const set of exercise?.sets ?? []) delete map[set.id];
+    for (const set of exercise?.sets ?? []) {
+      delete map[set.id];
+      for (const dropset of set.dropsets) delete map[dropset.id];
+    }
     setComplete(map);
     saveComplete(workout.id, map);
     setRemoveExerciseId(null);
@@ -283,6 +409,8 @@ export function SessionLogger({ initialWorkout }: { initialWorkout: Workout }) {
     .slice()
     .sort((a, b) => a.exercise_order - b.exercise_order);
   const removeTarget = exercises.find((item) => item.id === removeExerciseId);
+  const menuTarget = exercises.find((item) => item.id === menuExerciseId);
+  const dropsetTarget = exercises.find((item) => item.id === dropsetExerciseId);
 
   return (
     <div className="session-logger">
@@ -339,9 +467,10 @@ export function SessionLogger({ initialWorkout }: { initialWorkout: Workout }) {
                   <h2>{exercise.exercise_name}</h2>
                   <IconButton
                     icon={DotsThreeVerticalIcon}
-                    label={`Remove ${exercise.exercise_name}`}
-                    tone="danger"
-                    onClick={() => setRemoveExerciseId(exercise.id)}
+                    label={`More actions for ${exercise.exercise_name}`}
+                    aria-haspopup="menu"
+                    aria-expanded={menuExerciseId === exercise.id}
+                    onClick={() => setMenuExerciseId(exercise.id)}
                   />
                 </header>
                 <div className="session-set-table" role="table" aria-label={`${exercise.exercise_name} sets`}>
@@ -355,55 +484,44 @@ export function SessionLogger({ initialWorkout }: { initialWorkout: Workout }) {
                   {sets.map((set, index) => {
                     const values = displayValues(set);
                     const done = Boolean(complete[set.id]);
+                    const dropsets = sortedDropsets(set);
                     return (
-                      <div
-                        className="session-set-row"
-                        role="row"
-                        data-complete={done || undefined}
-                        key={set.id}
-                      >
-                        <span className="session-set-index">{index + 1}</span>
-                        <input
-                          className="session-set-input"
-                          inputMode="decimal"
-                          placeholder="kg"
-                          aria-label={`Set ${index + 1} kg`}
-                          value={values.weight_kg}
-                          onChange={(event) =>
-                            updateDraft(set, "weight_kg", event.target.value)
+                      <div className="session-set-group" key={set.id}>
+                        <SessionLoggedRow
+                          set={set}
+                          label={String(index + 1)}
+                          kind="working"
+                          values={values}
+                          done={done}
+                          onWeightChange={(value) =>
+                            updateDraft(set, "weight_kg", value)
                           }
+                          onRepsChange={(value) => updateDraft(set, "reps", value)}
+                          onToggleComplete={() => toggleComplete(set)}
+                          onRemove={() => void handleRemoveSet(set)}
                         />
-                        <input
-                          className="session-set-input"
-                          inputMode="numeric"
-                          placeholder="reps"
-                          aria-label={`Set ${index + 1} reps`}
-                          value={values.reps}
-                          onChange={(event) =>
-                            updateDraft(set, "reps", event.target.value)
-                          }
-                        />
-                        <button
-                          className="session-check"
-                          type="button"
-                          data-complete={done || undefined}
-                          aria-pressed={done}
-                          aria-label={
-                            done
-                              ? `Set ${index + 1} complete`
-                              : `Mark set ${index + 1} complete`
-                          }
-                          onClick={() => toggleComplete(set)}
-                        >
-                          <CheckIcon size={16} weight="bold" aria-hidden="true" />
-                        </button>
-                        <IconButton
-                          icon={MinusIcon}
-                          label={`Remove set ${index + 1}`}
-                          size="sm"
-                          tone="danger"
-                          onClick={() => void handleRemoveSet(set.id)}
-                        />
+                        {dropsets.length > 0 ? (
+                          <div className="session-dropset-rail">
+                            {dropsets.map((dropset, dropIndex) => (
+                              <SessionLoggedRow
+                                key={dropset.id}
+                                set={dropset}
+                                label={`Drop ${dropIndex + 1}`}
+                                kind="dropset"
+                                values={displayValues(dropset)}
+                                done={Boolean(complete[dropset.id])}
+                                onWeightChange={(value) =>
+                                  updateDraft(dropset, "weight_kg", value)
+                                }
+                                onRepsChange={(value) =>
+                                  updateDraft(dropset, "reps", value)
+                                }
+                                onToggleComplete={() => toggleComplete(dropset)}
+                                onRemove={() => void handleRemoveSet(dropset)}
+                              />
+                            ))}
+                          </div>
+                        ) : null}
                       </div>
                     );
                   })}
@@ -487,7 +605,7 @@ export function SessionLogger({ initialWorkout }: { initialWorkout: Workout }) {
         title="Remove exercise"
         body={
           removeTarget
-            ? `Remove ${removeTarget.exercise_name} and its sets from this session?`
+            ? `Remove ${removeTarget.exercise_name} and its sets and dropsets from this session?`
             : "Remove this exercise?"
         }
         confirmLabel="Remove"
@@ -496,6 +614,69 @@ export function SessionLogger({ initialWorkout }: { initialWorkout: Workout }) {
           if (removeExerciseId) void handleRemoveExercise(removeExerciseId);
         }}
       />
+
+      <Menu
+        open={menuExerciseId !== null}
+        onOpenChange={(open) => {
+          if (!open) setMenuExerciseId(null);
+        }}
+        title={menuTarget ? menuTarget.exercise_name : "Exercise"}
+        items={[
+          {
+            id: "dropset",
+            label: "Add dropset",
+            icon: PlusIcon,
+            disabled: !menuTarget || workingSets(menuTarget).length === 0,
+          },
+          {
+            id: "remove",
+            label: "Delete exercise",
+            icon: TrashIcon,
+            tone: "danger",
+          },
+        ]}
+        onSelect={(id) => {
+          if (!menuTarget) return;
+          if (id === "dropset") setDropsetExerciseId(menuTarget.id);
+          if (id === "remove") setRemoveExerciseId(menuTarget.id);
+        }}
+      />
+
+      <Modal
+        open={dropsetExerciseId !== null}
+        onClose={() => setDropsetExerciseId(null)}
+        labelledBy={dropsetHeadingId}
+        variant="responsive-dialog"
+      >
+        <h2 className="modal-heading" id={dropsetHeadingId}>
+          Add dropset
+        </h2>
+        <p className="modal-body">
+          Which working set is this dropset for? It will nest under that set.
+        </p>
+        {dropsetTarget ? (
+          workingSets(dropsetTarget).length > 0 ? (
+            <ChoiceList
+              labelledBy={dropsetHeadingId}
+              items={workingSets(dropsetTarget).map((set, index) => ({
+                id: set.id,
+                title: `Set ${index + 1}`,
+                meta: setMeta(set),
+              }))}
+              onSelect={(id) => {
+                void handleAddDropset(id);
+              }}
+            />
+          ) : (
+            <p className="modal-body">Add a working set first, then attach a dropset to it.</p>
+          )
+        ) : null}
+        <div className="modal-actions">
+          <Button variant="secondary" onClick={() => setDropsetExerciseId(null)}>
+            Cancel
+          </Button>
+        </div>
+      </Modal>
 
       <DeleteRecordDialog
         open={discardOpen}
