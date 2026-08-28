@@ -32,9 +32,7 @@ import {
 import {
   formatElapsedClock,
   getKathmanduLocalDate,
-  isoToKathmanduInputValue,
-  kathmanduInputValueToIso,
-  nowAsKathmanduInputValue,
+  nowAsKathmanduIso,
 } from "@/lib/time";
 import type { ExerciseSet, Workout, WorkoutExercise } from "@/lib/workouts";
 
@@ -64,10 +62,9 @@ function valuesFromSet(set: ExerciseSet): DraftValues {
 }
 
 function finishCheckoutIso(checkInAt: string): string {
-  const nowIso = kathmanduInputValueToIso(nowAsKathmanduInputValue());
+  const nowIso = nowAsKathmanduIso();
   if (new Date(nowIso).getTime() > new Date(checkInAt).getTime()) return nowIso;
-  const later = new Date(new Date(checkInAt).getTime() + 60_000).toISOString();
-  return kathmanduInputValueToIso(isoToKathmanduInputValue(later));
+  return nowAsKathmanduIso(new Date(new Date(checkInAt).getTime() + 1000));
 }
 
 function topLevelSets(exercise: WorkoutExercise): ExerciseSet[] {

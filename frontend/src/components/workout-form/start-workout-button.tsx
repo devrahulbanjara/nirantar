@@ -6,7 +6,7 @@ import { useState } from "react";
 
 import { Button, type ButtonSize } from "@/components/ui/button";
 import { createWorkout } from "@/lib/actions/workouts";
-import { kathmanduInputValueToIso, nowOnKathmanduDate } from "@/lib/time";
+import { nowOnKathmanduDateIso } from "@/lib/time";
 
 export function StartWorkoutButton({
   date,
@@ -27,7 +27,7 @@ export function StartWorkoutButton({
     setSaving(true);
     setError(null);
     const result = await createWorkout({
-      check_in_at: kathmanduInputValueToIso(nowOnKathmanduDate(date)),
+      check_in_at: nowOnKathmanduDateIso(date),
       check_out_at: null,
       exercises: [],
       groups: [],

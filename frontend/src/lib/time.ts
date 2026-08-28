@@ -12,7 +12,7 @@ export function getKathmanduDate(now = new Date()): string {
   return `${values.year}-${values.month}-${values.day}`;
 }
 
-export function nowAsKathmanduInputValue(now = new Date()): string {
+function kathmanduDateTimeParts(now: Date) {
   const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: KATHMANDU_TIMEZONE,
     year: "numeric",
@@ -20,10 +20,21 @@ export function nowAsKathmanduInputValue(now = new Date()): string {
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
+    second: "2-digit",
     hourCycle: "h23",
   }).formatToParts(now);
-  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+  return Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+}
+
+export function nowAsKathmanduInputValue(now = new Date()): string {
+  const values = kathmanduDateTimeParts(now);
   return `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}`;
+}
+
+/** Current Kathmandu instant, including seconds. Use for live session start/finish. */
+export function nowAsKathmanduIso(now = new Date()): string {
+  const values = kathmanduDateTimeParts(now);
+  return `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}:${values.second}${KATHMANDU_OFFSET}`;
 }
 
 export function isoToKathmanduInputValue(iso: string): string {
@@ -40,7 +51,7 @@ export function isoToKathmanduInputValue(iso: string): string {
   return `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}`;
 }
 
-
+/** Convert a datetime-local `YYYY-MM-DDTHH:mm` value to ISO; seconds are always `00`. */
 export function kathmanduInputValueToIso(value: string): string {
   return `${value}:00${KATHMANDU_OFFSET}`;
 }
@@ -137,6 +148,11 @@ export function parseDayParam(raw: string | undefined, fallback: string): string
 /** Current Kathmandu clock time on a chosen civil date, as a datetime-local value. */
 export function nowOnKathmanduDate(date: string, now = new Date()): string {
   return `${date}T${nowAsKathmanduInputValue(now).slice(11)}`;
+}
+
+/** Current Kathmandu instant on a chosen civil date, including seconds. */
+export function nowOnKathmanduDateIso(date: string, now = new Date()): string {
+  return `${date}${nowAsKathmanduIso(now).slice(10)}`;
 }
 
 export function dayHeading(date: string, today: string): string {
