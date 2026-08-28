@@ -123,13 +123,15 @@ export async function editWorkout(
 export async function deleteWorkout(
   workoutId: string,
   expectedUpdatedAt: string,
-  confirmation: string,
 ): Promise<ActionResult<{ workout_id: string; deleted: true }>> {
   const result = await apiMutate<{ workout_id: string; deleted: true }>(
     `/workouts/${workoutId}`,
     {
       method: "DELETE",
-      body: { expected_updated_at: expectedUpdatedAt, confirmation },
+      body: {
+        expected_updated_at: expectedUpdatedAt,
+        confirmation: `DELETE ${workoutId}`,
+      },
     },
   );
   if (result.ok) {

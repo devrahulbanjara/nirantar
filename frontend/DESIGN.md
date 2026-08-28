@@ -71,9 +71,9 @@ Do not design coaching claims, predicted outcomes, or nutrition advice. The prod
 ## Critical Flows
 
 1. Start a workout, add exercises and working sets on the live session page, then Finish. Use the completed-session editor for dropsets, supersets, title, and notes.
-2. Open a workout, edit against its current `updated_at`, resolve stale conflicts without losing the draft, or delete with exact confirmation.
+2. Open a workout, edit against its current `updated_at`, resolve stale conflicts without losing the draft, or delete with a two-click confirm dialog.
 3. Log a meal with multiple food items and save the aggregate once.
-4. Open, edit, reorder, or delete a meal with the same stale-write and confirmation protections.
+4. Open, edit, reorder, or delete a meal with the same stale-write protection and two-click confirm dialog.
 5. Log or correct one body-weight value for a Nepal-local calendar date.
 6. Review today's deterministic summary and move into the underlying records.
 
@@ -533,7 +533,8 @@ Dates are product data, not decorative labels. Parse, compare, and display calen
 - `Popover`: anchored, non-modal choices on desktop; dismisses with Escape and outside click without losing committed state.
 - `BottomSheet`: short mobile choices and filters. It has a visible title, close control, focus management, scroll containment, and safe-area padding.
 - `Dialog`: destructive confirmation, stale-edit conflict, or another decision requiring protected focus. It traps focus, restores focus to its trigger, and closes with Escape unless an irreversible operation is running.
-- `ConfirmDialog`: states the exact record name or ID, consequence, and explicit destructive verb. The destructive action remains visually secondary until this step.
+- `ConfirmDialog`: states the exact record name or ID, consequence, and explicit destructive verb. The destructive action remains visually secondary until this step. Confirmation is a second click (`Cancel` plus the destructive verb), never a typed phrase or ID.
+- `DeleteRecordDialog`: used for workout and meal deletion, including discarding an open session. Same two-click confirm as `ConfirmDialog`, plus stale-write refresh when the record changed.
 - `StaleConflictDialog`: preserves the draft and clearly separates refresh, retry, and cancel outcomes.
 - `Menu`: secondary actions only. Primary save, log, edit, or recovery actions never live solely inside it.
 - `BackButton`: the only in-app back affordance. It uses browser history when available, a route fallback for direct entry, the shared left-arrow treatment, a `44px` minimum target, and context-specific labels such as `Back to meals`. Do not create route-local back links or alternate hover treatments.
@@ -546,7 +547,7 @@ Mobile disclosure becomes a sheet only when the content remains a short choice o
 
 - `DailySummary`: server-owned facts with honest missing and incomplete states; quick logging actions remain visible above the fold on a common phone. Domain cards lead with `DomainIcon` plus the hero metric. They do not repeat the domain name as an uppercase eyebrow.
 - `WorkoutActivityCalendar`: Nepal-local year heatmap of workout presence (binary active/inactive). Compact cells, the workouts domain accent for active days, horizontal scroll on narrow viewports, tooltips and aria with exact workout counts, and day links into Workouts for that `?date=`.
-- `SessionLogger`: the default gym path. Sticky header with back, elapsed clock, and `Finish`. Add exercise by name only (no catalog, notes, photos, or Settings). Each new exercise starts with three empty working sets. Compact set table: SET, KG, REPS, check, remove. Empty cells use muted placeholders that turn ink when filled. Checkmarks are local to the device (`nirantar:set-complete:{id}`), not a server field. Enter kg and reps before checking a set. `Add set` appends another empty working set. `Finish` sets `check_out_at`. `Discard workout` deletes the session after typed confirmation. Dropsets and supersets stay on the completed-session editor.
+- `SessionLogger`: the default gym path. Sticky header with back, elapsed clock, and `Finish`. Add exercise by name only (no catalog, notes, photos, or Settings). Each new exercise starts with three empty working sets. Compact set table: SET, KG, REPS, check, remove. Empty cells use muted placeholders that turn ink when filled. Checkmarks are local to the device (`nirantar:set-complete:{id}`), not a server field. Enter kg and reps before checking a set. `Add set` appends another empty working set. `Finish` sets `check_out_at`. `Discard workout` deletes the session after a two-click confirm dialog. Dropsets and supersets stay on the completed-session editor.
 - `WorkoutCard` and `WorkoutDetail`: stable order of local date/time, title, duration, set counts, completion state, and actions.
 - `ExerciseCard`: one performed exercise with ordered set rows and optional superset membership.
 - `SetRow`: order, textual set type, weight in kg, and reps aligned consistently. A dropset is indented beneath and visibly connected to its working-set parent by a rail, not by color alone.
@@ -672,7 +673,7 @@ When a new pattern is truly reusable, update this component inventory in the sam
 - Use bottom sheets for short mobile choices and filters.
 - Present the same form and filter popups as centered dialogs on tablet and desktop.
 - Use dialogs for destructive confirmation and stale-edit conflicts.
-- Confirm permanent deletion with the exact record name or ID and explain the result.
+- Confirm permanent deletion with a dialog that names the record and the result. The confirm control is a filled destructive button; Cancel stays secondary. Do not require typing a phrase or ID.
 - Toasts confirm completed actions but never carry the only error explanation.
 - Skeletons should match the final structure. Avoid generic full-page spinners.
 

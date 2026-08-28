@@ -72,13 +72,15 @@ export async function editMeal(
 export async function deleteMeal(
   mealId: string,
   expectedUpdatedAt: string,
-  confirmation: string,
 ): Promise<ActionResult<{ meal_id: string; deleted: true }>> {
   const result = await apiMutate<{ meal_id: string; deleted: true }>(
     `/meals/${mealId}`,
     {
       method: "DELETE",
-      body: { expected_updated_at: expectedUpdatedAt, confirmation },
+      body: {
+        expected_updated_at: expectedUpdatedAt,
+        confirmation: `DELETE ${mealId}`,
+      },
     },
   );
   if (result.ok) {

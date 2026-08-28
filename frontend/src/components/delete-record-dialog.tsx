@@ -27,22 +27,18 @@ export function DeleteRecordDialog({
   onDelete: (
     id: string,
     expectedUpdatedAt: string,
-    confirmation: string,
   ) => Promise<ActionResult<unknown>>;
   onDeleted: () => void;
 }) {
   const router = useRouter();
   const headingId = useId();
-  const inputId = useId();
-  const expected = `DELETE ${recordId}`;
-  const [value, setValue] = useState("");
   const [pending, setPending] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [stale, setStale] = useState(false);
 
   function close() {
-    setValue("");
+    if (pending) return;
     setError(null);
     setStale(false);
     onOpenChange(false);
@@ -52,7 +48,7 @@ export function DeleteRecordDialog({
     setPending(true);
     setError(null);
     setStale(false);
-    const result = await onDelete(recordId, expectedUpdatedAt, value);
+    const result = await onDelete(recordId, expectedUpdatedAt);
     setPending(false);
     if (result.ok) {
       onDeleted();
@@ -81,20 +77,6 @@ export function DeleteRecordDialog({
         This permanently deletes <strong>{recordLabel}</strong> and all of its
         data. This cannot be undone.
       </p>
-      <div className="field">
-        <label className="field-label" htmlFor={inputId}>
-          Type <code>{expected}</code> to confirm
-        </label>
-        <input
-          id={inputId}
-          className="field-input"
-          type="text"
-          autoComplete="off"
-          spellCheck={false}
-          value={value}
-          onChange={(event) => setValue(event.target.value)}
-        />
-      </div>
       {error ? (
         <p className="field-error" role="alert">
           <WarningCircleIcon size={16} weight="fill" aria-hidden="true" />
@@ -102,7 +84,7 @@ export function DeleteRecordDialog({
         </p>
       ) : null}
       <div className="modal-actions">
-        <Button variant="secondary" onClick={close}>
+        <Button variant="secondary" disabled={pending} onClick={close}>
           Cancel
         </Button>
         {stale ? (
@@ -119,7 +101,7 @@ export function DeleteRecordDialog({
           <Button
             variant="destructive"
             icon={TrashIcon}
-            disabled={value !== expected || pending}
+            disabled={pending}
             loading={pending}
             onClick={handleDelete}
           >
