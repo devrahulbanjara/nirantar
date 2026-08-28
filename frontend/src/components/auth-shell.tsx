@@ -12,10 +12,10 @@ export function BrandLogo({
   return (
     <Link className="brand-logo" href={href} aria-label="Nirantar home">
       <Image
-        src="/logo/light_logo.png"
+        src="/logo/logo.png"
         alt=""
-        width={1374}
-        height={1145}
+        width={1672}
+        height={941}
         sizes={sizes}
         priority
       />

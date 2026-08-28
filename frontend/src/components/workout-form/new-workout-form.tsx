@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { createWorkout, type WorkoutCreateInput } from "@/lib/actions/workouts";
+import { Button } from "@/components/ui/button";
 import { DateTimeField } from "@/components/ui/date-time-field";
-import { kathmanduInputValueToIso, nowAsKathmanduInputValue } from "@/lib/time";
+import { kathmanduInputValueToIso, nowAsKathmanduInputValue, nowOnKathmanduDate } from "@/lib/time";
 
 import { GroupsEditor, type DraftGroup } from "@/components/workout-form/groups-editor";
 import { ExerciseBuilder } from "@/components/workout-form/exercise-builder";
@@ -17,11 +18,11 @@ import {
   type DraftExercise,
 } from "@/components/workout-form/types";
 
-export function NewWorkoutForm() {
+export function NewWorkoutForm({ defaultDate }: { defaultDate?: string }) {
   const router = useRouter();
-  const [checkInAt, setCheckInAt] = useState(nowAsKathmanduInputValue());
-  const [stillCheckedIn, setStillCheckedIn] = useState(true);
-  const [checkOutAt, setCheckOutAt] = useState(nowAsKathmanduInputValue());
+  const [checkInAt, setCheckInAt] = useState(() =>
+    defaultDate ? nowOnKathmanduDate(defaultDate) : nowAsKathmanduInputValue(),
+  );
   const [title, setTitle] = useState("");
   const [notes, setNotes] = useState("");
   const [exercises, setExercises] = useState<DraftExercise[]>([emptyExercise()]);
@@ -57,16 +58,9 @@ export function NewWorkoutForm() {
       return;
     }
 
-    const checkInIso = kathmanduInputValueToIso(checkInAt);
-    const checkOutIso = stillCheckedIn ? null : kathmanduInputValueToIso(checkOutAt);
-    if (checkOutIso && new Date(checkOutIso) <= new Date(checkInIso)) {
-      setError("Check-out must be after check-in.");
-      return;
-    }
-
     const payload: WorkoutCreateInput = {
-      check_in_at: checkInIso,
-      check_out_at: checkOutIso,
+      check_in_at: kathmanduInputValueToIso(checkInAt),
+      check_out_at: null,
       title: title.trim() || null,
       notes: notes.trim() || null,
       exercises: trimmedExercises.map((exercise, index) =>
@@ -108,22 +102,6 @@ export function NewWorkoutForm() {
             value={checkInAt}
             onChange={setCheckInAt}
           />
-          <label className="checkbox-field">
-            <input
-              type="checkbox"
-              checked={stillCheckedIn}
-              onChange={(event) => setStillCheckedIn(event.target.checked)}
-            />
-            Still checked in
-          </label>
-          {!stillCheckedIn ? (
-            <DateTimeField
-              id="check-out-at"
-              label="Check-out"
-              value={checkOutAt}
-              onChange={setCheckOutAt}
-            />
-          ) : null}
           <div className="field">
             <label className="field-label" htmlFor="workout-title">
               Title (optional)
@@ -169,14 +147,16 @@ export function NewWorkoutForm() {
             />
           ))}
         </div>
-        <button
-          type="button"
-          className="button-secondary workout-add-exercise"
-          onClick={() => setExercises([...exercises, emptyExercise()])}
-        >
-          <PlusIcon size={18} weight="bold" aria-hidden="true" />
-          Add exercise
-        </button>
+        <span className="workout-add-exercise">
+          <Button
+            variant="secondary"
+            icon={PlusIcon}
+            fullWidth
+            onClick={() => setExercises([...exercises, emptyExercise()])}
+          >
+            Add exercise
+          </Button>
+        </span>
       </section>
 
       <details className="editor-section optional-section-disclosure optional-editor-section">
@@ -185,14 +165,9 @@ export function NewWorkoutForm() {
       </details>
 
       <div className="sticky-action-bar">
-        <button
-          type="button"
-          className="button-primary"
-          disabled={saving}
-          onClick={handleSubmit}
-        >
-          {saving ? "Saving…" : "Save workout"}
-        </button>
+        <Button variant="primary" size="lg" loading={saving} onClick={handleSubmit}>
+          Save workout
+        </Button>
       </div>
     </div>
   );

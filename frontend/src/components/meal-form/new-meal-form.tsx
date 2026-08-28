@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { FoodItemBuilder } from "@/components/meal-form/food-item-builder";
+import { Button } from "@/components/ui/button";
 import { DateTimeField } from "@/components/ui/date-time-field";
 import {
   draftFoodItemToInput,
@@ -12,11 +13,13 @@ import {
   type DraftFoodItem,
 } from "@/components/meal-form/types";
 import { createMeal, type MealCreateInput } from "@/lib/actions/meals";
-import { kathmanduInputValueToIso, nowAsKathmanduInputValue } from "@/lib/time";
+import { kathmanduInputValueToIso, nowAsKathmanduInputValue, nowOnKathmanduDate } from "@/lib/time";
 
-export function NewMealForm() {
+export function NewMealForm({ defaultDate }: { defaultDate?: string }) {
   const router = useRouter();
-  const [eatenAt, setEatenAt] = useState(nowAsKathmanduInputValue());
+  const [eatenAt, setEatenAt] = useState(() =>
+    defaultDate ? nowOnKathmanduDate(defaultDate) : nowAsKathmanduInputValue(),
+  );
   const [name, setName] = useState("");
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<DraftFoodItem[]>([emptyFoodItem()]);
@@ -114,25 +117,19 @@ export function NewMealForm() {
             />
           ))}
         </div>
-        <button
-          type="button"
-          className="button-secondary"
+        <Button
+          variant="secondary"
+          icon={PlusIcon}
           onClick={() => setItems([...items, emptyFoodItem()])}
         >
-          <PlusIcon size={18} weight="bold" aria-hidden="true" />
           Add food item
-        </button>
+        </Button>
       </section>
 
       <div className="sticky-action-bar">
-        <button
-          type="button"
-          className="button-primary"
-          disabled={saving}
-          onClick={handleSubmit}
-        >
-          {saving ? "Saving…" : "Save meal"}
-        </button>
+        <Button variant="primary" size="lg" loading={saving} onClick={handleSubmit}>
+          Save meal
+        </Button>
       </div>
     </div>
   );

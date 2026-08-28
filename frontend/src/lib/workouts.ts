@@ -61,6 +61,12 @@ export type Workout = {
   physical_set_count: number;
 };
 
+export function openWorkoutOnDay(workouts: Workout[]): Workout | null {
+  const open = workouts.filter((workout) => workout.check_out_at === null);
+  if (open.length === 0) return null;
+  return open.sort((a, b) => (a.check_in_at < b.check_in_at ? 1 : -1))[0] ?? null;
+}
+
 export type RecentWorkoutsResult =
   | { status: "ready"; workouts: Workout[] }
   | { status: "unavailable" };

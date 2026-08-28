@@ -9,6 +9,7 @@ import {
 import { useId } from "react";
 
 import { SetFields } from "@/components/workout-form/set-fields";
+import { Button, IconButton } from "@/components/ui/button";
 import {
   duplicateSet,
   emptyDropset,
@@ -137,10 +138,10 @@ export function ExerciseBuilder({
                           updateSet(setIndex, { ...set, dropsets });
                         }}
                       />
-                      <button
-                        type="button"
-                        className="icon-button"
-                        aria-label={`Remove drop ${dropIndex + 1} of ${heading}`}
+                      <IconButton
+                        icon={TrashIcon}
+                        tone="danger"
+                        label={`Remove drop ${dropIndex + 1} of ${heading}`}
                         onClick={() =>
                           updateSet(setIndex, {
                             ...set,
@@ -149,9 +150,7 @@ export function ExerciseBuilder({
                             ),
                           })
                         }
-                      >
-                        <TrashIcon size={16} />
-                      </button>
+                      />
                     </div>
                   ))}
                 </div>
@@ -181,9 +180,10 @@ export function ExerciseBuilder({
                     </select>
                   </label>
                   {set.type === "working" ? (
-                    <button
-                      type="button"
-                      className="button-secondary button-compact"
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      icon={PlusIcon}
                       onClick={() =>
                         updateSet(setIndex, {
                           ...set,
@@ -191,18 +191,18 @@ export function ExerciseBuilder({
                         })
                       }
                     >
-                      <PlusIcon size={16} weight="bold" aria-hidden="true" />
                       Add dropset
-                    </button>
+                    </Button>
                   ) : null}
-                  <button
-                    type="button"
-                    className="button-secondary button-compact"
+                  <Button
+                    variant="tertiary"
+                    size="sm"
+                    tone="danger"
+                    icon={TrashIcon}
                     onClick={() => removeSet(setIndex)}
                   >
-                    <TrashIcon size={16} aria-hidden="true" />
                     Remove set
-                  </button>
+                  </Button>
                 </div>
               </details>
             </li>
@@ -211,52 +211,25 @@ export function ExerciseBuilder({
       </ol>
 
       <div className="exercise-builder-add-set">
-        <button
-          type="button"
-          className="button-primary"
-          onClick={addSet}
-        >
-          <PlusIcon size={18} weight="bold" aria-hidden="true" />
+        <Button variant="primary" icon={PlusIcon} onClick={addSet}>
           Add another set
-        </button>
+        </Button>
       </div>
       <details className="exercise-builder-options">
         <summary>Exercise options</summary>
         <div className="exercise-builder-options-actions">
-          <button
-            type="button"
-            className="button-secondary"
-            disabled={!canMoveUp}
-            onClick={() => onMove(-1)}
-          >
-            <ArrowUpIcon size={18} aria-hidden="true" />
+          <Button variant="secondary" icon={ArrowUpIcon} disabled={!canMoveUp} onClick={() => onMove(-1)}>
             Move up
-          </button>
-          <button
-            type="button"
-            className="button-secondary"
-            disabled={!canMoveDown}
-            onClick={() => onMove(1)}
-          >
-            <ArrowDownIcon size={18} aria-hidden="true" />
+          </Button>
+          <Button variant="secondary" icon={ArrowDownIcon} disabled={!canMoveDown} onClick={() => onMove(1)}>
             Move down
-          </button>
-          <button
-            type="button"
-            className="button-secondary"
-            onClick={addWarmup}
-          >
-            <PlusIcon size={18} weight="bold" aria-hidden="true" />
+          </Button>
+          <Button variant="secondary" icon={PlusIcon} onClick={addWarmup}>
             Add warm-up
-          </button>
-          <button
-            type="button"
-            className="button-secondary"
-            onClick={onRemove}
-          >
-            <TrashIcon size={18} aria-hidden="true" />
+          </Button>
+          <Button variant="tertiary" tone="danger" icon={TrashIcon} onClick={onRemove}>
             Remove exercise
-          </button>
+          </Button>
         </div>
       </details>
     </article>

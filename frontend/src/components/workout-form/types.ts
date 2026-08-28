@@ -66,6 +66,13 @@ export function emptyExercise(): DraftExercise {
   return { key: nextKey("exercise"), name: "", notes: "", sets: [emptySet()] };
 }
 
+export function emptyWorkingSets(count = 3): SetInput[] {
+  return Array.from({ length: count }, (_, index) => ({
+    order: index + 1,
+    type: "working" as const,
+  }));
+}
+
 export function toDecimal(value: string): number | null {
   const trimmed = value.trim();
   if (trimmed === "") return null;

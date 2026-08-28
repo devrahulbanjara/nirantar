@@ -4,7 +4,7 @@ import {
   ClockIcon,
   WarningCircleIcon,
 } from "@phosphor-icons/react/dist/ssr";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
 import { BackButton } from "@/components/ui/back-button";
@@ -104,6 +104,9 @@ export default async function WorkoutDetailPage({
   const result = await getWorkout(id);
 
   if (result.status === "not-found") notFound();
+  if (result.status === "ready" && !result.workout.check_out_at) {
+    redirect(`/workouts/${id}/session`);
+  }
 
   return (
     <AppShell activeDestination="workouts">
@@ -145,16 +148,14 @@ export default async function WorkoutDetailPage({
               <p className="card-note detail-notes">{result.workout.notes}</p>
             ) : null}
 
+            <p className="metric-hero">
+              {formatDurationBetween(
+                result.workout.check_in_at,
+                result.workout.check_out_at,
+              )}
+            </p>
+
             <dl className="workout-list-metrics detail-metrics">
-              <div>
-                <dt>Duration</dt>
-                <dd>
-                  {formatDurationBetween(
-                    result.workout.check_in_at,
-                    result.workout.check_out_at,
-                  )}
-                </dd>
-              </div>
               <div>
                 <dt>Exercises</dt>
                 <dd>{result.workout.exercises.length}</dd>

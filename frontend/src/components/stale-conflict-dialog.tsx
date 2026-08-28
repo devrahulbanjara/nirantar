@@ -4,6 +4,7 @@ import { ArrowClockwiseIcon } from "@phosphor-icons/react";
 import { useId, useState } from "react";
 
 import { Modal } from "@/components/modal";
+import { Button } from "@/components/ui/button";
 
 export function StaleConflictDialog({
   open,
@@ -39,22 +40,18 @@ export function StaleConflictDialog({
         retry your save.
       </p>
       <div className="modal-actions">
-        <button
-          type="button"
-          className="button-secondary"
-          onClick={onKeepEditing}
-        >
+        <Button variant="secondary" onClick={onKeepEditing}>
           Keep editing
-        </button>
-        <button
-          type="button"
-          className="button-primary"
+        </Button>
+        <Button
+          variant="primary"
+          icon={ArrowClockwiseIcon}
           disabled={refreshing}
+          loading={refreshing}
           onClick={handleRefresh}
         >
-          <ArrowClockwiseIcon size={18} weight="bold" aria-hidden="true" />
-          {refreshing ? "Loading…" : "Load latest & retry"}
-        </button>
+          Load latest & retry
+        </Button>
       </div>
     </Modal>
   );

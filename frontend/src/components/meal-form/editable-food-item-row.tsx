@@ -4,6 +4,7 @@ import { TrashIcon, WarningCircleIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 
 import { FoodItemFields, type FoodItemFieldValues } from "@/components/meal-form/food-item-fields";
+import { IconButton, TextLink } from "@/components/ui/button";
 import { decimalToEditValue, toDecimal } from "@/components/meal-form/types";
 import type { FoodItemInput, MealEditOperation } from "@/lib/actions/meals";
 import type { FoodItem } from "@/lib/meals";
@@ -97,10 +98,10 @@ export function EditableFoodItemRow({
           value={values.name}
           onChange={(event) => setValues({ ...values, name: event.target.value })}
         />
-        <button
-          type="button"
-          className="icon-button"
-          aria-label={`Remove food item ${order}`}
+        <IconButton
+          icon={TrashIcon}
+          tone="danger"
+          label={`Remove food item ${order}`}
           disabled={removing}
           onClick={async () => {
             setRemoving(true);
@@ -110,9 +111,7 @@ export function EditableFoodItemRow({
               setError(result.message ?? "Could not remove this food item.");
             }
           }}
-        >
-          <TrashIcon size={18} />
-        </button>
+        />
       </header>
       <FoodItemFields
         values={values}
@@ -123,9 +122,7 @@ export function EditableFoodItemRow({
         <p className="field-error" role="alert">
           <WarningCircleIcon size={14} weight="fill" aria-hidden="true" />
           {error}{" "}
-          <button type="button" className="text-link" onClick={commitIfChanged}>
-            Try again
-          </button>
+          <TextLink onClick={commitIfChanged}>Try again</TextLink>
         </p>
       ) : null}
     </div>

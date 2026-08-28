@@ -4,6 +4,7 @@ import { TrashIcon, WarningCircleIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { IconButton, TextLink } from "@/components/ui/button";
 import { SetFields } from "@/components/workout-form/set-fields";
 import {
   decimalToEditValue,
@@ -107,22 +108,18 @@ export function EditableSetRow({
           labelPrefix={label}
           onChange={(field, value) => setValues({ ...values, [field]: value })}
         />
-        <button
-          type="button"
-          className="icon-button"
-          aria-label={`Remove ${label.toLowerCase()}`}
+        <IconButton
+          icon={TrashIcon}
+          tone="danger"
+          label={`Remove ${label.toLowerCase()}`}
           onClick={() => setConfirmOpen(true)}
-        >
-          <TrashIcon size={16} />
-        </button>
+        />
       </div>
       {error ? (
         <p className="field-error" role="alert">
           <WarningCircleIcon size={14} weight="fill" aria-hidden="true" />
           {error}{" "}
-          <button type="button" className="text-link" onClick={commitIfChanged}>
-            Try again
-          </button>
+          <TextLink onClick={commitIfChanged}>Try again</TextLink>
         </p>
       ) : null}
       <ConfirmDialog

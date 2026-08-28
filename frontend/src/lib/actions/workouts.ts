@@ -114,6 +114,7 @@ export async function editWorkout(
   if (result.ok) {
     revalidatePath("/workouts");
     revalidatePath(`/workouts/${workoutId}`);
+    revalidatePath(`/workouts/${workoutId}/session`);
     revalidatePath("/");
   }
   return result;

@@ -4,6 +4,7 @@ import { TrashIcon, WarningCircleIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { IconButton } from "@/components/ui/button";
 import { AddDropsetInline } from "@/components/workout-form/add-dropset-inline";
 import { AddSetInline } from "@/components/workout-form/add-set-inline";
 import { EditableSetRow } from "@/components/workout-form/editable-set-row";
@@ -96,14 +97,12 @@ export function ExistingExerciseEditor({
           value={name}
           onChange={(event) => setName(event.target.value)}
         />
-        <button
-          type="button"
-          className="icon-button"
-          aria-label={`Remove exercise ${order}`}
+        <IconButton
+          icon={TrashIcon}
+          tone="danger"
+          label={`Remove exercise ${order}`}
           onClick={() => setConfirmRemoveOpen(true)}
-        >
-          <TrashIcon size={18} />
-        </button>
+        />
       </header>
       {nameError ? (
         <p className="field-error" role="alert">

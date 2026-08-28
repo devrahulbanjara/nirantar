@@ -3,6 +3,7 @@
 import { TrashIcon } from "@phosphor-icons/react";
 
 import { FoodItemFields } from "@/components/meal-form/food-item-fields";
+import { IconButton } from "@/components/ui/button";
 import type { DraftFoodItem } from "@/components/meal-form/types";
 
 export function FoodItemBuilder({
@@ -33,14 +34,12 @@ export function FoodItemBuilder({
           onChange={(event) => onChange({ ...draft, name: event.target.value })}
         />
         {showRemove ? (
-          <button
-            type="button"
-            className="icon-button"
-            aria-label={`Remove food item ${order}`}
+          <IconButton
+            icon={TrashIcon}
+            tone="danger"
+            label={`Remove food item ${order}`}
             onClick={onRemove}
-          >
-            <TrashIcon size={18} />
-          </button>
+          />
         ) : null}
       </header>
       <FoodItemFields

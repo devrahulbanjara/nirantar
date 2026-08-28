@@ -3,6 +3,8 @@
 import { PlusIcon, TrashIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 
+import { Button, IconButton } from "@/components/ui/button";
+
 import { nextKey, type DraftExercise } from "@/components/workout-form/types";
 
 export type DraftGroup = { key: string; exerciseKeys: string[] };
@@ -53,14 +55,12 @@ export function GroupsEditor({
                 <strong>Superset {index + 1}:</strong>{" "}
                 {group.exerciseKeys.map(exerciseLabel).join(" + ")}
               </span>
-              <button
-                type="button"
-                className="icon-button"
-                aria-label={`Remove superset ${index + 1}`}
+              <IconButton
+                icon={TrashIcon}
+                tone="danger"
+                label={`Remove superset ${index + 1}`}
                 onClick={() => removeGroup(group.key)}
-              >
-                <TrashIcon size={16} />
-              </button>
+              />
             </li>
           ))}
         </ul>
@@ -84,36 +84,36 @@ export function GroupsEditor({
             ))}
           </div>
           <div className="groups-editor-picker-actions">
-            <button
-              type="button"
-              className="button-secondary button-compact"
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => {
                 setPicking(false);
                 setSelected([]);
               }}
             >
               Cancel
-            </button>
-            <button
-              type="button"
-              className="button-primary button-compact"
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
               disabled={selected.length < 2}
               onClick={createGroup}
             >
               Create superset
-            </button>
+            </Button>
           </div>
         </div>
       ) : (
-        <button
-          type="button"
-          className="button-secondary button-compact"
+        <Button
+          variant="secondary"
+          size="sm"
+          icon={PlusIcon}
           disabled={eligibleExercises.length < 2}
           onClick={() => setPicking(true)}
         >
-          <PlusIcon size={16} weight="bold" aria-hidden="true" />
           Add superset
-        </button>
+        </Button>
       )}
     </section>
   );

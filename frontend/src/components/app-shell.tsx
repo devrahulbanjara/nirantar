@@ -3,7 +3,7 @@
 import {
   BarbellIcon,
   BowlFoodIcon,
-  CalendarDotsIcon,
+  GaugeIcon,
   GearIcon,
   HouseIcon,
   MoonIcon,
@@ -14,9 +14,11 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { BrandLogo } from "@/components/auth-shell";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { clerkAppearance } from "@/lib/clerk-appearance";
 
-export type NavigationDestination = "today" | "workouts" | "meals" | "sleep" | "history";
+export type NavigationDestination = "today" | "workouts" | "meals" | "sleep" | "weight";
 
 type NavigationItem = {
   destination: NavigationDestination;
@@ -36,10 +38,10 @@ const navigation: NavigationItem[] = [
   { destination: "meals", label: "Meals", icon: BowlFoodIcon, href: "/meals" },
   { destination: "sleep", label: "Sleep", icon: MoonIcon, href: "/sleep" },
   {
-    destination: "history",
-    label: "History",
-    icon: CalendarDotsIcon,
-    href: "/history",
+    destination: "weight",
+    label: "Weight",
+    icon: GaugeIcon,
+    href: "/weight",
   },
 ];
 
@@ -60,6 +62,7 @@ function Navigation({ activeDestination }: { activeDestination: NavigationDestin
             <Link
               className="navigation-item"
               data-active={active || undefined}
+              data-destination={destination}
               aria-current={active ? "page" : undefined}
               href={href}
               key={destination}
@@ -86,20 +89,21 @@ function Navigation({ activeDestination }: { activeDestination: NavigationDestin
 function AccountControls({ layout }: { layout: "header" | "sidebar" }) {
   return (
     <div className="account-controls" data-layout={layout}>
+      <ThemeToggle />
       <Show when="signed-out">
         {layout === "header" ? (
           <>
-            <Link className="button-secondary button-compact" href="/sign-in">
+            <Button href="/sign-in" variant="secondary" size="md">
               Sign in
-            </Link>
-            <Link className="button-primary button-compact" href="/sign-up">
+            </Button>
+            <Button href="/sign-up" variant="primary" size="md">
               Sign up
-            </Link>
+            </Button>
           </>
         ) : (
-          <Link className="button-secondary button-compact account-sidebar-link" href="/sign-in">
+          <Button href="/sign-in" variant="secondary" size="md">
             Sign in
-          </Link>
+          </Button>
         )}
       </Show>
       <Show when="signed-in">

@@ -1,31 +1,230 @@
 @import "tailwindcss";
 
+/* ==========================================================================
+   Token layer — the single source of every visual value.
+   Components consume role tokens only. Never hard-code a colour, radius,
+   shadow, font size, or duration outside this block.
+   See frontend/DESIGN.md → Color System, Typography, Visual Hierarchy.
+   ========================================================================== */
+
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* Neutrals */
+  --canvas: #f5f6f8;
+  --surface: #ffffff;
+  --surface-strong: #eceef2;
+  --surface-elevated: #ffffff;
+  --hairline: #e6e8ec;
+  --border: #d9dce2;
+  --border-strong: #a9afbb;
+  --ink: #101319;
+  --text: #3a404b;
+  --muted: #6b7280;
+  --scrim: rgb(12 14 18 / 55%);
+
+  /* Energy accent */
+  --energy: #b4e01c;
+  --energy-strong: #7e9e0b;
+  --energy-text: #4a6300;
+  --energy-soft: #f1f8d8;
+  --on-energy: #101319;
+
+  /* Action roles — the primary action flips expression between themes */
+  --action-bg: #151922;
+  --action-bg-hover: #272d3a;
+  --action-fg: #ffffff;
+  --action-border: #151922;
+  --action-disabled-bg: #dfe2e8;
+  --action-disabled-fg: #8a909c;
+  --focus-ring: #151922;
+
+  /* Domain accents */
+  --domain-workouts: #b4e01c;
+  --domain-workouts-text: #4a6300;
+  --domain-workouts-soft: #f1f8d8;
+  --domain-meals: #0fa968;
+  --domain-meals-text: #046d46;
+  --domain-meals-soft: #e2f7ee;
+  --domain-sleep: #7c5cf0;
+  --domain-sleep-text: #5b3acc;
+  --domain-sleep-soft: #eeeafe;
+  --domain-weight: #0ea5e9;
+  --domain-weight-text: #0369a1;
+  --domain-weight-soft: #e2f4fd;
+
+  /* Macro accents */
+  --macro-calories: #b4e01c;
+  --macro-calories-text: #4a6300;
+  --macro-calories-soft: #f1f8d8;
+  --macro-protein: #2563eb;
+  --macro-protein-text: #1d4ed8;
+  --macro-protein-soft: #dbeafe;
+  --macro-carbs: #d97706;
+  --macro-carbs-text: #b45309;
+  --macro-carbs-soft: #fef3c7;
+  --macro-fat: #db2777;
+  --macro-fat-text: #be185d;
+  --macro-fat-soft: #fce7f3;
+
+  /* Semantic */
+  --success: #0f7a48;
+  --success-soft: #e4f5ec;
+  --warning: #8a5a00;
+  --warning-soft: #fdf3e0;
+  --danger: #c0271a;
+  --danger-strong: #9c1e14;
+  --danger-hover: #9c1e14;
+  --danger-soft: #fdeceb;
+  --on-danger: #ffffff;
+  --info: #1d4ed8;
+  --info-soft: #e7edfd;
+
+  /* Sleep quality scale — 1 bad (red) to 5 good (green) */
+  --quality-1: #c0271a;
+  --quality-1-fg: #ffffff;
+  --quality-1-hover: #9c1e14;
+  --quality-2: #d4531a;
+  --quality-2-fg: #ffffff;
+  --quality-2-hover: #b54414;
+  --quality-3: #c9890a;
+  --quality-3-fg: #101319;
+  --quality-3-hover: #a87208;
+  --quality-4: #5a8a18;
+  --quality-4-fg: #ffffff;
+  --quality-4-hover: #4a7314;
+  --quality-5: #0f7a48;
+  --quality-5-fg: #ffffff;
+  --quality-5-hover: #0c663c;
+
+  /* Brand — the mark and destructive moments only, never a UI action */
+  --brand: #d4143a;
+
+  /* Elevation */
+  --elevation-card: 0 1px 2px rgb(16 19 25 / 4%), 0 4px 12px rgb(16 19 25 / 5%);
+  --elevation-float: 0 2px 8px rgb(16 19 25 / 6%), 0 12px 32px rgb(16 19 25 / 12%);
+  --glow-energy: none;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Neutrals — elevation is expressed by raising surface lightness */
+  --canvas: #0c0e12;
+  --surface: #14171d;
+  --surface-strong: #1c2028;
+  --surface-elevated: #22262f;
+  --hairline: #1e222a;
+  --border: #2a2f39;
+  --border-strong: #454c59;
+  --ink: #f3f5f8;
+  --text: #c4cad5;
+  --muted: #8a93a2;
+  --scrim: rgb(0 0 0 / 68%);
+
+  /* Energy accent */
+  --energy: #c6f24e;
+  --energy-strong: #d8ff6b;
+  --energy-text: #c6f24e;
+  --energy-soft: #1f2a10;
+  --on-energy: #101319;
+
+  /* Action roles */
+  --action-bg: #c6f24e;
+  --action-bg-hover: #d8ff6b;
+  --action-fg: #101319;
+  --action-border: #c6f24e;
+  --action-disabled-bg: #232833;
+  --action-disabled-fg: #69707d;
+  --focus-ring: #c6f24e;
+
+  /* Domain accents */
+  --domain-workouts: #c6f24e;
+  --domain-workouts-text: #c6f24e;
+  --domain-workouts-soft: #1f2a10;
+  --domain-meals: #34d399;
+  --domain-meals-text: #34d399;
+  --domain-meals-soft: #0d2a20;
+  --domain-sleep: #a78bfa;
+  --domain-sleep-text: #a78bfa;
+  --domain-sleep-soft: #1e1936;
+  --domain-weight: #38bdf8;
+  --domain-weight-text: #38bdf8;
+  --domain-weight-soft: #0c2635;
+
+  /* Macro accents */
+  --macro-calories: #c6f24e;
+  --macro-calories-text: #c6f24e;
+  --macro-calories-soft: #1f2a10;
+  --macro-protein: #60a5fa;
+  --macro-protein-text: #60a5fa;
+  --macro-protein-soft: #0f2744;
+  --macro-carbs: #fbbf24;
+  --macro-carbs-text: #fbbf24;
+  --macro-carbs-soft: #2c2109;
+  --macro-fat: #f472b6;
+  --macro-fat-text: #f472b6;
+  --macro-fat-soft: #2d1524;
+
+  /* Semantic */
+  --success: #4ade80;
+  --success-soft: #10281a;
+  --warning: #fbbf24;
+  --warning-soft: #2c2109;
+  --danger: #f87171;
+  --danger-strong: #fca5a5;
+  --danger-hover: #ef4444;
+  --danger-soft: #2e1414;
+  --on-danger: #101319;
+  --info: #60a5fa;
+  --info-soft: #10203a;
+
+  /* Sleep quality scale — 1 bad (red) to 5 good (green) */
+  --quality-1: #f87171;
+  --quality-1-fg: #101319;
+  --quality-1-hover: #ef4444;
+  --quality-2: #fb923c;
+  --quality-2-fg: #101319;
+  --quality-2-hover: #f97316;
+  --quality-3: #fbbf24;
+  --quality-3-fg: #101319;
+  --quality-3-hover: #f59e0b;
+  --quality-4: #a3e635;
+  --quality-4-fg: #101319;
+  --quality-4-hover: #84cc16;
+  --quality-5: #4ade80;
+  --quality-5-fg: #101319;
+  --quality-5-hover: #22c55e;
+
+  /* Brand */
+  --brand: #f0426a;
+
+  /* Elevation — no drop shadow on near-black; separation comes from surface */
+  --elevation-card: none;
+  --elevation-float: 0 12px 40px rgb(0 0 0 / 55%);
+  --glow-energy: 0 6px 20px -6px rgb(198 242 78 / 40%);
+}
+
 :root {
-  --canvas: #ffffff;
-  --surface: #f7f7f8;
-  --surface-strong: #eeeff1;
-  --border: #dcdde1;
-  --hairline-soft: #ebebeb;
-  --border-strong: #b8bbc1;
-  --ink: #202124;
-  --text: #3f4248;
-  --muted: #686d76;
-  --primary: #d4143a;
-  --primary-active: #b90f31;
-  --primary-disabled: #f4b8c5;
-  --primary-soft: #fce8ed;
-  --on-primary: #ffffff;
-  --success: #18794e;
-  --warning: #946200;
-  --warning-soft: #fdf7ea;
-  --danger: #b42318;
-  --danger-active: #8f1c12;
-  --danger-soft: #fdf1ef;
-  --info: #175cd3;
-  --scrim: rgb(0 0 0 / 50%);
-  --focus: #202124;
-  --shadow-float: 0 0 0 1px rgb(0 0 0 / 2%), 0 2px 6px rgb(0 0 0 / 4%),
-    0 4px 8px rgb(0 0 0 / 10%);
+  /* Radius */
+  --radius-control: 12px;
+  --radius-card: 20px;
+  --radius-surface: 28px;
+  --radius-pill: 999px;
+
+  /* Control heights — see DESIGN.md → Size scale */
+  --control-sm: 36px;
+  --control-md: 44px;
+  --control-lg: 52px;
+  --field-height: 56px;
+  --touch-target: 44px;
+
+  /* Type families */
+  --font-sans: var(--font-inter), system-ui, "Segoe UI", sans-serif;
+  --font-display: var(--font-inter-tight), var(--font-inter), system-ui, sans-serif;
+
+  /* Motion */
   --interaction-duration: 180ms;
   --interaction-ease: ease-out;
 }
@@ -38,15 +237,22 @@ html {
   background: var(--canvas);
 }
 
+::selection {
+  background: var(--energy-soft);
+  color: var(--ink);
+}
+
 body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
   background: var(--canvas);
   color: var(--ink);
-  font-family: var(--font-geist-sans), Inter, "Segoe UI", sans-serif;
+  font-family: var(--font-sans);
   font-size: 16px;
   line-height: 1.5;
+  font-feature-settings: "ss02" 1;
+  font-optical-sizing: auto;
 }
 
 button,
@@ -64,7 +270,7 @@ button:disabled {
 }
 
 :focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 3px;
 }
 
@@ -85,7 +291,8 @@ button:disabled {
   height: 64px;
   align-items: center;
   gap: 4px;
-  border-bottom: 1px solid var(--hairline-soft);
+  border-bottom: 1px solid var(--hairline);
+  background: var(--surface);
   padding: 0 12px;
 }
 
@@ -96,7 +303,7 @@ button:disabled {
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
 }
 
 .brand-logo img {
@@ -105,102 +312,268 @@ button:disabled {
   height: auto;
 }
 
-.button-primary,
-.button-secondary {
+.theme-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 48px;
-  border-radius: 10px;
-  padding: 0 16px;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  padding: 0 10px;
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.theme-toggle:hover {
+  background: var(--surface-strong);
+  color: var(--ink);
+}
+
+.mobile-header .theme-toggle-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.desktop-sidebar .theme-toggle {
+  width: 100%;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 52px;
+  padding: 8px 4px;
+  font-size: 11px;
+}
+
+.theme-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.theme-option {
+  display: inline-flex;
+  min-height: var(--control-md);
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 600;
-  line-height: 20px;
+}
+
+.theme-option[data-selected="true"] {
+  border-color: var(--action-border);
+  background: var(--energy-soft);
+  color: var(--energy-text);
+}
+
+.settings-appearance {
+  margin-bottom: 40px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+/* ==========================================================================
+   Button — the single definition of every action control.
+   Owned by components/ui/button.tsx. Variant and size are chosen through
+   typed props only. Nothing outside this block may restyle a button, and no
+   page may reach in with a descendant selector.
+   See DESIGN.md -> Action hierarchy, Size scale.
+   ========================================================================== */
+
+.button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  font-family: var(--font-sans);
+  font-weight: 600;
   text-decoration: none;
+  white-space: nowrap;
   transition:
     background-color var(--interaction-duration) var(--interaction-ease),
     border-color var(--interaction-duration) var(--interaction-ease),
     color var(--interaction-duration) var(--interaction-ease);
 }
 
-.button-primary {
-  border: 1px solid var(--primary);
-  background: var(--primary);
-  color: var(--on-primary);
+/* Size — derived from the action's role, never from available space. */
+
+.button[data-size="sm"] {
+  min-height: var(--control-sm);
+  padding: 0 10px;
+  font-size: 13px;
+  line-height: 18px;
 }
 
-.button-primary:hover {
-  border-color: var(--primary-active);
-  background: var(--primary-active);
-}
-
-.button-primary:active {
-  border-color: var(--primary-active);
-  background: var(--primary-active);
-}
-
-.button-primary:disabled {
-  border-color: var(--primary-disabled);
-  background: var(--primary-disabled);
-  color: var(--ink);
-}
-
-.button-secondary {
-  border: 1px solid var(--border);
-  background: var(--canvas);
-  color: var(--ink);
-}
-
-.button-secondary:hover {
-  border-color: var(--border-strong);
-  background: var(--surface);
-}
-
-.button-compact {
-  min-height: 48px;
-  padding: 0 12px;
-}
-
-.button-destructive {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-height: 48px;
-  border: 1px solid var(--danger);
-  border-radius: 10px;
-  background: var(--danger);
-  padding: 0 16px;
-  color: var(--on-primary);
+.button[data-size="md"] {
+  min-height: var(--control-md);
+  padding: 0 14px;
   font-size: 14px;
-  font-weight: 600;
   line-height: 20px;
-  transition:
-    background-color var(--interaction-duration) var(--interaction-ease),
-    border-color var(--interaction-duration) var(--interaction-ease),
-    opacity var(--interaction-duration) var(--interaction-ease);
 }
 
-.button-destructive:hover:not(:disabled) {
-  border-color: var(--danger-active);
-  background: var(--danger-active);
+.button[data-size="lg"] {
+  min-height: var(--control-lg);
+  padding: 0 20px;
+  font-size: 15px;
+  line-height: 22px;
 }
 
-.button-destructive:disabled {
+/* A small control keeps a full touch target without growing visually. */
+.button[data-size="sm"]::after {
+  content: "";
+  position: absolute;
+  inset: calc((var(--control-sm) - var(--touch-target)) / 2) 0;
+}
+
+.button[data-full-width="true"] {
+  width: 100%;
+}
+
+/* Variant — primary */
+
+.button[data-variant="primary"] {
+  border-color: var(--action-border);
+  background: var(--action-bg);
+  box-shadow: var(--glow-energy);
+  color: var(--action-fg);
+}
+
+.button[data-variant="primary"]:hover:not(:disabled) {
+  border-color: var(--action-bg-hover);
+  background: var(--action-bg-hover);
+}
+
+.button[data-variant="primary"]:disabled {
+  border-color: var(--action-disabled-bg);
+  background: var(--action-disabled-bg);
+  box-shadow: none;
+  color: var(--action-disabled-fg);
+}
+
+/* Variant — secondary */
+
+.button[data-variant="secondary"] {
   border-color: var(--border);
   background: var(--surface);
-  color: var(--muted);
+  color: var(--ink);
 }
+
+.button[data-variant="secondary"]:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  background: var(--surface-strong);
+}
+
+.button[data-variant="secondary"]:disabled {
+  border-color: var(--border);
+  background: var(--action-disabled-bg);
+  color: var(--action-disabled-fg);
+}
+
+/* Variant — tertiary. Repeated row actions live here so they never compete
+   with the single primary action on the surface. */
+
+.button[data-variant="tertiary"] {
+  border-color: transparent;
+  background: transparent;
+  color: var(--text);
+}
+
+.button[data-variant="tertiary"]:hover:not(:disabled) {
+  background: var(--surface-strong);
+  color: var(--ink);
+}
+
+.button[data-variant="tertiary"]:disabled {
+  background: transparent;
+  color: var(--action-disabled-fg);
+}
+
+/* Variant — destructive. Confirmation step only. */
+
+.button[data-variant="destructive"] {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: var(--on-danger);
+}
+
+.button[data-variant="destructive"]:hover:not(:disabled) {
+  border-color: var(--danger-hover);
+  background: var(--danger-hover);
+}
+
+.button[data-variant="destructive"]:disabled {
+  border-color: var(--border);
+  background: var(--action-disabled-bg);
+  color: var(--action-disabled-fg);
+}
+
+/* Quiet delete/remove/discard. Rest matches the host variant; hover is danger. */
+.button[data-tone="danger"]:not([data-variant="destructive"]) {
+  color: var(--text);
+}
+
+.button[data-tone="danger"]:not([data-variant="destructive"]):hover:not(:disabled) {
+  border-color: transparent;
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+/* Loading keeps the control's width and blocks duplicate submission. */
+
+.button[data-loading="true"] {
+  cursor: progress;
+}
+
+.button-spinner {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  border: 2px solid currentcolor;
+  border-top-color: transparent;
+  border-radius: var(--radius-pill);
+  opacity: 0.85;
+  animation: button-spin 700ms linear infinite;
+}
+
+@keyframes button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.button-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Icon-only action. Always at least the shared touch target. */
 
 .icon-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 44px;
-  min-height: 44px;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
   border: 1px solid transparent;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   background: transparent;
   color: var(--text);
   transition:
@@ -209,17 +582,50 @@ button:disabled {
     color var(--interaction-duration) var(--interaction-ease);
 }
 
-.icon-button:hover {
-  border-color: var(--border);
-  background: var(--surface);
+.icon-button:hover:not(:disabled) {
+  background: var(--surface-strong);
   color: var(--ink);
 }
 
+.icon-button[data-tone="danger"]:hover:not(:disabled) {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.icon-button[data-variant="destructive"] {
+  background: var(--danger);
+  color: var(--on-danger);
+}
+
+.icon-button[data-variant="destructive"]:hover:not(:disabled) {
+  background: var(--danger-hover);
+  color: var(--on-danger);
+}
+
+.icon-button[data-variant="secondary"] {
+  border-color: var(--border);
+  background: var(--surface);
+}
+
+.icon-button[data-variant="secondary"]:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  background: var(--surface-strong);
+}
+
+.icon-button:disabled {
+  color: var(--action-disabled-fg);
+}
+
+/* Inline text action. */
+
 .text-link {
   display: inline-flex;
-  min-height: 44px;
+  min-height: var(--touch-target);
   align-items: center;
+  border: 0;
+  background: transparent;
   color: var(--ink);
+  font-family: var(--font-sans);
   font-size: 14px;
   font-weight: 600;
   line-height: 20px;
@@ -233,16 +639,8 @@ button:disabled {
 }
 
 .text-link:hover {
-  color: var(--primary);
+  color: var(--energy-text);
   text-decoration-color: currentcolor;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .button-primary,
-  .button-secondary,
-  .text-link {
-    transition-duration: 0.01ms;
-  }
 }
 
 
@@ -313,8 +711,8 @@ button:disabled {
 .clerk-card {
   width: 100%;
   border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--canvas);
+  border-radius: var(--radius-card);
+  background: var(--surface);
   box-shadow: none;
 }
 
@@ -333,21 +731,22 @@ button:disabled {
 
 .clerk-primary-button {
   min-height: 48px;
-  border-radius: 10px;
-  background: var(--primary);
+  border-radius: var(--radius-control);
+  background: var(--action-bg);
+  color: var(--action-fg);
   box-shadow: none;
 }
 
 .clerk-primary-button:hover,
 .clerk-primary-button:active {
-  background: var(--primary-active);
+  background: var(--action-bg-hover);
 }
 
 .clerk-secondary-button {
   min-height: 48px;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--canvas);
+  border-radius: var(--radius-control);
+  background: var(--surface);
   color: var(--text);
   box-shadow: none;
 }
@@ -355,8 +754,8 @@ button:disabled {
 .clerk-input {
   min-height: 56px;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--canvas);
+  border-radius: var(--radius-control);
+  background: var(--surface);
   box-shadow: none !important;
 }
 
@@ -368,7 +767,7 @@ button:disabled {
 }
 
 .clerk-link {
-  color: var(--primary);
+  color: var(--energy-text);
   font-weight: 600;
 }
 
@@ -386,8 +785,7 @@ button:disabled {
 
 .page-heading,
 .section-heading,
-.card-heading,
-.completeness {
+.card-heading {
   display: flex;
   align-items: center;
 }
@@ -412,10 +810,11 @@ button:disabled {
 .page-heading h1,
 .page-header h1 {
   margin: 2px 0 0;
-  font-size: 28px;
-  font-weight: 650;
-  letter-spacing: -0.025em;
-  line-height: 34px;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 36px;
 }
 
 .local-date,
@@ -445,9 +844,22 @@ button:disabled {
   width: 100%;
 }
 
-.page-header-actions > .button-primary {
+.page-header-actions > .button[data-variant="primary"],
+.page-header-actions > .start-workout-control {
   flex: 1 1 auto;
   min-width: min(100%, 148px);
+  justify-content: center;
+}
+
+.start-workout-control {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.start-workout-control > .button {
+  width: 100%;
   justify-content: center;
 }
 
@@ -458,13 +870,15 @@ button:disabled {
   margin-bottom: 28px;
 }
 
-.quick-actions > .entry-dialog-root {
+.quick-actions > .entry-dialog-root,
+.quick-actions > .start-workout-control {
   display: flex;
   min-width: 0;
 }
 
-.quick-actions > :is(.button-primary, .button-secondary),
-.quick-actions > .entry-dialog-root > :is(.button-primary, .button-secondary) {
+.quick-actions > .button,
+.quick-actions > .entry-dialog-root > .button,
+.quick-actions > .start-workout-control > .button {
   width: 100%;
   white-space: nowrap;
 }
@@ -489,7 +903,8 @@ button:disabled {
 .section-heading h2,
 .section-header h2 {
   margin: 0;
-  font-size: 20px;
+  font-family: var(--font-display);
+  font-size: 22px;
   font-weight: 650;
   letter-spacing: -0.018em;
   line-height: 28px;
@@ -510,9 +925,11 @@ button:disabled {
 }
 
 .summary-card {
+  container-type: inline-size;
   border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--canvas);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--elevation-card);
   padding: 18px;
 }
 
@@ -522,9 +939,9 @@ button:disabled {
   align-items: center;
   gap: 6px;
   border-radius: 999px;
-  background: var(--primary-soft);
+  background: var(--energy-soft);
   padding: 0 12px;
-  color: var(--primary-active);
+  color: var(--action-bg-hover);
   font-size: 13px;
   font-weight: 650;
 }
@@ -542,7 +959,7 @@ button:disabled {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: var(--primary);
+  background: var(--energy);
 }
 
 .card-subline {
@@ -561,38 +978,134 @@ button:disabled {
 
 .icon-surface {
   display: grid;
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   flex: 0 0 auto;
   place-items: center;
-  border-radius: 12px;
-  background: var(--surface);
+  border-radius: var(--radius-pill);
+  background: var(--surface-strong);
   color: var(--ink);
 }
 
+.icon-surface[data-tone="workouts"] {
+  background: var(--domain-workouts-soft);
+  color: var(--domain-workouts-text);
+}
+
+.icon-surface[data-tone="meals"] {
+  background: var(--domain-meals-soft);
+  color: var(--domain-meals-text);
+}
+
+.icon-surface[data-tone="sleep"] {
+  background: var(--domain-sleep-soft);
+  color: var(--domain-sleep-text);
+}
+
+.icon-surface[data-tone="weight"] {
+  background: var(--domain-weight-soft);
+  color: var(--domain-weight-text);
+}
+
+.icon-surface[data-tone="calories"] {
+  background: var(--macro-calories-soft);
+  color: var(--macro-calories-text);
+}
+
+.icon-surface[data-tone="protein"] {
+  background: var(--macro-protein-soft);
+  color: var(--macro-protein-text);
+}
+
+.icon-surface[data-tone="carbs"] {
+  background: var(--macro-carbs-soft);
+  color: var(--macro-carbs-text);
+}
+
+.icon-surface[data-tone="fat"] {
+  background: var(--macro-fat-soft);
+  color: var(--macro-fat-text);
+}
+
+.metric-label,
 .eyebrow {
-  margin: 0 0 1px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+
+.card-heading .metric-hero,
+.aggregate-card-lead .metric-hero {
+  margin-top: 0;
+}
+
+.metric-hero {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 4px 0 0;
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 44px;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-hero abbr,
+.metric-value abbr,
+.gauge-bar-values abbr {
+  color: var(--muted);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 450;
+  letter-spacing: 0;
+  line-height: 18px;
+  text-decoration: none;
+}
+
+.metric-value {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin: 4px 0 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 26px;
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-hint {
+  margin: 4px 0 0;
   color: var(--muted);
   font-size: 13px;
-  font-weight: 550;
+  font-weight: 450;
+  line-height: 18px;
 }
 
 .card-heading h2 {
   overflow: hidden;
-  margin: 0;
-  font-size: 18px;
-  font-weight: 650;
-  letter-spacing: -0.015em;
-  line-height: 24px;
+  margin: 4px 0 0;
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 44px;
+  font-variant-numeric: tabular-nums;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .metric-row,
 .nutrition-row {
   display: grid;
   margin: 18px 0 0;
-  border-top: 1px solid var(--hairline-soft);
+  border-top: 1px solid var(--hairline);
   padding-top: 16px;
 }
 
@@ -606,7 +1119,7 @@ button:disabled {
 
 .metric-row > div + div,
 .nutrition-row > div + div {
-  border-left: 1px solid var(--hairline-soft);
+  border-left: 1px solid var(--hairline);
   padding-left: 14px;
 }
 
@@ -626,27 +1139,347 @@ button:disabled {
   font-weight: 650;
 }
 
-.completeness {
-  width: fit-content;
-  gap: 5px;
+.card-note {
   margin-top: 14px;
-  font-size: 12px;
-  font-weight: 600;
+  border-top: 1px solid var(--hairline);
+  padding-top: 14px;
+  font-size: 13px;
 }
 
-.complete {
+.week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0 0 24px;
+}
+
+.week-strip-day {
+  display: flex;
+  min-height: 72px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border-radius: var(--radius-card);
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.week-strip-day:hover {
+  background: var(--surface-strong);
+  color: var(--ink);
+}
+
+.week-strip-weekday {
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.week-strip-number {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 650;
+  line-height: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+.week-strip-day[data-active]::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--energy);
+}
+
+.week-strip-day[data-selected] {
+  background: var(--action-bg);
+  box-shadow: var(--glow-energy);
+  color: var(--action-fg);
+}
+
+.week-strip-day[data-selected]::after {
+  background: var(--action-fg);
+}
+
+.week-strip-day[data-selected]:hover {
+  background: var(--action-bg-hover);
+  color: var(--action-fg);
+}
+
+.metric-tile {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  padding: 4px 0;
+}
+
+.macro-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 12px;
+  margin-top: 16px;
+  border-top: 1px solid var(--hairline);
+  padding-top: 16px;
+}
+
+.macro-grid[data-compact] {
+  margin-top: 0;
+  border-top: 0;
+  padding-top: 0;
+}
+
+.macro-grid .metric-tile {
+  min-height: 0;
+  align-items: center;
+  text-align: center;
+}
+
+@container (min-width: 440px) {
+  .macro-grid .metric-tile {
+    align-items: flex-start;
+    text-align: left;
+  }
+}
+
+.metric-tile-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 16px;
+}
+
+.metric-tile-icon {
+  flex: 0 0 auto;
+  color: var(--macro-calories-text);
+}
+
+.macro-rings {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.macro-rings-svg,
+.progress-ring-svg {
+  display: block;
+  width: 100%;
+  max-width: 180px;
+  margin: 0 auto;
+  transform: rotate(-90deg);
+}
+
+.macro-rings-track,
+.progress-ring-track {
+  fill: none;
+  stroke: var(--surface-strong);
+  stroke-width: 8;
+}
+
+.macro-rings-fill,
+.progress-ring-fill {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+
+.progress-ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.progress-ring-centre {
+  position: absolute;
+  inset: 22%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.progress-ring-centre .metric-value {
+  justify-content: center;
+  font-size: 18px;
+  line-height: 22px;
+}
+
+.progress-ring[data-tone="workouts"] .progress-ring-fill,
+.macro-rings-fill {
+  stroke: var(--energy);
+}
+
+.progress-ring[data-tone="meals"] .progress-ring-fill {
+  stroke: var(--domain-meals);
+}
+
+.gauge-bar[data-tone="meals"] .gauge-bar-track > span {
+  background: var(--domain-meals);
+}
+
+.progress-ring[data-tone="sleep"] .progress-ring-fill {
+  stroke: var(--domain-sleep);
+}
+
+.progress-ring[data-tone="weight"] .progress-ring-fill {
+  stroke: var(--domain-weight);
+}
+
+.macro-rings g[data-tone="calories"] .macro-rings-fill,
+.progress-ring[data-tone="calories"] .progress-ring-fill {
+  stroke: var(--macro-calories);
+}
+
+.macro-rings g[data-tone="protein"] .macro-rings-fill {
+  stroke: var(--macro-protein);
+}
+
+.macro-rings g[data-tone="carbs"] .macro-rings-fill {
+  stroke: var(--macro-carbs);
+}
+
+.macro-rings g[data-tone="fat"] .macro-rings-fill {
+  stroke: var(--macro-fat);
+}
+
+.gauge-bar {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.gauge-bar-copy {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.gauge-bar-values {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 24px;
+  font-variant-numeric: tabular-nums;
+}
+
+.gauge-bar-track {
+  overflow: hidden;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-strong);
+}
+
+.gauge-bar-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--energy);
+}
+
+.gauge-bar[data-tone="workouts"] .gauge-bar-track > span,
+.gauge-bar[data-tone="calories"] .gauge-bar-track > span {
+  background: var(--energy);
+}
+
+.gauge-bar[data-tone="protein"] .gauge-bar-track > span {
+  background: var(--macro-protein);
+}
+
+.gauge-bar[data-tone="carbs"] .gauge-bar-track > span {
+  background: var(--macro-carbs);
+}
+
+.gauge-bar[data-tone="fat"] .gauge-bar-track > span {
+  background: var(--macro-fat);
+}
+
+.gauge-bar[data-tone="sleep"] .gauge-bar-track > span {
+  background: var(--domain-sleep);
+}
+
+.gauge-bar[data-tone="weight"] .gauge-bar-track > span {
+  background: var(--domain-weight);
+}
+
+.trend-chart {
+  margin: 0 0 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--elevation-card);
+  padding: 18px;
+}
+
+.trend-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 8px;
+}
+
+.trend-chart-line {
+  fill: none;
+  stroke: var(--domain-weight);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.trend-chart-point {
+  fill: var(--surface);
+  stroke: var(--domain-weight);
+  stroke-width: 2.5;
+}
+
+.trend-chart-heading .metric-hero {
+  font-size: 32px;
+  line-height: 36px;
+}
+
+.status-badge {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 5px;
+  border-radius: var(--radius-pill);
+  padding: 4px 9px;
+  background: var(--surface-strong);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-badge[data-tone="success"] {
+  background: var(--success-soft);
   color: var(--success);
 }
 
-.incomplete {
+.status-badge[data-tone="warning"] {
+  background: var(--warning-soft);
   color: var(--warning);
 }
 
-.card-note {
-  margin-top: 14px;
-  border-top: 1px solid var(--hairline-soft);
-  padding-top: 14px;
-  font-size: 13px;
+.nutrition-hero {
+  display: grid;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+@container (min-width: 440px) {
+  .macro-rings {
+    grid-template-columns: minmax(160px, 200px) minmax(0, 1fr);
+    align-items: center;
+  }
 }
 
 .feedback-state {
@@ -654,7 +1487,7 @@ button:disabled {
   max-width: 680px;
   gap: 12px;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   background: var(--surface);
   padding: 18px;
 }
@@ -705,7 +1538,7 @@ button:disabled {
   margin-inline: auto;
   gap: 16px;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   background: var(--surface);
   padding: 48px 24px;
   text-align: center;
@@ -725,7 +1558,7 @@ button:disabled {
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: var(--canvas);
+  background: var(--surface);
   border: 1px solid var(--border);
   color: var(--muted);
 }
@@ -733,7 +1566,7 @@ button:disabled {
 .empty-state[data-variant="nested"] .empty-state-icon {
   width: 40px;
   height: 40px;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
 }
 
 .empty-state-copy {
@@ -777,12 +1610,9 @@ button:disabled {
   margin-top: 4px;
 }
 
-.empty-state-action > .button-primary,
-.empty-state-action > .button-secondary,
-.empty-state-action > a.button-primary,
-.empty-state-action > a.button-secondary,
-.empty-state-action > button.button-primary,
-.empty-state-action > button.button-secondary {
+.empty-state-action > .button,
+.empty-state-action > .start-workout-control,
+.empty-state-action > .start-workout-control > .button {
   width: 100%;
   min-height: 48px;
 }
@@ -796,12 +1626,9 @@ button:disabled {
     width: auto;
   }
 
-  .empty-state-action > .button-primary,
-  .empty-state-action > .button-secondary,
-  .empty-state-action > a.button-primary,
-  .empty-state-action > a.button-secondary,
-  .empty-state-action > button.button-primary,
-  .empty-state-action > button.button-secondary {
+  .empty-state-action > .button,
+  .empty-state-action > .start-workout-control,
+  .empty-state-action > .start-workout-control > .button {
     width: auto;
   }
 }
@@ -812,8 +1639,8 @@ button:disabled {
   right: 0;
   bottom: 0;
   left: 0;
-  border-top: 1px solid var(--hairline-soft);
-  background: rgb(255 255 255 / 96%);
+  border-top: 1px solid var(--hairline);
+  background: var(--surface);
   padding-bottom: env(safe-area-inset-bottom);
 }
 
@@ -837,7 +1664,7 @@ button:disabled {
   gap: 4px;
 }
 
-.settings-form > .button-primary {
+.settings-form > .button {
   justify-self: start;
   margin-top: 12px;
 }
@@ -861,7 +1688,32 @@ a.navigation-item:hover {
 }
 
 .navigation-item[data-active] {
-  color: var(--primary);
+  color: var(--energy-text);
+}
+
+.navigation-item[data-active]::after {
+  content: "";
+  width: 4px;
+  height: 4px;
+  border-radius: var(--radius-pill);
+  background: currentColor;
+  box-shadow: var(--glow-energy);
+}
+
+.navigation-item[data-active][data-destination="workouts"] {
+  color: var(--domain-workouts-text);
+}
+
+.navigation-item[data-active][data-destination="meals"] {
+  color: var(--domain-meals-text);
+}
+
+.navigation-item[data-active][data-destination="sleep"] {
+  color: var(--domain-sleep-text);
+}
+
+.navigation-item[data-active][data-destination="weight"] {
+  color: var(--domain-weight-text);
 }
 
 .pwa-install-prompt {
@@ -873,9 +1725,9 @@ a.navigation-item:hover {
   display: grid;
   gap: 12px;
   border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--canvas);
-  box-shadow: var(--shadow-float);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--elevation-float);
   padding: 16px;
 }
 
@@ -893,9 +1745,9 @@ a.navigation-item:hover {
   align-items: center;
   justify-content: center;
   flex: none;
-  border-radius: 10px;
-  background: var(--primary-soft);
-  color: var(--primary);
+  border-radius: var(--radius-control);
+  background: var(--energy-soft);
+  color: var(--energy-text);
 }
 
 .pwa-install-copy {
@@ -929,7 +1781,7 @@ a.navigation-item:hover {
   justify-content: center;
   flex: none;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   background: transparent;
   color: var(--muted);
   cursor: pointer;
@@ -940,7 +1792,7 @@ a.navigation-item:hover {
   color: var(--ink);
 }
 
-.pwa-install-prompt > .button-primary {
+.pwa-install-prompt > .button {
   width: 100%;
   min-height: 48px;
   margin-top: 4px;
@@ -965,8 +1817,8 @@ a.navigation-item:hover {
   grid-template-columns: repeat(2, 44px);
   flex: 0 0 auto;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--canvas);
+  border-radius: var(--radius-control);
+  background: var(--surface);
   padding: 3px;
 }
 
@@ -1036,7 +1888,7 @@ a.navigation-item:hover {
 }
 
 .collection[data-view="grid"] .metric-list > div + div {
-  border-top: 1px solid var(--hairline-soft);
+  border-top: 1px solid var(--hairline);
   padding-top: 10px;
 }
 
@@ -1065,8 +1917,9 @@ a.navigation-item:hover {
 .aggregate-card {
   display: block;
   border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--canvas);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--elevation-card);
   padding: 18px;
   color: var(--ink);
   text-decoration: none;
@@ -1078,7 +1931,7 @@ a.navigation-item:hover {
 a.workout-list-card:hover,
 a.aggregate-card:hover {
   border-color: var(--border-strong);
-  background: var(--surface);
+  background: var(--surface-strong);
 }
 
 .workout-list-heading,
@@ -1087,6 +1940,21 @@ a.aggregate-card:hover {
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
+}
+
+.aggregate-card-lead {
+  display: flex;
+  min-width: 0;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.aggregate-card-lead > div {
+  min-width: 0;
+}
+
+.aggregate-card-hero {
+  margin: 12px 0 0;
 }
 
 .workout-list-heading h3,
@@ -1149,29 +2017,35 @@ a.aggregate-card:hover {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px 0;
   margin: 16px 0 0;
-  border-top: 1px solid var(--hairline-soft);
+  border-top: 1px solid var(--hairline);
   padding-top: 16px;
 }
 
 .workout-list-metrics > div:nth-child(even),
 .metric-list > div:nth-child(even) {
-  border-left: 1px solid var(--hairline-soft);
+  border-left: 1px solid var(--hairline);
   padding-left: 16px;
 }
 
 .workout-list-metrics dt,
 .metric-list dt {
   color: var(--muted);
-  font-size: 12px;
-  font-weight: 550;
-  line-height: 18px;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  line-height: 16px;
+  text-transform: uppercase;
 }
 
 .workout-list-metrics dd,
 .metric-list dd {
-  margin: 3px 0 0;
-  font-variant-numeric: tabular-nums;
+  margin: 4px 0 0;
+  font-family: var(--font-display);
+  font-size: 22px;
   font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 26px;
+  font-variant-numeric: tabular-nums;
 }
 
 .skeleton-line,
@@ -1188,7 +2062,7 @@ a.aggregate-card:hover {
 
 .skeleton-card {
   height: 210px;
-  border-radius: 14px;
+  border-radius: var(--radius-card);
 }
 
 .skeleton-card + .skeleton-line {
@@ -1198,7 +2072,7 @@ a.aggregate-card:hover {
 .skeleton-action {
   width: 132px;
   height: 48px;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   background: var(--surface-strong);
 }
 
@@ -1238,7 +2112,7 @@ a.aggregate-card:hover {
 .skeleton-metrics {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   padding: 20px;
 }
 
@@ -1249,7 +2123,7 @@ a.aggregate-card:hover {
 .skeleton-field {
   width: 100%;
   height: 56px;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   background: var(--surface-strong);
 }
 
@@ -1280,7 +2154,8 @@ a.aggregate-card:hover {
     justify-content: flex-end;
   }
 
-  .page-header-actions > .button-primary {
+  .page-header-actions > .button[data-variant="primary"],
+  .page-header-actions > .start-workout-control {
     flex: 0 0 auto;
     min-width: 0;
   }
@@ -1319,8 +2194,9 @@ a.aggregate-card:hover {
     align-items: center;
   }
 
-  .quick-actions > :is(.button-primary, .button-secondary),
-  .quick-actions > .entry-dialog-root > :is(.button-primary, .button-secondary) {
+  .quick-actions > .button,
+  .quick-actions > .entry-dialog-root > .button,
+  .quick-actions > .start-workout-control > .button {
     width: auto;
     flex-shrink: 0;
   }
@@ -1343,7 +2219,7 @@ a.aggregate-card:hover {
 
   .workout-list-metrics > div + div,
   .metric-list[data-count="4"] > div + div {
-    border-left: 1px solid var(--hairline-soft);
+    border-left: 1px solid var(--hairline);
     padding-left: 16px;
   }
 
@@ -1362,7 +2238,7 @@ a.aggregate-card:hover {
   }
 
   .collection[data-view="grid"] .metric-list > div:nth-child(even) {
-    border-left: 1px solid var(--hairline-soft);
+    border-left: 1px solid var(--hairline);
     padding-left: 16px;
   }
 
@@ -1381,7 +2257,7 @@ a.aggregate-card:hover {
     height: 100vh;
     align-items: center;
     flex-direction: column;
-    border-right: 1px solid var(--hairline-soft);
+    border-right: 1px solid var(--hairline);
     background: var(--canvas);
     padding: 24px 10px;
   }
@@ -1404,11 +2280,27 @@ a.aggregate-card:hover {
 
   .desktop-sidebar .navigation-item {
     min-height: 60px;
-    border-radius: 10px;
+    border-radius: var(--radius-control);
   }
 
   .desktop-sidebar .navigation-item[data-active] {
-    background: var(--primary-soft);
+    background: var(--energy-soft);
+  }
+
+  .desktop-sidebar .navigation-item[data-active][data-destination="workouts"] {
+    background: var(--domain-workouts-soft);
+  }
+
+  .desktop-sidebar .navigation-item[data-active][data-destination="meals"] {
+    background: var(--domain-meals-soft);
+  }
+
+  .desktop-sidebar .navigation-item[data-active][data-destination="sleep"] {
+    background: var(--domain-sleep-soft);
+  }
+
+  .desktop-sidebar .navigation-item[data-active][data-destination="weight"] {
+    background: var(--domain-weight-soft);
   }
 
   .desktop-sidebar .account-controls {
@@ -1470,8 +2362,8 @@ a.aggregate-card:hover {
 .field-select {
   width: 100%;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--canvas);
+  border-radius: var(--radius-control);
+  background: var(--surface);
   padding: 0 14px;
   color: var(--ink);
   font: inherit;
@@ -1495,6 +2387,71 @@ a.aggregate-card:hover {
   border: 2px solid var(--ink);
   outline: none;
   padding-left: 13px;
+}
+
+.field-scale {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(44px, 1fr));
+  gap: 8px;
+}
+
+.field-scale-option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  padding: 0;
+  color: var(--ink);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.field-scale-option:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-strong);
+}
+
+.field-scale-option[data-rating="1"] {
+  --quality-fill: var(--quality-1);
+  --quality-fg: var(--quality-1-fg);
+  --quality-fill-hover: var(--quality-1-hover);
+}
+
+.field-scale-option[data-rating="2"] {
+  --quality-fill: var(--quality-2);
+  --quality-fg: var(--quality-2-fg);
+  --quality-fill-hover: var(--quality-2-hover);
+}
+
+.field-scale-option[data-rating="3"] {
+  --quality-fill: var(--quality-3);
+  --quality-fg: var(--quality-3-fg);
+  --quality-fill-hover: var(--quality-3-hover);
+}
+
+.field-scale-option[data-rating="4"] {
+  --quality-fill: var(--quality-4);
+  --quality-fg: var(--quality-4-fg);
+  --quality-fill-hover: var(--quality-4-hover);
+}
+
+.field-scale-option[data-rating="5"] {
+  --quality-fill: var(--quality-5);
+  --quality-fg: var(--quality-5-fg);
+  --quality-fill-hover: var(--quality-5-hover);
+}
+
+.field-scale-option[aria-checked="true"] {
+  border-color: var(--quality-fill);
+  background: var(--quality-fill);
+  color: var(--quality-fg);
+}
+
+.field-scale-option[aria-checked="true"]:hover {
+  background: var(--quality-fill-hover);
 }
 
 .field-with-unit {
@@ -1540,7 +2497,7 @@ a.aggregate-card:hover {
   align-items: flex-start;
   gap: 10px;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   padding: 14px 16px;
   margin-bottom: 20px;
   font-size: 14px;
@@ -1571,7 +2528,7 @@ a.aggregate-card:hover {
   margin-top: 32px;
 }
 
-.sticky-action-bar .button-primary {
+.sticky-action-bar .button[data-variant="primary"] {
   width: 100%;
 }
 
@@ -1631,7 +2588,7 @@ a.aggregate-card:hover {
   gap: 6px;
   margin: 0 0 12px -10px;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   background: transparent;
   padding: 0 10px;
   color: var(--text);
@@ -1676,8 +2633,8 @@ a.aggregate-card:hover {
 .detail-metrics {
   margin: 20px 0 28px;
   border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--canvas);
+  border-radius: var(--radius-card);
+  background: var(--surface);
   padding: 16px 18px;
 }
 
@@ -1745,7 +2702,7 @@ a.aggregate-card:hover {
 }
 
 .optional-editor-section {
-  border-top: 1px solid var(--hairline-soft);
+  border-top: 1px solid var(--hairline);
   padding-top: 8px;
 }
 
@@ -1757,21 +2714,6 @@ a.aggregate-card:hover {
   display: grid;
   gap: 16px;
   margin-top: 8px;
-}
-
-.checkbox-field {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: -4px 0 16px;
-  color: var(--text);
-  font-size: 14px;
-  font-weight: 550;
-}
-
-.checkbox-field input {
-  width: 18px;
-  height: 18px;
 }
 
 .visually-hidden {
@@ -1797,8 +2739,8 @@ a.aggregate-card:hover {
 .exercise-builder,
 .workout-exercise-card {
   border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--canvas);
+  border-radius: var(--radius-card);
+  background: var(--surface);
   padding: 16px;
 }
 
@@ -1865,7 +2807,7 @@ a.aggregate-card:hover {
 }
 
 .set-builder-row {
-  border-top: 1px solid var(--hairline-soft);
+  border-top: 1px solid var(--hairline);
   padding-top: 16px;
 }
 
@@ -1905,7 +2847,7 @@ a.aggregate-card:hover {
 .optional-fields-disclosure {
   flex: 1 0 100%;
   min-width: 0;
-  border-top: 1px solid var(--hairline-soft);
+  border-top: 1px solid var(--hairline);
   padding-top: 4px;
 }
 
@@ -1950,8 +2892,8 @@ a.aggregate-card:hover {
   min-width: 0;
   height: 56px;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--canvas);
+  border-radius: var(--radius-control);
+  background: var(--surface);
   padding: 0 10px;
   color: var(--ink);
   font: inherit;
@@ -1982,7 +2924,7 @@ a.aggregate-card:hover {
   margin-top: 4px;
 }
 
-.exercise-builder-add-set > .button-primary,
+.exercise-builder-add-set > .button[data-variant="primary"],
 .workout-add-exercise {
   width: 100%;
   justify-content: center;
@@ -1990,7 +2932,7 @@ a.aggregate-card:hover {
 
 .exercise-builder-options,
 .set-builder-options {
-  border-top: 1px solid var(--hairline-soft);
+  border-top: 1px solid var(--hairline);
 }
 
 .exercise-builder-options {
@@ -2008,14 +2950,14 @@ a.aggregate-card:hover {
   padding: 4px 0 8px;
 }
 
-.exercise-builder-options-actions > .button-secondary,
-.set-builder-options-actions > .button-secondary,
+.exercise-builder-options-actions > .button,
+.set-builder-options-actions > .button,
 .set-builder-options-actions > .set-type-select {
   width: 100%;
 }
 
-.exercise-builder-options-actions > .button-secondary,
-.set-builder-options-actions > .button-secondary {
+.exercise-builder-options-actions > .button,
+.set-builder-options-actions > .button {
   justify-content: center;
 }
 
@@ -2027,7 +2969,7 @@ a.aggregate-card:hover {
 
 .dropset-builder[data-has-dropsets="true"] {
   margin: 12px 0 0 20px;
-  border-left: 2px solid var(--hairline-soft);
+  border-left: 2px solid var(--hairline);
   padding-left: 14px;
 }
 
@@ -2119,7 +3061,7 @@ a.aggregate-card:hover {
   justify-content: space-between;
   gap: 12px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   background: var(--surface);
   padding: 10px 12px;
   font-size: 14px;
@@ -2171,7 +3113,7 @@ a.aggregate-card:hover {
 }
 
 .set-row {
-  border-top: 1px solid var(--hairline-soft);
+  border-top: 1px solid var(--hairline);
   padding-top: 12px;
 }
 
@@ -2218,7 +3160,7 @@ a.aggregate-card:hover {
   display: grid;
   gap: 8px;
   margin: 10px 0 0 20px;
-  border-left: 2px solid var(--hairline-soft);
+  border-left: 2px solid var(--hairline);
   padding: 0 0 0 14px;
   list-style: none;
 }
@@ -2259,10 +3201,10 @@ a.aggregate-card:hover {
   max-width: 100%;
   min-width: 0;
   flex: 1 1 auto;
-  gap: 6px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+.date-range-trigger .button {
+  max-width: 100%;
 }
 
 .date-range-trigger-label {
@@ -2291,8 +3233,8 @@ a.aggregate-card:hover {
   justify-content: space-between;
   gap: 12px;
   border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--canvas);
+  border-radius: var(--radius-control);
+  background: var(--surface);
   padding: 0 14px;
   color: var(--ink);
   font-variant-numeric: tabular-nums;
@@ -2369,8 +3311,8 @@ a.aggregate-card:hover {
 }
 
 .calendar-day[data-selected] {
-  background: var(--ink);
-  color: var(--on-primary);
+  background: var(--action-bg);
+  color: var(--action-fg);
 }
 
 .calendar-day-number {
@@ -2427,7 +3369,7 @@ a.aggregate-card:hover {
   justify-content: center;
   border: 1px solid var(--border);
   border-radius: 999px;
-  background: var(--canvas);
+  background: var(--surface);
   padding: 0 14px;
   color: var(--ink);
   font-size: 14px;
@@ -2452,8 +3394,8 @@ a.aggregate-card:hover {
 
 .food-item-builder {
   border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--canvas);
+  border-radius: var(--radius-card);
+  background: var(--surface);
   padding: 16px;
 }
 
@@ -2532,7 +3474,7 @@ a.aggregate-card:hover {
 }
 
 @media (min-width: 744px) {
-  .exercise-builder-add-set > .button-primary,
+  .exercise-builder-add-set > .button[data-variant="primary"],
   .workout-add-exercise {
     width: auto;
   }
@@ -2544,8 +3486,8 @@ a.aggregate-card:hover {
     align-items: end;
   }
 
-  .exercise-builder-options-actions > .button-secondary,
-  .set-builder-options-actions > .button-secondary,
+  .exercise-builder-options-actions > .button,
+  .set-builder-options-actions > .button,
   .set-builder-options-actions > .set-type-select {
     width: auto;
   }
@@ -2569,8 +3511,8 @@ a.aggregate-card:hover {
 
 .food-item-row {
   border: 1px solid var(--border);
-  border-radius: 14px;
-  background: var(--canvas);
+  border-radius: var(--radius-card);
+  background: var(--surface);
   padding: 16px;
 }
 
@@ -2607,7 +3549,7 @@ a.aggregate-card:hover {
 }
 
 .meal-nutrition-summary > div {
-  border-top: 1px solid var(--hairline-soft);
+  border-top: 1px solid var(--hairline);
   padding-top: 14px;
 }
 
@@ -2617,7 +3559,7 @@ a.aggregate-card:hover {
 }
 
 .meal-nutrition-summary > div:nth-child(even) {
-  border-left: 1px solid var(--hairline-soft);
+  border-left: 1px solid var(--hairline);
   padding-left: 16px;
 }
 
@@ -2632,7 +3574,7 @@ a.aggregate-card:hover {
   }
 
   .meal-nutrition-summary > div:nth-child(n + 2) {
-    border-left: 1px solid var(--hairline-soft);
+    border-left: 1px solid var(--hairline);
     padding-left: 16px;
   }
 }
@@ -2644,9 +3586,9 @@ a.aggregate-card:hover {
   margin: 0;
   overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-card);
   padding: 0;
-  background: var(--canvas);
+  background: var(--surface);
   list-style: none;
 }
 
@@ -2687,9 +3629,8 @@ a.aggregate-card:hover {
 }
 
 .weight-entry-list[data-view="grid"] .weight-entry-row {
-  min-height: 88px;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-card);
 }
 
 .weight-entry-list[data-view="grid"] .weight-entry-row + .weight-entry-row {
@@ -2704,27 +3645,41 @@ a.aggregate-card:hover {
 }
 
 .weight-entry-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  background: var(--canvas);
-  padding: 14px 16px;
+  gap: 16px;
+  background: var(--surface);
+  padding: 14px 18px;
 }
 
 .weight-entry-row + .weight-entry-row {
-  border-top: 1px solid var(--hairline-soft);
+  border-top: 1px solid var(--hairline);
 }
 
-.weight-entry-row > div:first-child {
+.weight-entry-copy {
   min-width: 0;
 }
 
 .weight-entry-date {
   margin: 0;
   color: var(--ink);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 550;
+  line-height: 20px;
+}
+
+.weight-entry-change,
+.weight-entry-copy .field-hint {
+  margin: 2px 0 0;
+}
+
+.weight-entry-change {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 450;
+  line-height: 18px;
+  font-variant-numeric: tabular-nums;
 }
 
 .weight-entry-actions {
@@ -2732,6 +3687,10 @@ a.aggregate-card:hover {
   flex: 0 0 auto;
   align-items: center;
   gap: 12px;
+}
+
+.weight-entry-actions .metric-value {
+  margin: 0;
 }
 
 /* Shared modal/sheet primitive (components/modal.tsx) */
@@ -2758,8 +3717,8 @@ a.aggregate-card:hover {
 .modal .modal-panel {
   border: 1px solid var(--border);
   border-radius: 20px;
-  background: var(--canvas);
-  box-shadow: var(--shadow-float);
+  background: var(--surface);
+  box-shadow: var(--elevation-float);
   padding: 20px;
 }
 
@@ -2819,8 +3778,7 @@ a.aggregate-card:hover {
   gap: 8px;
 }
 
-.modal-actions .button-primary,
-.modal-actions .button-secondary {
+.modal-actions .button {
   flex: 0 0 auto;
 }
 
@@ -2938,7 +3896,7 @@ a.aggregate-card:hover {
 }
 
 .workout-activity-cell[data-level="1"] {
-  background: var(--primary);
+  background: var(--domain-workouts);
   box-shadow: none;
 }
 
@@ -2953,7 +3911,7 @@ a.workout-activity-cell:hover {
 }
 
 a.workout-activity-cell:focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -2984,7 +3942,7 @@ a.workout-activity-cell::after {
 
 .workout-activity-skeleton-chart {
   height: 112px;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   background: var(--surface);
 }
 
@@ -3025,4 +3983,200 @@ a.workout-activity-cell::after {
     height: 12px;
     aspect-ratio: auto;
   }
+}
+
+.day-navigator {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 24px;
+}
+
+.day-navigator-label {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin: 0;
+  text-align: center;
+}
+
+.day-navigator-label > span:first-child {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 24px;
+}
+
+.day-navigator-date {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 450;
+  line-height: 18px;
+}
+
+.session-logger {
+  display: grid;
+  gap: 20px;
+}
+
+.session-logger-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+
+.session-logger-header .back-button {
+  justify-self: start;
+}
+
+.session-logger-clock {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 28px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.session-logger-header > .button {
+  justify-self: end;
+}
+
+.session-logger-empty {
+  display: grid;
+  gap: 16px;
+  justify-items: start;
+  padding: 24px 0;
+}
+
+.session-logger-empty p {
+  margin: 0;
+  color: var(--text);
+}
+
+.session-exercise-list {
+  display: grid;
+  gap: 24px;
+}
+
+.session-exercise {
+  display: grid;
+  gap: 12px;
+}
+
+.session-exercise-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.session-exercise-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 24px;
+}
+
+.session-set-table {
+  display: grid;
+  gap: 4px;
+}
+
+.session-set-row {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) minmax(0, 1fr) 44px 44px;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+}
+
+.session-set-row[data-head] {
+  min-height: 20px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.session-set-row[data-complete] {
+  background: var(--energy-soft);
+  border-radius: var(--radius-control);
+}
+
+.session-set-index {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  text-align: center;
+}
+
+.session-set-row[data-complete] .session-set-index {
+  color: var(--energy-text);
+}
+
+.session-set-input {
+  width: 100%;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  padding: 0 10px;
+  color: var(--ink);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+
+.session-set-input::placeholder {
+  color: var(--muted);
+  font-weight: 450;
+}
+
+.session-set-input:placeholder-shown {
+  color: var(--muted);
+  font-weight: 450;
+}
+
+.session-set-input:focus-visible {
+  border: 2px solid var(--ink);
+  outline: none;
+  padding: 0 9px;
+}
+
+.session-check {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.session-check[data-complete] {
+  border-color: var(--energy);
+  background: var(--energy);
+  color: var(--on-energy);
+}
+
+.session-check:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.session-logger-discard {
+  padding-top: 8px;
 }

@@ -4,6 +4,7 @@ import { PlusIcon, WarningCircleIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 
 import { SetFields } from "@/components/workout-form/set-fields";
+import { Button } from "@/components/ui/button";
 import { toDecimal, toInt, validateSetValues } from "@/components/workout-form/types";
 import type { SetInput } from "@/lib/actions/workouts";
 
@@ -22,14 +23,11 @@ export function AddSetInline({
 
   if (!open) {
     return (
-      <button
-        type="button"
-        className="button-secondary button-compact exercise-builder-add-set-trigger"
-        onClick={() => setOpen(true)}
-      >
-        <PlusIcon size={16} weight="bold" aria-hidden="true" />
-        Add set
-      </button>
+      <span className="exercise-builder-add-set-trigger">
+        <Button variant="secondary" size="sm" icon={PlusIcon} onClick={() => setOpen(true)}>
+          Add set
+        </Button>
+      </span>
     );
   }
 
@@ -82,21 +80,12 @@ export function AddSetInline({
         </p>
       ) : null}
       <div className="add-inline-form-actions">
-        <button
-          type="button"
-          className="button-secondary button-compact"
-          onClick={() => setOpen(false)}
-        >
+        <Button variant="secondary" size="sm" onClick={() => setOpen(false)}>
           Cancel
-        </button>
-        <button
-          type="button"
-          className="button-primary button-compact"
-          disabled={saving}
-          onClick={handleAdd}
-        >
-          {saving ? "Saving…" : "Save set"}
-        </button>
+        </Button>
+        <Button variant="primary" size="sm" loading={saving} onClick={handleAdd}>
+          Save set
+        </Button>
       </div>
     </div>
   );

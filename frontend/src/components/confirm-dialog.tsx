@@ -4,6 +4,7 @@ import { WarningCircleIcon } from "@phosphor-icons/react";
 import { useId } from "react";
 
 import { Modal } from "@/components/modal";
+import { Button } from "@/components/ui/button";
 
 export function ConfirmDialog({
   open,
@@ -44,21 +45,12 @@ export function ConfirmDialog({
         </p>
       ) : null}
       <div className="modal-actions">
-        <button
-          type="button"
-          className="button-secondary"
-          onClick={() => onOpenChange(false)}
-        >
+        <Button variant="secondary" onClick={() => onOpenChange(false)}>
           Cancel
-        </button>
-        <button
-          type="button"
-          className="button-destructive"
-          disabled={pending}
-          onClick={onConfirm}
-        >
+        </Button>
+        <Button variant="destructive" disabled={pending} onClick={onConfirm}>
           {pending ? "Removing…" : confirmLabel}
-        </button>
+        </Button>
       </div>
     </Modal>
   );

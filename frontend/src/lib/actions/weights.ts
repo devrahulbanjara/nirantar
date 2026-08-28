@@ -20,7 +20,7 @@ export async function logWeight(payload: {
   });
   if (result.ok) {
     revalidatePath("/");
-    revalidatePath("/history");
+    revalidatePath("/weight");
     return result;
   }
 
@@ -49,7 +49,7 @@ export async function editWeight(
   });
   if (result.ok) {
     revalidatePath("/");
-    revalidatePath("/history");
+    revalidatePath("/weight");
   }
   return result;
 }

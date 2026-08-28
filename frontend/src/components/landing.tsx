@@ -3,9 +3,10 @@ import {
   BowlFoodIcon,
   GaugeIcon,
 } from "@phosphor-icons/react/dist/ssr";
-import Link from "next/link";
 
 import { BrandLogo } from "@/components/auth-shell";
+import { Button, TextLink } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import "@/app/landing.css";
 
 const records = [
@@ -37,7 +38,7 @@ const exampleSummary = [
     icon: BowlFoodIcon,
     label: "Meals",
     value: "3 logged",
-    detail: "Nutrition incomplete",
+    detail: "1,840 kcal",
   },
   {
     icon: GaugeIcon,
@@ -62,7 +63,7 @@ function ProductPreview() {
           <span aria-current="page">Today</span>
           <span>Workouts</span>
           <span>Meals</span>
-          <span>History</span>
+          <span>Weight</span>
         </nav>
       </div>
 
@@ -110,12 +111,13 @@ export function Landing() {
             <span>Nirantar</span>
           </div>
           <nav className="landing-header-actions" aria-label="Account">
-            <Link className="button-secondary button-compact" href="/sign-in">
+            <ThemeToggle />
+            <Button href="/sign-in" variant="secondary" size="md">
               Sign in
-            </Link>
-            <Link className="button-primary button-compact" href="/sign-up">
+            </Button>
+            <Button href="/sign-up" variant="primary" size="md">
               Get started
-            </Link>
+            </Button>
           </nav>
         </div>
       </header>
@@ -129,12 +131,12 @@ export function Landing() {
               the same history with AI.
             </p>
             <div className="landing-actions">
-              <Link className="button-primary" href="/sign-up">
+              <Button href="/sign-up" variant="primary" size="lg">
                 Get started
-              </Link>
-              <Link className="button-secondary" href="#how-it-works">
+              </Button>
+              <Button href="#how-it-works" variant="secondary" size="lg">
                 See how it works
-              </Link>
+              </Button>
             </div>
           </div>
           <ProductPreview />
@@ -170,8 +172,8 @@ export function Landing() {
             <div className="landing-section-heading">
               <h2 id="history-title">The saved details stay visible.</h2>
               <p>
-                Open a past entry and see the order, units, timestamps, and
-                completeness exactly as recorded.
+                Open a past entry and see the order, units, and timestamps
+                exactly as recorded.
               </p>
             </div>
             <div className="landing-history-example" aria-label="Example history">
@@ -187,7 +189,7 @@ export function Landing() {
               <div className="landing-history-row">
                 <time>Today</time>
                 <strong>Lunch</strong>
-                <span>Nutrition incomplete</span>
+                <span>Meal logged</span>
               </div>
               <div className="landing-history-row">
                 <time>Yesterday</time>
@@ -218,9 +220,9 @@ export function Landing() {
             <h2 id="final-title">Start with today.</h2>
             <p>Build a fitness history you can use.</p>
           </div>
-          <Link className="button-primary" href="/sign-up">
+          <Button href="/sign-up" variant="primary" size="lg">
             Get started
-          </Link>
+          </Button>
         </section>
       </main>
 
@@ -231,12 +233,8 @@ export function Landing() {
             <span>Nirantar</span>
           </div>
           <nav aria-label="Footer">
-            <Link className="text-link" href="/sign-in">
-              Sign in
-            </Link>
-            <Link className="text-link" href="/sign-up">
-              Get started
-            </Link>
+            <TextLink href="/sign-in">Sign in</TextLink>
+            <TextLink href="/sign-up">Get started</TextLink>
           </nav>
         </div>
       </footer>

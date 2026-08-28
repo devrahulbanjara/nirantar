@@ -3,38 +3,31 @@ import {
   CheckCircleIcon,
   ClockIcon,
   PlusIcon,
-  WarningCircleIcon,
 } from "@phosphor-icons/react/dist/ssr";
-import Link from "next/link";
 
 import { AppShell } from "@/components/app-shell";
-import { DateRangeFilter } from "@/components/date-range-filter";
 import {
   AggregateCard,
-  AggregateCardHeader,
   MetricList,
 } from "@/components/ui/aggregate-card";
-import { EmptyState } from "@/components/ui/empty-state";
-import { FeedbackState } from "@/components/ui/feedback-state";
+import {
+  CollectionActions,
+  CollectionEmptyBody,
+  resolveCollectionStatus,
+  type CreateAction,
+} from "@/components/ui/collection";
+import { DayNavigator } from "@/components/ui/day-navigator";
+import { DomainIcon } from "@/components/ui/metric-tile";
 import { PageContainer, PageHeader } from "@/components/ui/page-layout";
 import { ViewToggle, type CollectionView } from "@/components/ui/view-toggle";
-import { formatKathmanduDate, getKathmanduDate } from "@/lib/daily-summary";
-import { getWorkouts, type Workout } from "@/lib/workouts";
+import { StartWorkoutButton } from "@/components/workout-form/start-workout-button";
+import { getKathmanduDate } from "@/lib/daily-summary";
+import { parseDayParam } from "@/lib/time";
+import { getWorkouts, openWorkoutOnDay, type Workout } from "@/lib/workouts";
 
 export const dynamic = "force-dynamic";
 
 const KATHMANDU_TIMEZONE = "Asia/Kathmandu";
-
-function getLocalDate(timestamp: string): string {
-  const parts = new Intl.DateTimeFormat("en", {
-    timeZone: KATHMANDU_TIMEZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(new Date(timestamp));
-  const values = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
-  return `${values.year}-${values.month}-${values.day}`;
-}
 
 function formatTime(timestamp: string): string {
   return new Intl.DateTimeFormat("en-US", {
@@ -59,38 +52,27 @@ function formatDuration(start: string, end: string | null): string {
   return `${hours} hr ${minutes} min`;
 }
 
-function groupWorkouts(workouts: Workout[]): Array<[string, Workout[]]> {
-  const groups = new Map<string, Workout[]>();
-
-  for (const workout of workouts) {
-    const date = getLocalDate(workout.check_in_at);
-    groups.set(date, [...(groups.get(date) ?? []), workout]);
-  }
-
-  return [...groups.entries()];
-}
-
-function WorkoutCard({
-  workout,
-  dateLabel,
-}: {
-  workout: Workout;
-  dateLabel?: string;
-}) {
+function WorkoutCard({ workout }: { workout: Workout }) {
   const exerciseNames = workout.exercises.map((item) => item.exercise_name);
+  const duration = formatDuration(workout.check_in_at, workout.check_out_at);
+  const href = workout.check_out_at
+    ? `/workouts/${workout.id}`
+    : `/workouts/${workout.id}/session`;
 
   return (
-    <AggregateCard href={`/workouts/${workout.id}`}>
-      <AggregateCardHeader
-        title={workout.title ?? "Workout"}
-        metadata={
-          <>
-            {dateLabel ? <span className="aggregate-card-date">{dateLabel} · </span> : null}
-            {formatTime(workout.check_in_at)}
-            {workout.check_out_at ? `–${formatTime(workout.check_out_at)}` : ""}
-          </>
-        }
-        status={<span
+    <AggregateCard href={href}>
+      <header className="aggregate-card-header">
+        <div className="aggregate-card-lead">
+          <DomainIcon tone="workouts" icon={BarbellIcon} />
+          <div>
+            <h3>{workout.title ?? "Workout"}</h3>
+            <p>
+              {formatTime(workout.check_in_at)}
+              {workout.check_out_at ? `–${formatTime(workout.check_out_at)}` : ""}
+            </p>
+          </div>
+        </div>
+        <span
           className="workout-status"
           data-status={workout.check_out_at ? "completed" : "open"}
         >
@@ -100,15 +82,16 @@ function WorkoutCard({
             <ClockIcon size={15} weight="fill" aria-hidden="true" />
           )}
           {workout.check_out_at ? "Completed" : "Open"}
-        </span>}
-      />
+        </span>
+      </header>
+
+      <p className="metric-hero aggregate-card-hero">{duration}</p>
 
       <p className="exercise-preview">
         {exerciseNames.length > 0 ? exerciseNames.join(" · ") : "No exercises"}
       </p>
 
       <MetricList items={[
-        { label: "Duration", value: formatDuration(workout.check_in_at, workout.check_out_at) },
         { label: "Exercises", value: workout.exercises.length },
         { label: "Working sets", value: workout.working_set_count },
         { label: "Drop sets", value: workout.dropset_count },
@@ -117,51 +100,42 @@ function WorkoutCard({
   );
 }
 
-function EmptyWorkouts({ isDefaultRange }: { isDefaultRange: boolean }) {
-  return (
-    <EmptyState
-      id="no-workouts-title"
-      title={isDefaultRange ? "No workouts logged today" : "No workouts in this range"}
-      description={
-        isDefaultRange
-          ? "Log a workout to begin today’s history."
-          : "Nothing was logged in the selected dates."
-      }
-      icon={<BarbellIcon size={24} weight="regular" />}
-      action={
-        <Link href="/workouts/new" className="button-primary">
-          <PlusIcon size={18} weight="bold" aria-hidden="true" />
-          Log workout
-        </Link>
-      }
-    />
-  );
-}
-
-function UnavailableWorkouts() {
-  return (
-    <FeedbackState
-      id="workouts-error-title"
-      title="Workouts are unavailable"
-      description="Refresh to try again."
-      icon={<WarningCircleIcon size={24} weight="regular" />}
-      tone="warning"
-    />
-  );
+function workoutCreateAction(date: string, open: Workout | null): CreateAction {
+  if (open) {
+    return {
+      label: "Continue workout",
+      href: `/workouts/${open.id}/session`,
+      icon: BarbellIcon,
+    };
+  }
+  return {
+    label: "Start workout",
+    icon: PlusIcon,
+    render: ({ size }) => <StartWorkoutButton date={date} size={size} />,
+  };
 }
 
 export default async function WorkoutsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ start?: string; end?: string; view?: string }>;
+  searchParams: Promise<{ date?: string; view?: string }>;
 }) {
   const params = await searchParams;
   const today = getKathmanduDate();
-  const endDate = params.end ?? today;
-  const startDate = params.start ?? today;
-  const isDefaultRange = !params.start && !params.end;
+  const selectedDate = parseDayParam(params.date, today);
   const view: CollectionView = params.view === "grid" ? "grid" : "list";
-  const result = await getWorkouts(startDate, endDate);
+  const result = await getWorkouts(selectedDate, selectedDate);
+  const workouts = result.status === "unavailable" ? [] : result.history.workouts;
+  const open = openWorkoutOnDay(workouts);
+  const createAction = workoutCreateAction(selectedDate, open);
+  const viewParams = selectedDate === today ? undefined : { date: selectedDate };
+  const isToday = selectedDate === today;
+
+  const status = resolveCollectionStatus({
+    unavailable: result.status === "unavailable",
+    count: workouts.length,
+    isFiltered: false,
+  });
 
   return (
     <AppShell activeDestination="workouts">
@@ -169,61 +143,57 @@ export default async function WorkoutsPage({
         <PageHeader
           title="Workouts"
           actions={
-            <>
-              <ViewToggle
-                basePath="/workouts"
-                view={view}
-                preferenceKey="nirantar:view:workouts"
-                params={
-                  isDefaultRange
-                    ? undefined
-                    : { start: startDate, end: endDate }
-                }
-              />
-              <DateRangeFilter
-                basePath="/workouts"
-                startDate={startDate}
-                endDate={endDate}
-                isDefaultRange={isDefaultRange}
-                todayDate={today}
-                clearBehavior="today"
-                extraParams={{ view }}
-              />
-              <Link href="/workouts/new" className="button-primary">
-                <PlusIcon size={18} weight="bold" aria-hidden="true" />
-                Log workout
-              </Link>
-            </>
+            <CollectionActions
+              status={status}
+              viewToggle={
+                <ViewToggle
+                  basePath="/workouts"
+                  view={view}
+                  preferenceKey="nirantar:view:workouts"
+                  params={viewParams}
+                />
+              }
+              createAction={createAction}
+            />
           }
         />
 
-        {result.status === "unavailable" ? (
-          <UnavailableWorkouts />
-        ) : result.history.workouts.length === 0 ? (
-          <EmptyWorkouts isDefaultRange={isDefaultRange} />
-        ) : view === "grid" ? (
-          <div className="workout-list collection collection-grid-flat" data-view="grid">
-            {groupWorkouts(result.history.workouts).flatMap(([date, workouts]) =>
-              workouts.map((workout) => (
-                <WorkoutCard
-                  workout={workout}
-                  dateLabel={date === today ? "Today" : formatKathmanduDate(date)}
-                  key={workout.id}
-                />
-              )),
-            )}
-          </div>
+        <DayNavigator
+          basePath="/workouts"
+          date={selectedDate}
+          today={today}
+          extraParams={{ view }}
+        />
+
+        {status !== "ready" ? (
+          <CollectionEmptyBody
+            status={status}
+            id="no-workouts-title"
+            icon={<BarbellIcon size={24} weight="regular" />}
+            createAction={createAction}
+            emptyTitle={
+              isToday ? "No workouts logged today" : "No workouts on this day"
+            }
+            emptyDescription={
+              isToday
+                ? "Start a workout to begin today’s history."
+                : "Start a workout for this day."
+            }
+            noResultsTitle="No workouts on this day"
+            noResultsDescription="Nothing was logged on this day."
+            unavailableTitle="Workouts are unavailable"
+          />
         ) : (
-          <div className="workout-groups collection" data-view={view}>
-            {groupWorkouts(result.history.workouts).map(([date, workouts]) => (
-              <section className="workout-day" key={date}>
-                <h2>{date === today ? "Today" : formatKathmanduDate(date)}</h2>
-                <div className="workout-list">
-                  {workouts.map((workout) => (
-                    <WorkoutCard workout={workout} key={workout.id} />
-                  ))}
-                </div>
-              </section>
+          <div
+            className={
+              view === "grid"
+                ? "workout-list collection collection-grid-flat"
+                : "workout-list collection"
+            }
+            data-view={view}
+          >
+            {workouts.map((workout) => (
+              <WorkoutCard workout={workout} key={workout.id} />
             ))}
           </div>
         )}

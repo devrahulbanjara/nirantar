@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 
 import { Modal } from "@/components/modal";
+import { Button } from "@/components/ui/button";
 import type { ActionResult } from "@/lib/api";
 
 export function DeleteRecordDialog({
@@ -101,29 +102,29 @@ export function DeleteRecordDialog({
         </p>
       ) : null}
       <div className="modal-actions">
-        <button type="button" className="button-secondary" onClick={close}>
+        <Button variant="secondary" onClick={close}>
           Cancel
-        </button>
+        </Button>
         {stale ? (
-          <button
-            type="button"
-            className="button-primary"
+          <Button
+            variant="primary"
+            icon={ArrowClockwiseIcon}
             disabled={refreshing}
+            loading={refreshing}
             onClick={handleRefresh}
           >
-            <ArrowClockwiseIcon size={18} weight="bold" aria-hidden="true" />
-            {refreshing ? "Refreshing…" : "Refresh & try again"}
-          </button>
+            Refresh & try again
+          </Button>
         ) : (
-          <button
-            type="button"
-            className="button-destructive"
+          <Button
+            variant="destructive"
+            icon={TrashIcon}
             disabled={value !== expected || pending}
+            loading={pending}
             onClick={handleDelete}
           >
-            <TrashIcon size={18} weight="bold" aria-hidden="true" />
-            {pending ? "Deleting…" : `Delete ${recordKind}`}
-          </button>
+            Delete {recordKind}
+          </Button>
         )}
       </div>
     </Modal>

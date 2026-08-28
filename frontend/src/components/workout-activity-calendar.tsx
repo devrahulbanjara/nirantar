@@ -113,7 +113,7 @@ export function WorkoutActivityCalendar({
               }
               return (
                 <Link
-                  href={`/workouts?start=${cell.date}&end=${cell.date}`}
+                  href={`/workouts?date=${cell.date}`}
                   className={className}
                   data-level={cell.level}
                   aria-label={label}

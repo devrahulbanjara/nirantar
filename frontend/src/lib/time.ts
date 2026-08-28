@@ -126,3 +126,45 @@ export function formatDateShortLabel(date: string): string {
     month: "short",
   }).format(new Date(`${date}T00:00:00${KATHMANDU_OFFSET}`));
 }
+
+const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+export function parseDayParam(raw: string | undefined, fallback: string): string {
+  if (!raw || !DAY_PATTERN.test(raw)) return fallback;
+  return raw;
+}
+
+/** Current Kathmandu clock time on a chosen civil date, as a datetime-local value. */
+export function nowOnKathmanduDate(date: string, now = new Date()): string {
+  return `${date}T${nowAsKathmanduInputValue(now).slice(11)}`;
+}
+
+export function dayHeading(date: string, today: string): string {
+  if (date === today) return "Today";
+  if (date === addDaysToDateString(today, -1)) return "Yesterday";
+  if (date === addDaysToDateString(today, 1)) return "Tomorrow";
+  return formatDateLabel(date);
+}
+
+/** Elapsed session clock from check-in, as `m:ss` or `h:mm:ss`. */
+export function formatElapsedClock(startIso: string, nowMs = Date.now()): string {
+  const elapsed = Math.max(0, Math.floor((nowMs - new Date(startIso).getTime()) / 1000));
+  const hours = Math.floor(elapsed / 3600);
+  const minutes = Math.floor((elapsed % 3600) / 60);
+  const seconds = elapsed % 60;
+  const pad = (value: number) => String(value).padStart(2, "0");
+  if (hours > 0) return `${hours}:${pad(minutes)}:${pad(seconds)}`;
+  return `${minutes}:${pad(seconds)}`;
+}
+
+export function dayHref(
+  basePath: string,
+  date: string,
+  today: string,
+  extraParams?: Record<string, string>,
+): string {
+  const search = new URLSearchParams(extraParams);
+  if (date !== today) search.set("date", date);
+  const query = search.toString();
+  return query ? `${basePath}?${query}` : basePath;
+}

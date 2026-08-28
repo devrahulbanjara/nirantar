@@ -12,6 +12,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 - Read `DESIGN.md` completely before changing any product UI, landing, auth, or shared frontend component.
 - Treat `DESIGN.md` as the single visual and interaction source of truth. Do not create a competing page-local design system or silently import defaults from a component library.
-- Build mobile first, then verify the same layout system at `375px`, `768px`, `1024px`, and `1440px` with Playwright before calling UI work complete.
+- Appearance is defined only inside shared primitives. Pages compose those primitives; they never pass `className`, `style`, or raw CSS strings into them.
+- Build mobile first, then verify the same layout system at `375px`, `768px`, `1024px`, and `1440px` in both light and dark with Playwright before calling UI work complete.
 - Reuse the primitives and patterns named in the `Component system` section of `DESIGN.md`. If a reusable pattern is missing, define its contract there when adding it.
-- Airbnb is a craft reference only. Preserve Nirantar's fitness language, data density, crimson accent, deterministic facts, and accessibility requirements.
+- Theme is first-class. Never hard-code a colour or branch on theme in TypeScript; resolve appearance through tokens.
+- Preserve Nirantar's fitness language, data density, domain accents, deterministic facts, and accessibility requirements.

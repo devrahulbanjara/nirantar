@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 
 import { Modal } from "@/components/modal";
+import { Button, IconButton } from "@/components/ui/button";
 import { DateField } from "@/components/ui/date-field";
 import {
   addDaysToDateString,
@@ -39,7 +40,7 @@ export function DateRangeFilter({
   isDefaultRange: boolean;
   todayDate: string;
   extraParams?: Record<string, string>;
-  /** `today` clears to the page default (no start/end). `omit-params` same URL shape for History's longer default. */
+  /** `today` clears to the page default (no start/end). `omit-params` same URL shape for Weight's longer default. */
   clearBehavior?: "today" | "omit-params";
 }) {
   const router = useRouter();
@@ -80,28 +81,25 @@ export function DateRangeFilter({
 
   return (
     <div className="history-filter-bar">
-      <button
-        type="button"
-        className="button-secondary button-compact date-range-trigger"
-        aria-label={`Filter dates, currently ${rangeLabel}`}
-        onClick={() => {
-          setStart(startDate);
-          setEnd(endDate);
-          setOpen(true);
-        }}
-      >
-        <CalendarDotsIcon size={16} weight="bold" aria-hidden="true" />
-        <span className="date-range-trigger-label">{rangeLabel}</span>
-      </button>
-      {!isDefaultRange ? (
-        <button
-          type="button"
-          className="icon-button date-range-clear"
-          aria-label="Clear date filter"
-          onClick={clear}
+      <span className="date-range-trigger">
+        <Button
+          variant="secondary"
+          size="md"
+          icon={CalendarDotsIcon}
+          aria-label={`Filter dates, currently ${rangeLabel}`}
+          onClick={() => {
+            setStart(startDate);
+            setEnd(endDate);
+            setOpen(true);
+          }}
         >
-          <XIcon size={16} weight="bold" aria-hidden="true" />
-        </button>
+          <span className="date-range-trigger-label">{rangeLabel}</span>
+        </Button>
+      </span>
+      {!isDefaultRange ? (
+        <span className="date-range-clear">
+          <IconButton icon={XIcon} label="Clear date filter" onClick={clear} />
+        </span>
       ) : null}
       <Modal
         open={open}
@@ -146,17 +144,12 @@ export function DateRangeFilter({
           </p>
         ) : null}
         <div className="modal-actions">
-          <button type="button" className="button-secondary" onClick={clear}>
+          <Button variant="secondary" onClick={clear}>
             Clear
-          </button>
-          <button
-            type="button"
-            className="button-primary"
-            onClick={apply}
-            disabled={invalidRange}
-          >
+          </Button>
+          <Button variant="primary" onClick={apply} disabled={invalidRange}>
             Apply dates
-          </button>
+          </Button>
         </div>
       </Modal>
     </div>

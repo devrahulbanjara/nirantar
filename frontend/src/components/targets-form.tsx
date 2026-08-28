@@ -3,6 +3,7 @@
 import { CheckCircleIcon, WarningCircleIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { saveTargets } from "@/lib/actions/targets";
 import type { Targets } from "@/lib/targets";
 
@@ -114,9 +115,9 @@ export function TargetsForm({ targets }: { targets: Targets | null }) {
           {message.text}
         </p>
       ) : null}
-      <button className="button-primary" type="submit" disabled={saving}>
-        {saving ? "Saving…" : "Save targets"}
-      </button>
+      <Button variant="primary" type="submit" loading={saving}>
+        Save targets
+      </Button>
     </form>
   );
 }

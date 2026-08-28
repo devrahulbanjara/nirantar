@@ -3,6 +3,8 @@
 import { PencilSimpleIcon, PlusIcon, TrashIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 
+import { Button, IconButton } from "@/components/ui/button";
+
 import type { WorkoutEditOperation } from "@/lib/actions/workouts";
 import type { ExerciseGroup, WorkoutExercise } from "@/lib/workouts";
 
@@ -59,8 +61,18 @@ export function ExistingGroupsEditor({ exercises, groups, runOp }: {
             <li className="groups-editor-chip" key={group.id}>
               <span><strong>Superset {index + 1}:</strong> {group.members.slice().sort((a, b) => a.member_order - b.member_order).map((member) => member.exercise_name).join(" + ")}</span>
               <span className="inline-actions">
-                <button type="button" className="icon-button" aria-label={`Edit superset ${index + 1}`} onClick={() => begin(group)}><PencilSimpleIcon size={16} /></button>
-                <button type="button" className="icon-button" aria-label={`Remove superset ${index + 1}`} disabled={saving} onClick={() => void remove(group.id)}><TrashIcon size={16} /></button>
+                <IconButton
+                  icon={PencilSimpleIcon}
+                  label={`Edit superset ${index + 1}`}
+                  onClick={() => begin(group)}
+                />
+                <IconButton
+                  icon={TrashIcon}
+                  tone="danger"
+                  label={`Remove superset ${index + 1}`}
+                  disabled={saving}
+                  onClick={() => void remove(group.id)}
+                />
               </span>
             </li>
           ))}
@@ -79,12 +91,30 @@ export function ExistingGroupsEditor({ exercises, groups, runOp }: {
           </div>
           {error ? <p className="field-error" role="alert">{error}</p> : null}
           <div className="groups-editor-picker-actions">
-            <button type="button" className="button-secondary button-compact" onClick={() => setEditingId(null)}>Cancel</button>
-            <button type="button" className="button-primary button-compact" disabled={selected.length < 2 || saving} onClick={() => void save()}>{saving ? "Saving…" : "Save superset"}</button>
+            <Button variant="secondary" size="sm" onClick={() => setEditingId(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              loading={saving}
+              disabled={selected.length < 2}
+              onClick={() => void save()}
+            >
+              Save superset
+            </Button>
           </div>
         </div>
       ) : (
-        <button type="button" className="button-secondary button-compact" disabled={exercises.length < 2} onClick={() => begin()}><PlusIcon size={16} weight="bold" />Add superset</button>
+        <Button
+          variant="secondary"
+          size="sm"
+          icon={PlusIcon}
+          disabled={exercises.length < 2}
+          onClick={() => begin()}
+        >
+          Add superset
+        </Button>
       )}
     </div>
   );

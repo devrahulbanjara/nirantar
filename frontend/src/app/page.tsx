@@ -1,7 +1,6 @@
 import {
   BarbellIcon,
   BowlFoodIcon,
-  CheckCircleIcon,
   FireIcon,
   GaugeIcon,
   MoonIcon,
@@ -10,11 +9,20 @@ import {
 
 import { auth } from "@clerk/nextjs/server";
 
-import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  GaugeBar,
+  MacroGrid,
+  MacroRings,
+  StatusBadge,
+} from "@/components/ui/data-viz";
+import { DomainIcon } from "@/components/ui/metric-tile";
+import { WeekStrip } from "@/components/ui/week-strip";
 
 import { AppShell } from "@/components/app-shell";
 import { Landing } from "@/components/landing";
 import { SleepEntryDialog } from "@/components/sleep-entry-dialog";
+import { StartWorkoutButton } from "@/components/workout-form/start-workout-button";
 import { WorkoutActivityCalendar } from "@/components/workout-activity-calendar";
 import { FeedbackState } from "@/components/ui/feedback-state";
 import {
@@ -28,70 +36,21 @@ import {
   getDailySummary,
   getKathmanduDate,
   type DailySummary,
-  type NutrientTotal,
 } from "@/lib/daily-summary";
 import { getStreaks, type Streaks } from "@/lib/insights";
-import { addDaysToDateString } from "@/lib/time";
+import {
+  clampSummaryDate,
+  formatNumeric,
+  macrosFromSummary,
+} from "@/lib/nutrition";
+import { addDaysToDateString, dayHref, formatDurationSeconds } from "@/lib/time";
 import {
   buildActivityCells,
   getWorkoutActivity,
 } from "@/lib/workout-activity";
+import { getWorkouts, openWorkoutOnDay } from "@/lib/workouts";
 
 export const dynamic = "force-dynamic";
-
-function formatDuration(totalSeconds: number): string {
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-
-  if (hours === 0) return `${minutes} min`;
-  if (minutes === 0) return `${hours} hr`;
-  return `${hours} hr ${minutes} min`;
-}
-
-function formatNutrient(
-  nutrient: NutrientTotal,
-  unit: "kcal" | "g",
-): string {
-  if (nutrient.known_total === null) return "Not provided";
-  return `${Number(nutrient.known_total).toLocaleString("en-US", {
-    maximumFractionDigits: 1,
-  })} ${unit}`;
-}
-
-function NutrientProgress({
-  nutrient,
-  unit,
-}: {
-  nutrient: NutrientTotal;
-  unit: "kcal" | "g";
-}) {
-  const actual = formatNutrient(nutrient, unit);
-  if (nutrient.target_value === null) return <h2>{actual}</h2>;
-  const target = Number(nutrient.target_value).toLocaleString("en-US", {
-    maximumFractionDigits: 1,
-  });
-  const percentage = Math.max(
-    0,
-    Math.min(100, Number(nutrient.percentage_of_target ?? 0)),
-  );
-  return (
-    <>
-      <h2>
-        {actual.replace(` ${unit}`, "")} / {target} {unit}
-      </h2>
-      <div
-        className="target-progress"
-        role="progressbar"
-        aria-label={`${unit === "kcal" ? "Energy" : "Protein"} target progress`}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={Math.round(percentage)}
-      >
-        <span style={{ width: `${percentage}%` }} />
-      </div>
-    </>
-  );
-}
 
 function EmptySummary() {
   return (
@@ -117,25 +76,6 @@ function UnavailableActivity() {
   );
 }
 
-function NutritionCompleteness({ nutrient }: { nutrient: NutrientTotal }) {
-  if (nutrient.complete) {
-    return (
-      <span className="completeness complete">
-        <CheckCircleIcon size={15} weight="fill" aria-hidden="true" />
-        Complete
-      </span>
-    );
-  }
-
-  return (
-    <span className="completeness incomplete">
-      <WarningCircleIcon size={15} weight="fill" aria-hidden="true" />
-      {nutrient.known_item_count} of{" "}
-      {nutrient.known_item_count + nutrient.missing_item_count} items
-    </span>
-  );
-}
-
 function SummaryContent({
   summary,
   streaks,
@@ -143,36 +83,54 @@ function SummaryContent({
   summary: DailySummary;
   streaks: Streaks | null;
 }) {
-  const workoutStatus = summary.workouts.open_workout_count
-    ? `${summary.workouts.open_workout_count} open`
-    : summary.workouts.completed_workout_count
-      ? `${summary.workouts.completed_workout_count} completed`
+  const workoutLogged = summary.workouts.workout_count > 0;
+  const workoutHero = workoutLogged
+    ? formatDurationSeconds(summary.workouts.gym_duration_seconds)
+    : summary.workouts.open_workout_count
+      ? `${summary.workouts.open_workout_count} open`
       : "No workout";
+  const weeklyTarget = streaks?.workouts.target_workout_days_per_week;
+  const weeklyLogged = streaks?.workouts.workout_days_logged_this_week;
+  const weeklyPercent =
+    weeklyTarget && weeklyTarget > 0 && weeklyLogged !== undefined
+      ? (weeklyLogged / weeklyTarget) * 100
+      : null;
+  const macros = macrosFromSummary(summary);
+  const hasMacroTargets = macros.some((item) => item.target);
+  const calories = summary.meals.nutrition.calories_kcal;
+  const sleepHours = summary.sleep
+    ? Number(summary.sleep.hours_slept).toFixed(1)
+    : null;
+  const weight = summary.body_weight
+    ? formatNumeric(summary.body_weight.weight_kg, 3)
+    : null;
 
   return (
     <div className="summary-grid">
-      <article className="summary-card workout-card">
+      <article className="summary-card" aria-label="Workout">
         <div className="card-heading">
-          <span className="icon-surface" aria-hidden="true">
-            <BarbellIcon size={22} weight="bold" />
-          </span>
+          <DomainIcon tone="workouts" icon={BarbellIcon} />
           <div>
-            <p className="eyebrow">Workout</p>
-            <h2>{workoutStatus}</h2>
-            {streaks && streaks.workouts.target_workout_days_per_week !== null ? (
+            <p className="metric-hero">{workoutHero}</p>
+            {weeklyTarget !== null && weeklyTarget !== undefined ? (
               <p className="card-subline">
-                {streaks.workouts.workout_days_logged_this_week}/
-                {streaks.workouts.target_workout_days_per_week} this week
+                {weeklyLogged}/{weeklyTarget} days this week
               </p>
             ) : null}
           </div>
         </div>
-        {summary.workouts.workout_count > 0 ? (
-          <dl className="metric-row">
-            <div>
-              <dt>Duration</dt>
-              <dd>{formatDuration(summary.workouts.gym_duration_seconds)}</dd>
-            </div>
+        {weeklyPercent !== null ? (
+          <GaugeBar
+            label="Weekly target"
+            value={weeklyLogged}
+            target={weeklyTarget}
+            unit="days"
+            percentage={weeklyPercent}
+            tone="workouts"
+          />
+        ) : null}
+        {workoutLogged ? (
+          <dl className="metric-list" data-count="3">
             <div>
               <dt>Working sets</dt>
               <dd>{summary.workouts.working_set_count}</dd>
@@ -181,114 +139,134 @@ function SummaryContent({
               <dt>Drop sets</dt>
               <dd>{summary.workouts.dropset_count}</dd>
             </div>
+            <div>
+              <dt>Physical sets</dt>
+              <dd>{summary.workouts.physical_set_count}</dd>
+            </div>
           </dl>
         ) : null}
       </article>
 
-      <article className="summary-card meal-card">
+      <article className="summary-card" aria-label="Nutrition">
         <div className="card-heading">
-          <span className="icon-surface" aria-hidden="true">
-            <BowlFoodIcon size={22} weight="bold" />
-          </span>
+          <DomainIcon tone="meals" icon={BowlFoodIcon} />
           <div>
-            <p className="eyebrow">Nutrition</p>
-            <NutrientProgress
-              nutrient={summary.meals.nutrition.calories_kcal}
-              unit="kcal"
-            />
+            <p className="metric-hero">
+              {formatNumeric(calories.known_total, 0) ?? "Not provided"}
+              {calories.known_total !== null ? <abbr>kcal</abbr> : null}
+            </p>
+            {summary.meals.meal_count > 0 ? (
+              <p className="card-subline">
+                {summary.meals.meal_count} meal
+                {summary.meals.meal_count === 1 ? "" : "s"}
+              </p>
+            ) : (
+              <p className="card-subline">No meals logged</p>
+            )}
           </div>
         </div>
         {summary.meals.meal_count > 0 ? (
           <>
-            <dl className="nutrition-row">
-              <div>
-                <dt>Protein</dt>
-                <dd>
-                  <NutrientProgress
-                    nutrient={summary.meals.nutrition.protein_g}
-                    unit="g"
-                  />
-                </dd>
-              </div>
-            </dl>
-            <NutritionCompleteness
-              nutrient={summary.meals.nutrition.calories_kcal}
-            />
+            {calories.target_value !== null ? (
+              <GaugeBar
+                label="Energy"
+                value={formatNumeric(calories.known_total, 0) ?? "Not provided"}
+                target={formatNumeric(calories.target_value, 0)}
+                unit="kcal"
+                percentage={calories.percentage_of_target}
+                tone="calories"
+              />
+            ) : null}
+            {hasMacroTargets ? (
+              <MacroRings items={macros} />
+            ) : (
+              <MacroGrid items={macros} />
+            )}
           </>
         ) : null}
       </article>
 
-      <article className="summary-card sleep-card">
+      <article className="summary-card" aria-label="Sleep">
         <div className="card-heading">
-          <span className="icon-surface" aria-hidden="true">
-            <MoonIcon size={22} weight="bold" />
-          </span>
+          <DomainIcon tone="sleep" icon={MoonIcon} />
           <div>
-            <p className="eyebrow">Sleep</p>
-            <h2>
-              {summary.sleep
-                ? `${Number(summary.sleep.hours_slept).toFixed(1)} hrs`
-                : "Not logged"}
-            </h2>
+            <p className="metric-hero">
+              {sleepHours ?? "Not logged"}
+              {sleepHours ? <abbr>hrs</abbr> : null}
+            </p>
+            {summary.sleep?.quality_rating ? (
+              <StatusBadge tone="neutral">
+                Quality {summary.sleep.quality_rating}/5
+              </StatusBadge>
+            ) : null}
           </div>
         </div>
-        {summary.sleep?.quality_rating ? (
-          <p className="card-note">Quality {summary.sleep.quality_rating}/5</p>
-        ) : null}
       </article>
 
-      <article className="summary-card weight-card">
+      <article className="summary-card" aria-label="Body weight">
         <div className="card-heading">
-          <span className="icon-surface" aria-hidden="true">
-            <GaugeIcon size={22} weight="bold" />
-          </span>
+          <DomainIcon tone="weight" icon={GaugeIcon} />
           <div>
-            <p className="eyebrow">Body weight</p>
-            <h2>
-              {summary.body_weight
-                ? `${Number(summary.body_weight.weight_kg).toLocaleString("en-US", {
-                    maximumFractionDigits: 3,
-                  })} kg`
-                : "Not logged"}
-            </h2>
+            <p className="metric-hero">
+              {weight ?? "Not logged"}
+              {weight ? <abbr>kg</abbr> : null}
+            </p>
+            {summary.body_weight?.notes ? (
+              <p className="card-subline">{summary.body_weight.notes}</p>
+            ) : null}
+            {summary.body_weight && summary.body_weight_goal ? (
+              <p className="card-subline">
+                {summary.body_weight_goal.is_at_goal
+                  ? "At goal"
+                  : `${Math.abs(Number(summary.body_weight_goal.weight_difference_from_goal_kg)).toFixed(1)} kg to ${Number(summary.body_weight_goal.weight_difference_from_goal_kg) > 0 ? "lose" : "gain"}`}
+              </p>
+            ) : null}
           </div>
         </div>
-        {summary.body_weight?.notes ? (
-          <p className="card-note">{summary.body_weight.notes}</p>
-        ) : null}
-        {summary.body_weight && summary.body_weight_goal ? (
-          <p className="card-note">
-            {summary.body_weight_goal.is_at_goal
-              ? "At goal"
-              : `${Math.abs(Number(summary.body_weight_goal.weight_difference_from_goal_kg)).toFixed(1)} kg to ${Number(summary.body_weight_goal.weight_difference_from_goal_kg) > 0 ? "lose" : "gain"}`}
-          </p>
-        ) : null}
       </article>
     </div>
   );
 }
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ date?: string }>;
+}) {
   const { userId } = await auth();
   if (!userId) {
     return <Landing />;
   }
 
+  const params = await searchParams;
   const today = getKathmanduDate();
+  const selectedDate = clampSummaryDate(params.date, today);
   const activityStart = addDaysToDateString(today, -364);
-  const [result, activityResult, streakResult] = await Promise.all([
-    getDailySummary(today),
+  const [result, activityResult, streakResult, workoutsResult] = await Promise.all([
+    getDailySummary(selectedDate),
     getWorkoutActivity(activityStart, today),
     getStreaks(),
+    getWorkouts(selectedDate, selectedDate),
   ]);
   const streaks = streakResult.ok ? streakResult.data : null;
+  const openWorkout =
+    workoutsResult.status === "ready"
+      ? openWorkoutOnDay(workoutsResult.history.workouts)
+      : null;
+  const activeDates = new Set(
+    activityResult.status === "ready"
+      ? activityResult.activity.days
+          .filter((day) => day.workout_count > 0)
+          .map((day) => day.date)
+      : [],
+  );
 
   return (
     <AppShell activeDestination="today">
       <PageContainer>
         <PageHeader
-          title="Today"
-          eyebrow={formatKathmanduDate(today)}
+          title={selectedDate === today ? "Today" : formatKathmanduDate(selectedDate)}
+          eyebrow={selectedDate === today ? formatKathmanduDate(selectedDate) : undefined}
           actions={
             streaks && streaks.meals.current_streak_days > 0 ? (
               <span className="streak-badge">
@@ -299,27 +277,51 @@ export default async function Home() {
           }
         />
 
+        <WeekStrip
+          today={today}
+          selected={selectedDate}
+          activeDates={activeDates}
+        />
+
         <div className="quick-actions">
-          <Link href="/workouts/new" className="button-primary">
-            <BarbellIcon size={18} weight="bold" aria-hidden="true" />
-            Log workout
-          </Link>
-          <Link href="/meals/new" className="button-secondary">
-            <BowlFoodIcon size={18} weight="bold" aria-hidden="true" />
+          {openWorkout ? (
+            <Button
+              href={`/workouts/${openWorkout.id}/session`}
+              variant="secondary"
+              size="lg"
+              icon={BarbellIcon}
+            >
+              Continue workout
+            </Button>
+          ) : (
+            <StartWorkoutButton
+              date={selectedDate}
+              size="lg"
+              variant="secondary"
+            />
+          )}
+          <Button
+            href={dayHref("/meals/new", selectedDate, today)}
+            variant="secondary"
+            size="lg"
+            icon={BowlFoodIcon}
+          >
             Log meal
-          </Link>
+          </Button>
           <WeightEntryDialog
             triggerLabel="Log weight"
-            triggerClassName="button-secondary"
-            defaultDate={today}
-            createIcon={<GaugeIcon size={18} weight="bold" aria-hidden="true" />}
+            triggerVariant="secondary"
+            triggerSize="lg"
+            triggerGlyph="weight"
+            defaultDate={selectedDate}
             existing={
               result.status === "ready" ? result.summary.body_weight ?? undefined : undefined
             }
           />
           <SleepEntryDialog
-            triggerClassName="button-secondary"
-            createIcon={<MoonIcon size={18} weight="bold" aria-hidden="true" />}
+            triggerVariant="secondary"
+            triggerSize="lg"
+            triggerGlyph="sleep"
             existing={
               result.status === "ready" ? result.summary.sleep ?? undefined : undefined
             }

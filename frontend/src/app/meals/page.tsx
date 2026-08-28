@@ -1,114 +1,73 @@
-import {
-  BowlFoodIcon,
-  PlusIcon,
-  WarningCircleIcon,
-} from "@phosphor-icons/react/dist/ssr";
-import Link from "next/link";
+import { BowlFoodIcon, PlusIcon } from "@phosphor-icons/react/dist/ssr";
 
 import { AppShell } from "@/components/app-shell";
-import { DateRangeFilter } from "@/components/date-range-filter";
+import { AggregateCard } from "@/components/ui/aggregate-card";
 import {
-  AggregateCard,
-  AggregateCardHeader,
-  MetricList,
-} from "@/components/ui/aggregate-card";
-import { EmptyState } from "@/components/ui/empty-state";
-import { FeedbackState } from "@/components/ui/feedback-state";
+  CollectionActions,
+  CollectionEmptyBody,
+  resolveCollectionStatus,
+  type CreateAction,
+} from "@/components/ui/collection";
+import { MacroGrid } from "@/components/ui/data-viz";
+import { DayNavigator } from "@/components/ui/day-navigator";
+import { DomainIcon } from "@/components/ui/metric-tile";
 import { PageContainer, PageHeader } from "@/components/ui/page-layout";
 import { ViewToggle, type CollectionView } from "@/components/ui/view-toggle";
 import { getKathmanduDate } from "@/lib/daily-summary";
 import { getMeals, type Meal } from "@/lib/meals";
-import {
-  formatDateLabel,
-  formatKathmanduTime,
-  getKathmanduLocalDate,
-} from "@/lib/time";
+import { macrosFromMeal } from "@/lib/nutrition";
+import { dayHref, formatKathmanduTime, parseDayParam } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
-
-function groupMealsByDate(meals: Meal[]): Array<[string, Meal[]]> {
-  const groups = new Map<string, Meal[]>();
-  for (const meal of meals) {
-    const date = getKathmanduLocalDate(meal.eaten_at);
-    groups.set(date, [...(groups.get(date) ?? []), meal]);
-  }
-  return [...groups.entries()].sort(([a], [b]) => (a < b ? 1 : -1));
-}
-
-function knownNutritionSummary(meal: Meal): string {
-  const known = meal.items.filter((item) => item.calories_kcal !== null);
-  if (known.length === 0) return "Nutrition not provided";
-  const total = known.reduce((sum, item) => sum + Number(item.calories_kcal), 0);
-  const label = `${total.toLocaleString("en-US", { maximumFractionDigits: 0 })} kcal`;
-  return known.length === meal.items.length
-    ? label
-    : `${label} · ${known.length} of ${meal.items.length} items`;
-}
 
 function MealCard({ meal }: { meal: Meal }) {
   return (
     <AggregateCard href={`/meals/${meal.id}`}>
-      <AggregateCardHeader
-        title={meal.name}
-        metadata={formatKathmanduTime(meal.eaten_at)}
-      />
+      <header className="aggregate-card-header">
+        <div className="aggregate-card-lead">
+          <DomainIcon tone="meals" icon={BowlFoodIcon} />
+          <div>
+            <h3>{meal.name}</h3>
+            <p>{formatKathmanduTime(meal.eaten_at)}</p>
+          </div>
+        </div>
+      </header>
       <p className="exercise-preview">
-        {meal.items.map((item) => item.name).join(" · ")}
+        {meal.items.map((item) => item.name).join(" · ") || "No food items"}
       </p>
-      <MetricList items={[
-        { label: "Items", value: meal.items.length },
-        { label: "Nutrition", value: knownNutritionSummary(meal) },
-      ]} />
+      <MacroGrid items={macrosFromMeal(meal)} />
     </AggregateCard>
   );
 }
 
-function EmptyMeals({ isDefaultRange }: { isDefaultRange: boolean }) {
-  return (
-    <EmptyState
-      id="no-meals-title"
-      title={isDefaultRange ? "No meals logged today" : "No meals in this range"}
-      description={
-        isDefaultRange
-          ? "Log a meal to start today’s nutrition history."
-          : "Nothing was logged in the selected dates."
-      }
-      icon={<BowlFoodIcon size={24} weight="regular" />}
-      action={
-        <Link href="/meals/new" className="button-primary">
-          <PlusIcon size={18} weight="bold" aria-hidden="true" />
-          Log meal
-        </Link>
-      }
-    />
-  );
-}
-
-function UnavailableMeals() {
-  return (
-    <FeedbackState
-      id="meals-error-title"
-      title="Meals are unavailable"
-      description="Refresh to try again."
-      icon={<WarningCircleIcon size={24} weight="regular" />}
-      tone="warning"
-    />
-  );
+function mealCreateAction(date: string, today: string): CreateAction {
+  return {
+    label: "Log meal",
+    href: dayHref("/meals/new", date, today),
+    icon: PlusIcon,
+  };
 }
 
 export default async function MealsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ start?: string; end?: string; view?: string }>;
+  searchParams: Promise<{ date?: string; view?: string }>;
 }) {
   const params = await searchParams;
   const today = getKathmanduDate();
-  const endDate = params.end ?? today;
-  const startDate = params.start ?? today;
-  const isDefaultRange = !params.start && !params.end;
+  const selectedDate = parseDayParam(params.date, today);
   const view: CollectionView = params.view === "grid" ? "grid" : "list";
+  const result = await getMeals(selectedDate, selectedDate);
+  const meals = result.status === "unavailable" ? [] : result.history.meals;
+  const createAction = mealCreateAction(selectedDate, today);
+  const viewParams = selectedDate === today ? undefined : { date: selectedDate };
+  const isToday = selectedDate === today;
 
-  const result = await getMeals(startDate, endDate);
+  const status = resolveCollectionStatus({
+    unavailable: result.status === "unavailable",
+    count: meals.length,
+    isFiltered: false,
+  });
 
   return (
     <AppShell activeDestination="meals">
@@ -116,53 +75,52 @@ export default async function MealsPage({
         <PageHeader
           title="Meals"
           actions={
-            <>
-            <ViewToggle
-              basePath="/meals"
-              view={view}
-              preferenceKey="nirantar:view:meals"
-              params={
-                isDefaultRange
-                  ? undefined
-                  : { start: startDate, end: endDate }
+            <CollectionActions
+              status={status}
+              viewToggle={
+                <ViewToggle
+                  basePath="/meals"
+                  view={view}
+                  preferenceKey="nirantar:view:meals"
+                  params={viewParams}
+                />
               }
+              createAction={createAction}
             />
-            <DateRangeFilter
-              basePath="/meals"
-              startDate={startDate}
-              endDate={endDate}
-              isDefaultRange={isDefaultRange}
-              todayDate={today}
-              clearBehavior="today"
-              extraParams={{ view }}
-            />
-            <Link href="/meals/new" className="button-primary">
-              <PlusIcon size={18} weight="bold" aria-hidden="true" />
-              Log meal
-            </Link>
-            </>
           }
         />
 
-        {result.status === "unavailable" ? (
-          <UnavailableMeals />
-        ) : result.history.meals.length === 0 ? (
-          <EmptyMeals isDefaultRange={isDefaultRange} />
+        <DayNavigator
+          basePath="/meals"
+          date={selectedDate}
+          today={today}
+          extraParams={{ view }}
+        />
+
+        {status !== "ready" ? (
+          <CollectionEmptyBody
+            status={status}
+            id="no-meals-title"
+            icon={<BowlFoodIcon size={24} weight="regular" />}
+            createAction={createAction}
+            emptyTitle={isToday ? "No meals logged today" : "No meals on this day"}
+            emptyDescription={
+              isToday
+                ? "Log a meal to start today’s nutrition history."
+                : "Log a meal for this day."
+            }
+            noResultsTitle="No meals on this day"
+            noResultsDescription="Nothing was logged on this day."
+            unavailableTitle="Meals are unavailable"
+          />
         ) : (
-          <div className="workout-groups collection" data-view={view}>
-            {groupMealsByDate(result.history.meals).map(([date, meals]) => (
-              <section className="workout-day" key={date}>
-                <h2>{date === today ? "Today" : formatDateLabel(date)}</h2>
-                <div className="workout-list">
-                  {meals
-                    .slice()
-                    .sort((a, b) => (a.eaten_at < b.eaten_at ? 1 : -1))
-                    .map((meal) => (
-                      <MealCard meal={meal} key={meal.id} />
-                    ))}
-                </div>
-              </section>
-            ))}
+          <div className="workout-list collection" data-view={view}>
+            {meals
+              .slice()
+              .sort((a, b) => (a.eaten_at < b.eaten_at ? 1 : -1))
+              .map((meal) => (
+                <MealCard meal={meal} key={meal.id} />
+              ))}
           </div>
         )}
       </PageContainer>

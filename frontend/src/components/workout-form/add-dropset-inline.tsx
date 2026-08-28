@@ -4,6 +4,7 @@ import { PlusIcon, WarningCircleIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 
 import { SetFields } from "@/components/workout-form/set-fields";
+import { Button } from "@/components/ui/button";
 import { toDecimal, toInt, validateSetValues } from "@/components/workout-form/types";
 import type { DropsetInput } from "@/lib/actions/workouts";
 
@@ -21,14 +22,11 @@ export function AddDropsetInline({
 
   if (!open) {
     return (
-      <button
-        type="button"
-        className="button-secondary button-compact dropset-add"
-        onClick={() => setOpen(true)}
-      >
-        <PlusIcon size={14} weight="bold" aria-hidden="true" />
-        Add dropset
-      </button>
+      <span className="dropset-add">
+        <Button variant="secondary" size="sm" icon={PlusIcon} onClick={() => setOpen(true)}>
+          Add dropset
+        </Button>
+      </span>
     );
   }
 
@@ -68,21 +66,12 @@ export function AddDropsetInline({
         </p>
       ) : null}
       <div className="add-inline-form-actions">
-        <button
-          type="button"
-          className="button-secondary button-compact"
-          onClick={() => setOpen(false)}
-        >
+        <Button variant="secondary" size="sm" onClick={() => setOpen(false)}>
           Cancel
-        </button>
-        <button
-          type="button"
-          className="button-primary button-compact"
-          disabled={saving}
-          onClick={handleAdd}
-        >
-          {saving ? "Saving…" : "Save dropset"}
-        </button>
+        </Button>
+        <Button variant="primary" size="sm" loading={saving} onClick={handleAdd}>
+          Save dropset
+        </Button>
       </div>
     </div>
   );

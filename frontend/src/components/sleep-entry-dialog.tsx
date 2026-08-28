@@ -1,14 +1,16 @@
 "use client";
 
-import {
-  PencilSimpleIcon,
-  PlusIcon,
-  WarningCircleIcon,
-} from "@phosphor-icons/react";
+import { WarningCircleIcon } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
-import { useId, useState, type ReactNode } from "react";
+import { useId, useState } from "react";
 
 import { Modal } from "@/components/modal";
+import {
+  Button,
+  type ButtonSize,
+  type ButtonVariant,
+} from "@/components/ui/button";
+import { TRIGGER_GLYPHS, type TriggerGlyph } from "@/components/ui/trigger-glyph";
 import { DateTimeField } from "@/components/ui/date-time-field";
 import { editSleep, logSleep } from "@/lib/actions/sleep";
 import type { SleepEntry } from "@/lib/sleep";
@@ -40,13 +42,17 @@ function defaultTimes(existing?: SleepEntry) {
 export function SleepEntryDialog({
   existing,
   triggerLabel = "Log sleep",
-  triggerClassName = "button-secondary",
-  createIcon,
+  triggerVariant = "primary",
+  triggerSize = "md",
+  triggerGlyph,
 }: {
   existing?: SleepEntry;
   triggerLabel?: string;
-  triggerClassName?: string;
-  createIcon?: ReactNode;
+  /** Emphasis comes from the action's role. See DESIGN.md -> Action hierarchy. */
+  triggerVariant?: ButtonVariant;
+  triggerSize?: ButtonSize;
+  /** Closed name only — never pass an icon component across the RSC boundary. */
+  triggerGlyph?: TriggerGlyph;
 }) {
   const router = useRouter();
   const headingId = useId();
@@ -96,14 +102,14 @@ export function SleepEntryDialog({
 
   return (
     <div className="entry-dialog-root">
-      <button type="button" className={triggerClassName} onClick={openDialog}>
-        {existing ? (
-          <PencilSimpleIcon size={16} weight="bold" aria-hidden="true" />
-        ) : (
-          createIcon ?? <PlusIcon size={18} weight="bold" aria-hidden="true" />
-        )}
+      <Button
+        variant={triggerVariant}
+        size={triggerSize}
+        icon={TRIGGER_GLYPHS[triggerGlyph ?? (existing ? "pencil" : "plus")]}
+        onClick={openDialog}
+      >
         {triggerLabel}
-      </button>
+      </Button>
       <Modal
         open={open}
         onClose={() => setOpen(false)}
@@ -111,7 +117,6 @@ export function SleepEntryDialog({
         variant="responsive-dialog"
       >
         <h2 className="modal-heading" id={headingId}>{existing ? "Correct sleep" : "Log sleep"}</h2>
-        <p className="field-hint">Sleep is attributed to the local date you woke up.</p>
         <DateTimeField
           id={`${headingId}-start`}
           label="Bedtime"
@@ -125,11 +130,48 @@ export function SleepEntryDialog({
           onChange={setEnd}
         />
         <div className="field">
-          <label className="field-label" htmlFor={`${headingId}-quality`}>Quality (optional)</label>
-          <select id={`${headingId}-quality`} className="field-select" value={quality} onChange={(event) => setQuality(event.target.value)}>
-            <option value="">Not set</option>
-            {[1, 2, 3, 4, 5].map((value) => <option value={value} key={value}>{value} of 5</option>)}
-          </select>
+          <p className="field-label" id={`${headingId}-quality`}>Quality (optional)</p>
+          <div
+            className="field-scale"
+            role="radiogroup"
+            aria-labelledby={`${headingId}-quality`}
+            onKeyDown={(event) => {
+              if (
+                event.key !== "ArrowRight" &&
+                event.key !== "ArrowLeft" &&
+                event.key !== "ArrowDown" &&
+                event.key !== "ArrowUp"
+              ) {
+                return;
+              }
+              event.preventDefault();
+              const current = quality ? Number(quality) : 0;
+              const step = event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : -1;
+              const next = Math.min(5, Math.max(1, (current || (step > 0 ? 0 : 6)) + step));
+              setQuality(String(next));
+              event.currentTarget
+                .querySelectorAll<HTMLButtonElement>("[role=radio]")
+                [next - 1]?.focus();
+            }}
+          >
+            {[1, 2, 3, 4, 5].map((value) => {
+              const selected = quality === String(value);
+              return (
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  tabIndex={selected || (!quality && value === 1) ? 0 : -1}
+                  className="field-scale-option"
+                  data-rating={value}
+                  key={value}
+                  onClick={() => setQuality(selected ? "" : String(value))}
+                >
+                  {value}
+                </button>
+              );
+            })}
+          </div>
         </div>
         <div className="field">
           <label className="field-label" htmlFor={`${headingId}-notes`}>Notes (optional)</label>
@@ -137,8 +179,12 @@ export function SleepEntryDialog({
         </div>
         {error ? <p className="field-error" role="alert"><WarningCircleIcon size={16} weight="fill" aria-hidden="true" />{error}</p> : null}
         <div className="modal-actions">
-          <button type="button" className="button-secondary" onClick={() => setOpen(false)}>Cancel</button>
-          <button type="button" className="button-primary" disabled={saving} onClick={save}>{saving ? "Saving…" : "Save sleep"}</button>
+          <Button variant="secondary" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button variant="primary" loading={saving} onClick={save}>
+            Save sleep
+          </Button>
         </div>
       </Modal>
     </div>

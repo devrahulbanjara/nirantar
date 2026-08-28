@@ -1,18 +1,18 @@
-import {
-  MoonIcon,
-  WarningCircleIcon,
-} from "@phosphor-icons/react/dist/ssr";
+import { MoonIcon, PlusIcon } from "@phosphor-icons/react/dist/ssr";
 
 import { AppShell } from "@/components/app-shell";
 import { DateRangeFilter } from "@/components/date-range-filter";
 import { SleepEntryDialog } from "@/components/sleep-entry-dialog";
+import { AggregateCard } from "@/components/ui/aggregate-card";
+import { Button } from "@/components/ui/button";
 import {
-  AggregateCard,
-  AggregateCardHeader,
-  MetricList,
-} from "@/components/ui/aggregate-card";
-import { EmptyState } from "@/components/ui/empty-state";
-import { FeedbackState } from "@/components/ui/feedback-state";
+  CollectionActions,
+  CollectionEmptyBody,
+  resolveCollectionStatus,
+  type CreateAction,
+} from "@/components/ui/collection";
+import { StatusBadge } from "@/components/ui/data-viz";
+import { DomainIcon } from "@/components/ui/metric-tile";
 import { PageContainer, PageHeader } from "@/components/ui/page-layout";
 import { getKathmanduDate } from "@/lib/daily-summary";
 import { getSleepHistory, type SleepEntry } from "@/lib/sleep";
@@ -31,52 +31,41 @@ function groupSleepByDate(entries: SleepEntry[]): Array<[string, SleepEntry[]]> 
 function SleepCard({ entry }: { entry: SleepEntry }) {
   return (
     <AggregateCard>
-      <AggregateCardHeader
-        title={`${Number(entry.hours_slept).toFixed(1)} hrs`}
-        metadata={`${formatKathmanduTime(entry.sleep_start)} – ${formatKathmanduTime(entry.sleep_end)}`}
-        status={
-          <SleepEntryDialog
-            existing={entry}
-            triggerLabel="Edit"
-            triggerClassName="button-secondary button-compact"
-          />
-        }
-      />
-      {entry.notes ? <p className="exercise-preview">{entry.notes}</p> : null}
+      <header className="aggregate-card-header">
+        <div className="aggregate-card-lead">
+          <DomainIcon tone="sleep" icon={MoonIcon} />
+          <div>
+            <p className="metric-hero">
+              {Number(entry.hours_slept).toFixed(1)}
+              <abbr>hrs</abbr>
+            </p>
+            <p>
+              {formatKathmanduTime(entry.sleep_start)} – {formatKathmanduTime(entry.sleep_end)}
+            </p>
+          </div>
+        </div>
+        <SleepEntryDialog
+          existing={entry}
+          triggerLabel="Edit"
+          triggerVariant="tertiary"
+          triggerSize="sm"
+        />
+      </header>
       {entry.quality_rating ? (
-        <MetricList items={[{ label: "Quality", value: `${entry.quality_rating}/5` }]} />
+        <StatusBadge tone="neutral">Quality {entry.quality_rating}/5</StatusBadge>
       ) : null}
+      {entry.notes ? <p className="exercise-preview">{entry.notes}</p> : null}
     </AggregateCard>
   );
 }
 
-function EmptySleep({ isDefaultRange }: { isDefaultRange: boolean }) {
-  return (
-    <EmptyState
-      id="no-sleep-title"
-      title={isDefaultRange ? "No sleep logged today" : "No sleep in this range"}
-      description={
-        isDefaultRange
-          ? "Log a complete sleep interval to start today’s history."
-          : "Nothing was logged in the selected dates."
-      }
-      icon={<MoonIcon size={24} weight="regular" />}
-      action={<SleepEntryDialog triggerClassName="button-primary" />}
-    />
-  );
-}
-
-function UnavailableSleep() {
-  return (
-    <FeedbackState
-      id="sleep-error-title"
-      title="Sleep history is unavailable"
-      description="Refresh to try again."
-      icon={<WarningCircleIcon size={24} weight="regular" />}
-      tone="warning"
-    />
-  );
-}
+const CREATE_SLEEP: CreateAction = {
+  label: "Log sleep",
+  icon: PlusIcon,
+  render: ({ size }) => (
+    <SleepEntryDialog triggerVariant="primary" triggerSize={size} />
+  ),
+};
 
 export default async function SleepPage({
   searchParams,
@@ -89,6 +78,13 @@ export default async function SleepPage({
   const startDate = params.start ?? today;
   const isDefaultRange = !params.start && !params.end;
   const result = await getSleepHistory(startDate, endDate);
+  const entries = result.ok ? result.data.entries : [];
+
+  const status = resolveCollectionStatus({
+    unavailable: !result.ok,
+    count: entries.length,
+    isFiltered: !isDefaultRange,
+  });
 
   return (
     <AppShell activeDestination="sleep">
@@ -96,27 +92,43 @@ export default async function SleepPage({
         <PageHeader
           title="Sleep"
           actions={
-            <>
-              <DateRangeFilter
-                basePath="/sleep"
-                startDate={startDate}
-                endDate={endDate}
-                isDefaultRange={isDefaultRange}
-                todayDate={today}
-                clearBehavior="today"
-              />
-              <SleepEntryDialog triggerClassName="button-primary" />
-            </>
+            <CollectionActions
+              status={status}
+              filter={
+                <DateRangeFilter
+                  basePath="/sleep"
+                  startDate={startDate}
+                  endDate={endDate}
+                  isDefaultRange={isDefaultRange}
+                  todayDate={today}
+                  clearBehavior="today"
+                />
+              }
+              createAction={CREATE_SLEEP}
+            />
           }
         />
 
-        {!result.ok ? (
-          <UnavailableSleep />
-        ) : result.data.entries.length === 0 ? (
-          <EmptySleep isDefaultRange={isDefaultRange} />
+        {status !== "ready" ? (
+          <CollectionEmptyBody
+            status={status}
+            id="no-sleep-title"
+            icon={<MoonIcon size={24} weight="regular" />}
+            createAction={CREATE_SLEEP}
+            emptyTitle="No sleep logged today"
+            emptyDescription="Log a complete sleep interval to start today’s history."
+            noResultsTitle="No sleep in this range"
+            noResultsDescription="Nothing was logged in the selected dates."
+            clearFilterAction={
+              <Button href="/sleep" variant="secondary" size="lg">
+                Back to today
+              </Button>
+            }
+            unavailableTitle="Sleep history is unavailable"
+          />
         ) : (
           <div className="workout-groups collection" data-view="list">
-            {groupSleepByDate(result.data.entries).map(([date, entries]) => (
+            {groupSleepByDate(entries).map(([date, entries]) => (
               <section className="workout-day" key={date}>
                 <h2>{date === today ? "Today" : formatDateLabel(date)}</h2>
                 <div className="workout-list">

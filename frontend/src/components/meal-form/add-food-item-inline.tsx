@@ -4,6 +4,7 @@ import { PlusIcon, WarningCircleIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 
 import { FoodItemFields } from "@/components/meal-form/food-item-fields";
+import { Button } from "@/components/ui/button";
 import { emptyFoodItem, draftFoodItemToInput } from "@/components/meal-form/types";
 import type { FoodItemInput } from "@/lib/actions/meals";
 
@@ -19,14 +20,9 @@ export function AddFoodItemInline({
 
   if (!open) {
     return (
-      <button
-        type="button"
-        className="button-secondary"
-        onClick={() => setOpen(true)}
-      >
-        <PlusIcon size={18} weight="bold" aria-hidden="true" />
+      <Button variant="secondary" icon={PlusIcon} onClick={() => setOpen(true)}>
         Add food item
-      </button>
+      </Button>
     );
   }
 
@@ -73,24 +69,19 @@ export function AddFoodItemInline({
         </p>
       ) : null}
       <div className="add-inline-form-actions">
-        <button
-          type="button"
-          className="button-secondary button-compact"
+        <Button
+          variant="secondary"
+          size="sm"
           onClick={() => {
             setOpen(false);
             setDraft(emptyFoodItem());
           }}
         >
           Cancel
-        </button>
-        <button
-          type="button"
-          className="button-primary button-compact"
-          disabled={saving}
-          onClick={handleAdd}
-        >
-          {saving ? "Saving…" : "Save food item"}
-        </button>
+        </Button>
+        <Button variant="primary" size="sm" loading={saving} onClick={handleAdd}>
+          Save food item
+        </Button>
       </div>
     </div>
   );

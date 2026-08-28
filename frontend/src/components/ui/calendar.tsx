@@ -3,6 +3,8 @@
 import { CaretLeftIcon, CaretRightIcon } from "@phosphor-icons/react";
 import { useMemo, useState } from "react";
 
+import { IconButton } from "@/components/ui/button";
+
 function parseDate(value: string) {
   const [year, month, day] = value.split("-").map(Number);
   return { year, month, day };
@@ -54,12 +56,16 @@ export function Calendar({
           }).format(new Date(visible.year, visible.month - 1, 1))}
         </p>
         <div className="calendar-navigation">
-          <button type="button" className="icon-button" aria-label="Previous month" onClick={() => moveMonth(-1)}>
-            <CaretLeftIcon size={18} weight="bold" />
-          </button>
-          <button type="button" className="icon-button" aria-label="Next month" onClick={() => moveMonth(1)}>
-            <CaretRightIcon size={18} weight="bold" />
-          </button>
+          <IconButton
+            icon={CaretLeftIcon}
+            label="Previous month"
+            onClick={() => moveMonth(-1)}
+          />
+          <IconButton
+            icon={CaretRightIcon}
+            label="Next month"
+            onClick={() => moveMonth(1)}
+          />
         </div>
       </div>
       <div className="calendar-grid" role="grid">

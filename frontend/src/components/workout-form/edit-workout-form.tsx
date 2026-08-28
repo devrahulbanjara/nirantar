@@ -3,6 +3,8 @@
 import { PlusIcon, WarningCircleIcon } from "@phosphor-icons/react";
 import { useRef, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+
 import { ExerciseBuilder } from "@/components/workout-form/exercise-builder";
 import { ExistingExerciseEditor } from "@/components/workout-form/existing-exercise-editor";
 import { ExistingGroupsEditor } from "@/components/workout-form/existing-groups-editor";
@@ -15,11 +17,7 @@ import {
   type WorkoutEditOperation,
 } from "@/lib/actions/workouts";
 import type { Workout } from "@/lib/workouts";
-import {
-  isoToKathmanduInputValue,
-  kathmanduInputValueToIso,
-  nowAsKathmanduInputValue,
-} from "@/lib/time";
+import { isoToKathmanduInputValue, kathmanduInputValueToIso } from "@/lib/time";
 
 type OpResult = { ok: boolean; message?: string };
 
@@ -34,15 +32,8 @@ export function EditWorkoutForm({ initialWorkout }: { initialWorkout: Workout })
   const [checkInAt, setCheckInAt] = useState(() =>
     isoToKathmanduInputValue(initialWorkout.check_in_at),
   );
-  const [stillCheckedIn, setStillCheckedIn] = useState(!initialWorkout.check_out_at);
-  const [checkOutAt, setCheckOutAt] = useState(() =>
-    initialWorkout.check_out_at
-      ? isoToKathmanduInputValue(initialWorkout.check_out_at)
-      : nowAsKathmanduInputValue(),
-  );
   const [title, setTitle] = useState(initialWorkout.title ?? "");
   const [notes, setNotes] = useState(initialWorkout.notes ?? "");
-  const [timeError, setTimeError] = useState<string | null>(null);
 
   const [addingExercise, setAddingExercise] = useState(false);
   const [newExercise, setNewExercise] = useState<DraftExercise>(emptyExercise());
@@ -99,41 +90,11 @@ export function EditWorkoutForm({ initialWorkout }: { initialWorkout: Workout })
     return computeNextExerciseOrder(workoutRef.current.exercises);
   }
 
-  function validateCheckTimes(
-    nextCheckIn: string,
-    nextStillCheckedIn: boolean,
-    nextCheckOut: string,
-  ): boolean {
-    if (nextStillCheckedIn) {
-      setTimeError(null);
-      return true;
-    }
-    const inTime = new Date(kathmanduInputValueToIso(nextCheckIn)).getTime();
-    const outTime = new Date(kathmanduInputValueToIso(nextCheckOut)).getTime();
-    if (outTime <= inTime) {
-      setTimeError("Check-out must be after check-in.");
-      return false;
-    }
-    setTimeError(null);
-    return true;
-  }
-
   async function commitCheckIn(nextValue = checkInAt) {
-    if (!validateCheckTimes(nextValue, stillCheckedIn, checkOutAt)) return;
     const current = workoutRef.current;
     const iso = kathmanduInputValueToIso(nextValue);
     if (new Date(iso).getTime() === new Date(current.check_in_at).getTime()) return;
     await runOp({ operation: "update_workout", check_in_at: iso });
-  }
-
-  async function commitCheckOut(nextStillCheckedIn: boolean, nextCheckOutAt: string) {
-    if (!validateCheckTimes(checkInAt, nextStillCheckedIn, nextCheckOutAt)) return;
-    const current = workoutRef.current;
-    const iso = nextStillCheckedIn ? null : kathmanduInputValueToIso(nextCheckOutAt);
-    const currentTime = current.check_out_at ? new Date(current.check_out_at).getTime() : null;
-    const nextTime = iso ? new Date(iso).getTime() : null;
-    if (currentTime === nextTime) return;
-    await runOp({ operation: "update_workout", check_out_at: iso });
   }
 
   async function commitTitle() {
@@ -191,28 +152,13 @@ export function EditWorkoutForm({ initialWorkout }: { initialWorkout: Workout })
 
       <section className="editor-section">
         <h2 className="editor-section-title">Session</h2>
-        <DateTimeField id="edit-check-in-at" label="Check-in" value={checkInAt} onChange={setCheckInAt} onCommit={commitCheckIn} />
-        <label className="checkbox-field">
-          <input
-            type="checkbox"
-            checked={stillCheckedIn}
-            onChange={(event) => {
-              const checked = event.target.checked;
-              setStillCheckedIn(checked);
-              void commitCheckOut(checked, checkOutAt);
-            }}
-          />
-          Still checked in
-        </label>
-        {!stillCheckedIn ? (
-          <DateTimeField id="edit-check-out-at" label="Check-out" value={checkOutAt} onChange={setCheckOutAt} onCommit={(next) => commitCheckOut(stillCheckedIn, next)} />
-        ) : null}
-        {timeError ? (
-          <p className="field-error" role="alert">
-            <WarningCircleIcon size={14} weight="fill" aria-hidden="true" />
-            {timeError}
-          </p>
-        ) : null}
+        <DateTimeField
+          id="edit-check-in-at"
+          label="Check-in"
+          value={checkInAt}
+          onChange={setCheckInAt}
+          onCommit={commitCheckIn}
+        />
         <div className="field">
           <label className="field-label" htmlFor="edit-workout-title">
             Title (optional)
@@ -277,35 +223,30 @@ export function EditWorkoutForm({ initialWorkout }: { initialWorkout: Workout })
               </p>
             ) : null}
             <div className="add-inline-form-actions">
-              <button
-                type="button"
-                className="button-secondary button-compact"
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={() => {
                   setAddingExercise(false);
                   setNewExercise(emptyExercise());
                 }}
               >
                 Cancel
-              </button>
-              <button
-                type="button"
-                className="button-primary button-compact"
-                disabled={savingExercise}
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                loading={savingExercise}
                 onClick={handleSaveNewExercise}
               >
-                {savingExercise ? "Saving…" : "Save exercise"}
-              </button>
+                Save exercise
+              </Button>
             </div>
           </div>
         ) : (
-          <button
-            type="button"
-            className="button-secondary"
-            onClick={() => setAddingExercise(true)}
-          >
-            <PlusIcon size={18} weight="bold" aria-hidden="true" />
+          <Button variant="secondary" icon={PlusIcon} onClick={() => setAddingExercise(true)}>
             Add exercise
-          </button>
+          </Button>
         )}
       </section>
 

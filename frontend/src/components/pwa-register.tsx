@@ -1,6 +1,8 @@
 "use client";
 
 import { DownloadSimpleIcon, XIcon } from "@phosphor-icons/react";
+
+import { Button, IconButton } from "@/components/ui/button";
 import { useAuth } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
 
@@ -125,14 +127,9 @@ export function PwaRegister() {
         <span className="pwa-install-icon" aria-hidden="true">
           <DownloadSimpleIcon size={22} weight="bold" />
         </span>
-        <button
-          type="button"
-          className="pwa-install-close"
-          aria-label="Dismiss install suggestion"
-          onClick={dismiss}
-        >
-          <XIcon size={20} aria-hidden="true" />
-        </button>
+        <span className="pwa-install-close">
+          <IconButton icon={XIcon} label="Dismiss install suggestion" onClick={dismiss} />
+        </span>
       </div>
       <div className="pwa-install-copy">
         <h2 id="pwa-install-title">Add Nirantar to your home screen</h2>
@@ -142,9 +139,9 @@ export function PwaRegister() {
             : "Open your fitness log in one tap, with its own app window."}
         </p>
       </div>
-      <button type="button" className="button-primary" onClick={install}>
+      <Button variant="primary" onClick={install}>
         {showIosInstructions ? "Got it" : "Install Nirantar"}
-      </button>
+      </Button>
     </aside>
   );
 }

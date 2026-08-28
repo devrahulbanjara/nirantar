@@ -1,10 +1,16 @@
 "use client";
 
-import { PencilSimpleIcon, PlusIcon, WarningCircleIcon } from "@phosphor-icons/react";
+import { WarningCircleIcon } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
-import { useId, useState, type ReactNode } from "react";
+import { useId, useState } from "react";
 
 import { Modal } from "@/components/modal";
+import {
+  Button,
+  type ButtonSize,
+  type ButtonVariant,
+} from "@/components/ui/button";
+import { TRIGGER_GLYPHS, type TriggerGlyph } from "@/components/ui/trigger-glyph";
 import { DateField } from "@/components/ui/date-field";
 import { editWeight, logWeight } from "@/lib/actions/weights";
 import type { WeightEntry } from "@/lib/weights";
@@ -24,14 +30,18 @@ export function WeightEntryDialog({
   existing,
   defaultDate,
   triggerLabel,
-  triggerClassName,
-  createIcon,
+  triggerVariant = "primary",
+  triggerSize = "md",
+  triggerGlyph,
 }: {
   existing?: WeightEntry;
   defaultDate?: string;
   triggerLabel: string;
-  triggerClassName: string;
-  createIcon?: ReactNode;
+  /** Emphasis comes from the action's role. See DESIGN.md -> Action hierarchy. */
+  triggerVariant?: ButtonVariant;
+  triggerSize?: ButtonSize;
+  /** Closed name only — never pass an icon component across the RSC boundary. */
+  triggerGlyph?: TriggerGlyph;
 }) {
   const router = useRouter();
   const headingId = useId();
@@ -107,14 +117,14 @@ export function WeightEntryDialog({
 
   return (
     <div className="entry-dialog-root">
-      <button type="button" className={triggerClassName} onClick={openDialog}>
-        {existing ? (
-          <PencilSimpleIcon size={16} weight="bold" aria-hidden="true" />
-        ) : (
-          createIcon ?? <PlusIcon size={18} weight="bold" aria-hidden="true" />
-        )}
+      <Button
+        variant={triggerVariant}
+        size={triggerSize}
+        icon={TRIGGER_GLYPHS[triggerGlyph ?? (existing ? "pencil" : "plus")]}
+        onClick={openDialog}
+      >
         {triggerLabel}
-      </button>
+      </Button>
       <Modal
         open={open}
         onClose={() => setOpen(false)}
@@ -174,21 +184,12 @@ export function WeightEntryDialog({
           />
         </div>
         <div className="modal-actions">
-          <button
-            type="button"
-            className="button-secondary"
-            onClick={() => setOpen(false)}
-          >
+          <Button variant="secondary" onClick={() => setOpen(false)}>
             Cancel
-          </button>
-          <button
-            type="button"
-            className="button-primary"
-            disabled={saving}
-            onClick={handleSave}
-          >
-            {saving ? "Saving…" : "Save weight"}
-          </button>
+          </Button>
+          <Button variant="primary" loading={saving} onClick={handleSave}>
+            Save weight
+          </Button>
         </div>
       </Modal>
     </div>

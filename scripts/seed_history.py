@@ -49,7 +49,7 @@ from nirantar.services.weights import WeightService
 from nirantar.services.workouts import WorkoutService
 
 DEFAULT_WEEKS = 16
-SEED_USER_ID = "user_3HzhQfWPlSSgQwsADzZiO0UeJMv"
+SEED_USER_ID = "user_3HzYSA1FALCgODfcHVtA2nZCrea"
 
 # Nepali training week: Saturday is the rest day, so the split runs
 # Sunday / Monday / Wednesday / Thursday. date.weekday(): Mon=0 .. Sun=6.

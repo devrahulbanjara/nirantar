@@ -4,6 +4,7 @@ import { CalendarDotsIcon } from "@phosphor-icons/react";
 import { useId, useState } from "react";
 
 import { Modal } from "@/components/modal";
+import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { getKathmanduDate } from "@/lib/time";
 
@@ -112,8 +113,12 @@ export function DateTimeField({
           </label>
         </div>
         <div className="modal-actions">
-          <button type="button" className="button-secondary" onClick={() => setOpen(false)}>Cancel</button>
-          <button type="button" className="button-primary" onClick={apply}>Apply date and time</button>
+          <Button variant="secondary" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={apply}>
+            Apply date and time
+          </Button>
         </div>
       </Modal>
     </div>

@@ -3,27 +3,14 @@ import { notFound } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
 import { BackButton } from "@/components/ui/back-button";
+import { MacroGrid } from "@/components/ui/data-viz";
 import { FeedbackState } from "@/components/ui/feedback-state";
 import { MealDetailActions } from "@/components/meals/meal-detail-actions";
 import { getMeal, type FoodItem } from "@/lib/meals";
+import { macrosFromMeal } from "@/lib/nutrition";
 import { formatKathmanduDateTime } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
-
-type NutrientKey = "calories_kcal" | "protein_g" | "carbohydrates_g" | "fat_g";
-
-function sumNutrient(items: FoodItem[], key: NutrientKey) {
-  let total = 0;
-  let known = 0;
-  for (const item of items) {
-    const value = item[key];
-    if (value !== null) {
-      total += Number(value);
-      known += 1;
-    }
-  }
-  return { total, known, missing: items.length - known };
-}
 
 function formatQuantity(item: FoodItem): string | null {
   if (item.quantity === null) return null;
@@ -34,39 +21,6 @@ function formatQuantity(item: FoodItem): string | null {
 function formatNutrientValue(value: string | null, unit: string): string {
   if (value === null) return "Not provided";
   return `${Number(value).toLocaleString("en-US", { maximumFractionDigits: 1 })} ${unit}`;
-}
-
-function NutrientTotalRow({
-  label,
-  unit,
-  items,
-  nutrientKey,
-}: {
-  label: string;
-  unit: string;
-  items: FoodItem[];
-  nutrientKey: NutrientKey;
-}) {
-  const { total, known, missing } = sumNutrient(items, nutrientKey);
-  const complete = missing === 0;
-  return (
-    <div>
-      <dt>{label}</dt>
-      <dd>
-        {known === 0
-          ? "Not provided"
-          : `${total.toLocaleString("en-US", { maximumFractionDigits: 1 })} ${unit}`}
-      </dd>
-      <span className={`completeness ${complete ? "complete" : "incomplete"}`}>
-        {complete ? (
-          <CheckCircleIcon size={13} weight="fill" aria-hidden="true" />
-        ) : (
-          <WarningCircleIcon size={13} weight="fill" aria-hidden="true" />
-        )}
-        {complete ? "Complete" : `${known} of ${items.length} items`}
-      </span>
-    </div>
-  );
 }
 
 export default async function MealDetailPage({
@@ -111,32 +65,7 @@ export default async function MealDetailPage({
               <p className="card-note detail-notes">{result.meal.notes}</p>
             ) : null}
 
-            <dl className="meal-nutrition-summary detail-metrics">
-              <NutrientTotalRow
-                label="Calories"
-                unit="kcal"
-                items={result.meal.items}
-                nutrientKey="calories_kcal"
-              />
-              <NutrientTotalRow
-                label="Protein"
-                unit="g"
-                items={result.meal.items}
-                nutrientKey="protein_g"
-              />
-              <NutrientTotalRow
-                label="Carbohydrates"
-                unit="g"
-                items={result.meal.items}
-                nutrientKey="carbohydrates_g"
-              />
-              <NutrientTotalRow
-                label="Fat"
-                unit="g"
-                items={result.meal.items}
-                nutrientKey="fat_g"
-              />
-            </dl>
+            <MacroGrid items={macrosFromMeal(result.meal)} />
 
             <ol className="food-item-list">
               {result.meal.items

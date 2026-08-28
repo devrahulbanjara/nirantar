@@ -4,6 +4,7 @@ import { CalendarDotsIcon } from "@phosphor-icons/react";
 import { useId, useState } from "react";
 
 import { Modal } from "@/components/modal";
+import { Button } from "@/components/ui/button";
 import { Calendar, formatCalendarDate } from "@/components/ui/calendar";
 
 export function DateField({
@@ -38,8 +39,18 @@ export function DateField({
         <h2 className="modal-heading" id={headingId}>{label}</h2>
         <Calendar value={draft} onChange={setDraft} min={min} max={max} todayDate={todayDate} />
         <div className="modal-actions">
-          <button type="button" className="button-secondary" onClick={() => setOpen(false)}>Cancel</button>
-          <button type="button" className="button-primary" onClick={() => { onChange(draft); setOpen(false); }}>Apply date</button>
+          <Button variant="secondary" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() => {
+              onChange(draft);
+              setOpen(false);
+            }}
+          >
+            Apply date
+          </Button>
         </div>
       </Modal>
     </div>

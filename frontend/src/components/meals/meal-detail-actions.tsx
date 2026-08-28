@@ -1,11 +1,11 @@
 "use client";
 
 import { PencilSimpleIcon, TrashIcon } from "@phosphor-icons/react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { DeleteRecordDialog } from "@/components/delete-record-dialog";
+import { Button } from "@/components/ui/button";
 import { deleteMeal } from "@/lib/actions/meals";
 
 export function MealDetailActions({
@@ -22,21 +22,23 @@ export function MealDetailActions({
 
   return (
     <div className="detail-actions">
-      <Link
+      <Button
         href={`/meals/${mealId}/edit`}
-        className="button-secondary button-compact"
+        variant="secondary"
+        size="md"
+        icon={PencilSimpleIcon}
       >
-        <PencilSimpleIcon size={16} weight="bold" aria-hidden="true" />
         Edit
-      </Link>
-      <button
-        type="button"
-        className="button-secondary button-compact"
+      </Button>
+      <Button
+        variant="tertiary"
+        size="md"
+        tone="danger"
+        icon={TrashIcon}
         onClick={() => setDeleteOpen(true)}
       >
-        <TrashIcon size={16} weight="bold" aria-hidden="true" />
         Delete
-      </button>
+      </Button>
       <DeleteRecordDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
