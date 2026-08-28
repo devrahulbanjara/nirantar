@@ -160,9 +160,7 @@ function SummaryContent({
                 {summary.meals.meal_count} meal
                 {summary.meals.meal_count === 1 ? "" : "s"}
               </p>
-            ) : (
-              <p className="card-subline">No meals logged</p>
-            )}
+            ) : null}
           </div>
         </div>
         {summary.meals.meal_count > 0 ? (

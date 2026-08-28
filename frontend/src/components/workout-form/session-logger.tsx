@@ -287,7 +287,11 @@ export function SessionLogger({ initialWorkout }: { initialWorkout: Workout }) {
   return (
     <div className="session-logger">
       <header className="session-logger-header">
-        <BackButton fallbackHref={backHref} label="Back to workouts" />
+        <BackButton
+          fallbackHref={backHref}
+          label="Back to workouts"
+          collapseLabel="narrow"
+        />
         <p className="session-logger-clock" aria-live="polite">
           {formatElapsedClock(workout.check_in_at, nowMs)}
         </p>
@@ -316,7 +320,12 @@ export function SessionLogger({ initialWorkout }: { initialWorkout: Workout }) {
       {exercises.length === 0 ? (
         <div className="session-logger-empty">
           <p>Add an exercise to start logging sets.</p>
-          <Button variant="primary" size="lg" icon={PlusIcon} onClick={() => setAddOpen(true)}>
+          <Button
+            variant="primary"
+            size="lg"
+            icon={PlusIcon}
+            onClick={() => setAddOpen(true)}
+          >
             Add exercise
           </Button>
         </div>

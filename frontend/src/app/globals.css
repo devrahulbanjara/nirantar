@@ -2583,6 +2583,7 @@ a.aggregate-card:hover {
 
 .back-button {
   display: inline-flex;
+  min-width: 44px;
   min-height: 44px;
   align-items: center;
   gap: 6px;
@@ -2597,6 +2598,32 @@ a.aggregate-card:hover {
   transition:
     background-color var(--interaction-duration) var(--interaction-ease),
     color var(--interaction-duration) var(--interaction-ease);
+}
+
+.back-button-label {
+  white-space: nowrap;
+}
+
+@media (max-width: 743px) {
+  .back-button[data-collapse-label="narrow"] {
+    position: relative;
+    justify-content: center;
+    width: 44px;
+    margin: 0;
+    padding: 0;
+  }
+
+  .back-button[data-collapse-label="narrow"] .back-button-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    border: 0;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
 }
 
 .back-button:hover {
@@ -4033,6 +4060,7 @@ a.workout-activity-cell::after {
 
 .session-logger-header .back-button {
   justify-self: start;
+  margin: 0;
 }
 
 .session-logger-clock {
@@ -4054,8 +4082,9 @@ a.workout-activity-cell::after {
 .session-logger-empty {
   display: grid;
   gap: 16px;
-  justify-items: start;
+  justify-items: center;
   padding: 24px 0;
+  text-align: center;
 }
 
 .session-logger-empty p {
